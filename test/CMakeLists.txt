@@ -371,3 +371,34 @@ add_test(
     COMMAND test_builtin_commands_integration
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+# ============================================================================
+# Phase 4 Integration Tests: Arrow Key Navigation for Tab Switching
+# ============================================================================
+
+add_executable(test_arrow_key_navigation
+    ui/test_arrow_key_navigation.cpp
+)
+
+target_include_directories(test_arrow_key_navigation
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_arrow_key_navigation
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+)
+
+add_test(
+    NAME Phase4ArrowKeyNavigationTests
+    COMMAND test_arrow_key_navigation
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
