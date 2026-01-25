@@ -173,7 +173,7 @@ add_custom_target(test_phase1_verbose
 # Create combined target for all tests
 add_custom_target(test_all
     COMMAND ${CMAKE_CTEST_COMMAND} -V
-    DEPENDS test_phase0_unit test_phase0_integration test_phase1_components test_phase2_metrics test_phase2_end_to_end test_command_registry test_logging_window
+    DEPENDS test_phase0_unit test_phase0_integration test_phase1_components test_phase2_metrics test_phase2_end_to_end test_command_registry test_logging_window test_layout_config
 )
 
 # ============================================================================
@@ -269,13 +269,44 @@ add_test(
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
+# ============================================================================
+# Phase 3 Unit Tests: Layout Persistence
+# ============================================================================
+
+add_executable(test_layout_config
+    ui/test_layout_config.cpp
+)
+
+target_include_directories(test_layout_config
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_layout_config
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+)
+
+add_test(
+    NAME Phase3LayoutConfigTests
+    COMMAND test_layout_config
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
 # Create custom targets for Phase 3
 add_custom_target(test_phase3
     COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -V
-    DEPENDS test_command_registry test_logging_window
+    DEPENDS test_command_registry test_logging_window test_layout_config
 )
 
 add_custom_target(test_phase3_verbose
     COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -VV --output-on-failure
-    DEPENDS test_command_registry test_logging_window
+    DEPENDS test_command_registry test_logging_window test_layout_config
 )
