@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <mutex>
 #include <ftxui/dom/elements.hpp>
 #include "ui/MetricsTileWindow.hpp"
 
@@ -23,6 +24,9 @@ public:
     // Update all tiles with latest values from MetricsCapability (called each frame)
     void UpdateAllMetrics();
 
+    // Store latest metric value (called from metrics event callback, thread-safe)
+    void SetLatestValue(const std::string& metric_id, double value);
+
     // Render all tiles as FTXUI elements
     ftxui::Element Render() const;
 
@@ -41,4 +45,8 @@ private:
     std::vector<std::shared_ptr<MetricsTileWindow>> tiles_;
     std::map<std::string, size_t> tile_index_;  // metric_id → tile vector index
     std::shared_ptr<app::capabilities::MetricsCapability> metrics_cap_;
+    
+    // Latest values storage (thread-safe, updated from metrics callback)
+    std::map<std::string, double> latest_values_;
+    mutable std::mutex values_lock_;
 };

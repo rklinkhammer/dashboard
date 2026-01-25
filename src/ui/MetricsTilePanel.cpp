@@ -28,11 +28,24 @@ void MetricsTilePanel::AddTile(std::shared_ptr<MetricsTileWindow> tile) {
 }
 
 void MetricsTilePanel::UpdateAllMetrics() {
-    if (!metrics_cap_) return;
+    // Copy latest values to tiles (lock-free during update iteration)
+    std::map<std::string, double> values_snapshot;
+    {
+        std::lock_guard<std::mutex> lock(values_lock_);
+        values_snapshot = latest_values_;
+    }
     
-    // For now, this is a placeholder
-    // In real implementation, would query MetricsCapability for latest values
-    // and call UpdateValue() on each tile
+    // Update each tile with its latest value
+    for (const auto& [metric_id, value] : values_snapshot) {
+        if (auto tile = GetTile(metric_id)) {
+            tile->UpdateValue(value);
+        }
+    }
+}
+
+void MetricsTilePanel::SetLatestValue(const std::string& metric_id, double value) {
+    std::lock_guard<std::mutex> lock(values_lock_);
+    latest_values_[metric_id] = value;
 }
 
 std::shared_ptr<MetricsTileWindow> MetricsTilePanel::GetTile(

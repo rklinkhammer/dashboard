@@ -145,14 +145,13 @@ void MetricsPanel::RegisterMetricsCapabilityCallback(std::shared_ptr<graph::Mock
             // Extract metric ID: node_name + "::" + metric_name
             std::string metric_id = event.source + "::" + event.data.at("metric_name");
             
-            // Find and update corresponding tile
-            if (auto tile = metrics_tile_panel_->GetTile(metric_id)) {
-                try {
-                    double value = std::stod(event.data.at("value"));
-                    tile->UpdateValue(value);
-                } catch (...) {
-                    // Ignore parse errors
-                }
+            try {
+                double value = std::stod(event.data.at("value"));
+                // Store the latest value (thread-safe)
+                // UpdateAllMetrics() will propagate to tiles each frame
+                metrics_tile_panel_->SetLatestValue(metric_id, value);
+            } catch (...) {
+                // Ignore parse errors
             }
         });
 
