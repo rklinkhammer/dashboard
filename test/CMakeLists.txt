@@ -173,7 +173,7 @@ add_custom_target(test_phase1_verbose
 # Create combined target for all tests
 add_custom_target(test_all
     COMMAND ${CMAKE_CTEST_COMMAND} -V
-    DEPENDS test_phase0_unit test_phase0_integration test_phase1_components test_phase2_metrics test_phase2_end_to_end
+    DEPENDS test_phase0_unit test_phase0_integration test_phase1_components test_phase2_metrics test_phase2_end_to_end test_command_registry
 )
 
 # ============================================================================
@@ -205,4 +205,46 @@ add_test(
     NAME Phase2MetricsTests
     COMMAND test_phase2_metrics
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# ============================================================================
+# Phase 3 Unit Tests: CommandRegistry and CommandWindow
+# ============================================================================
+
+add_executable(test_command_registry
+    ui/test_command_registry.cpp
+)
+
+target_include_directories(test_command_registry
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_command_registry
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+)
+
+add_test(
+    NAME Phase3CommandRegistryTests
+    COMMAND test_command_registry
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# Create custom targets for Phase 3
+add_custom_target(test_phase3
+    COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -V
+    DEPENDS test_command_registry
+)
+
+add_custom_target(test_phase3_verbose
+    COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -VV --output-on-failure
+    DEPENDS test_command_registry
 )
