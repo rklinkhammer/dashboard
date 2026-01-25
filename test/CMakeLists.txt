@@ -402,3 +402,34 @@ add_test(
     COMMAND test_arrow_key_navigation
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+# ============================================================================
+# Phase 4 Integration Tests: LoggingWindow Filter Integration
+# ============================================================================
+
+add_executable(test_logging_filter_integration
+    ui/test_logging_filter_integration.cpp
+)
+
+target_include_directories(test_logging_filter_integration
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_logging_filter_integration
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+)
+
+add_test(
+    NAME Phase4LoggingFilterIntegrationTests
+    COMMAND test_logging_filter_integration
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
