@@ -340,3 +340,34 @@ add_custom_target(test_phase3_verbose
     COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -VV --output-on-failure
     DEPENDS test_command_registry test_logging_window test_layout_config test_tab_container
 )
+
+# ============================================================================
+# Phase 4 Integration Tests: CommandRegistry with DashboardApplication
+# ============================================================================
+
+add_executable(test_builtin_commands_integration
+    ui/test_builtin_commands_integration.cpp
+)
+
+target_include_directories(test_builtin_commands_integration
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_builtin_commands_integration
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+)
+
+add_test(
+    NAME Phase4CommandIntegrationTests
+    COMMAND test_builtin_commands_integration
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
