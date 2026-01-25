@@ -136,13 +136,13 @@ TEST(LoggingWindowTest, MaintainsMaxLineLimit) {
     LoggingWindow window;
     window.ClearLogs();
 
-    // Add more than MAX_LINES
-    for (int i = 0; i < 600; ++i) {
+    // Add more than MAX_LINES (1000 with enhanced window)
+    for (int i = 0; i < 1200; ++i) {
         window.AddLogLine("Log line " + std::to_string(i));
     }
 
-    // Should maintain at most MAX_LINES (500)
-    EXPECT_LE(window.GetLogCount(), 500);
+    // Should maintain at most MAX_LINES (1000)
+    EXPECT_LE(window.GetLogCount(), 1000);
 }
 
 // ============================================================================

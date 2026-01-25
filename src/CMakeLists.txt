@@ -10,6 +10,7 @@ set(GDASHBOARD_SOURCES
     ui/Window.cpp
     ui/MetricsPanel.cpp
     ui/LoggingWindow.cpp
+    ui/LoggingAppender.cpp
     ui/CommandWindow.cpp
     ui/CommandRegistry.cpp
     ui/BuiltinCommands.cpp
