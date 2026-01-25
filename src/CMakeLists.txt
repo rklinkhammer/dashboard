@@ -12,6 +12,8 @@ set(GDASHBOARD_SOURCES
     ui/LoggingWindow.cpp
     ui/CommandWindow.cpp
     ui/StatusBar.cpp
+    ui/MetricsTileWindow.cpp
+    ui/MetricsTilePanel.cpp
     gdashboard/DashboardApplication.cpp
 )
 
