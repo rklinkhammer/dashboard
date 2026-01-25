@@ -7,13 +7,15 @@
 #include "ui/MetricsTileWindow.hpp"
 
 // Forward declaration
+namespace app::capabilities {
 class MetricsCapability;
+}
 
 // Container for metric tiles - manages tile lifecycle and updates
 class MetricsTilePanel {
 public:
     explicit MetricsTilePanel(
-        std::shared_ptr<MetricsCapability> metrics_cap = nullptr);
+        std::shared_ptr<app::capabilities::MetricsCapability> metrics_cap = nullptr);
 
     // Add a tile to the panel (typically called during Initialize())
     void AddTile(std::shared_ptr<MetricsTileWindow> tile);
@@ -31,12 +33,12 @@ public:
     std::shared_ptr<MetricsTileWindow> GetTile(const std::string& metric_id) const;
 
     // Set metrics capability (for dynamic updates)
-    void SetMetricsCapability(std::shared_ptr<MetricsCapability> metrics_cap) {
+    void SetMetricsCapability(std::shared_ptr<app::capabilities::MetricsCapability> metrics_cap) {
         metrics_cap_ = metrics_cap;
     }
 
 private:
     std::vector<std::shared_ptr<MetricsTileWindow>> tiles_;
     std::map<std::string, size_t> tile_index_;  // metric_id → tile vector index
-    std::shared_ptr<MetricsCapability> metrics_cap_;
+    std::shared_ptr<app::capabilities::MetricsCapability> metrics_cap_;
 };

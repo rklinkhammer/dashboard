@@ -1,8 +1,9 @@
 #include "ui/MetricsTilePanel.hpp"
+#include "app/capabilities/MetricsCapability.hpp"
 #include <iostream>
 
 MetricsTilePanel::MetricsTilePanel(
-    std::shared_ptr<MetricsCapability> metrics_cap)
+    std::shared_ptr<app::capabilities::MetricsCapability> metrics_cap)
     : metrics_cap_(metrics_cap) {
     std::cerr << "[MetricsTilePanel] Created\n";
 }
