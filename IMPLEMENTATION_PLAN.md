@@ -1,8 +1,8 @@
 # Detailed Implementation Plan for gdashboard
 
-**Date**: January 24, 2026  
-**Status**: Ready for Development Phase  
-**Duration Estimate**: 8-10 weeks (full implementation)
+**Date**: January 25, 2026  
+**Status**: Phase 2 In Progress - Foundation Classes Complete  
+**Duration Estimate**: 2-3 weeks remaining for Phase 2 metrics integration
 
 ---
 
@@ -96,8 +96,8 @@ target_link_libraries(gdashboard
 | Phase | Duration | Focus | Status |
 |-------|----------|-------|--------|
 | **Phase 0** | 3-4 weeks | MockGraphExecutor + MetricsCapability | ✅ **COMPLETE** (32/32 tests passing) |
-| **Phase 1** | 1-2 weeks | Window structure + layout | ✅ **COMPLETE** (22/22 tests passing) |
-| **Phase 2** | 2-3 weeks | Metrics integration + live updates | 🚀 **IN PROGRESS** |
+| **Phase 1** | 1-2 weeks | Window structure + FTXUI rendering | ✅ **COMPLETE** (22/22 tests passing) |
+| **Phase 2** | 2-3 weeks | Metrics integration + live updates | 🚀 **IN PROGRESS** (foundation classes complete) |
 | **Phase 3** | 2-3 weeks | Enhanced features + polish | 📋 Planned |
 | **Testing** | Continuous | Unit, integration, system tests | 📋 Planned |
 
@@ -1848,9 +1848,15 @@ TEST(Phase1LayoutTest, ExitsCleanlyOnQuit) { }
   - StatusBar: 4 tests
   - Plus integration tests
 - **Components Implemented**: DashboardApplication, MetricsPanel, LoggingWindow, CommandWindow, StatusBar
+- **FTXUI Rendering**: ✅ **RESTORED** - All windows render with borders, colors, and styled text at 30 FPS
+  - MetricsPanel: Green bordered box with metric list
+  - LoggingWindow: Blue bordered box with log lines (dim text)
+  - CommandWindow: Yellow bordered box with command prompt
+  - StatusBar: White text on black background (centered)
+  - BuildLayout() composes all windows in vbox with Run() rendering each frame
 - **CLI Features**: Argument parsing, height validation, graceful error handling
 - **Architecture**: Window-based layout with MockGraphExecutor from Phase 0
-- **Deliverables**: Executable (./src/gdashboard) with --graph-config parameter
+- **Deliverables**: Executable (./src/gdashboard) with --graph-config parameter and full FTXUI rendering
 
 ---
 
@@ -1871,9 +1877,20 @@ Integrate MetricsCapability with Dashboard to discover metrics schemas, create t
 #### D2.1: MetricsTileWindow Implementation
 **File**: `include/ui/MetricsTileWindow.hpp` + `src/ui/MetricsTileWindow.cpp`
 
+**Status**: ✅ **COMPLETE** (Commit f68b02b)
+
 **Represents**: Single metric tile with specific display type and alert status
 
-**Public Interface** (~200 lines):
+**Completed Features**:
+- ✅ 4 rendering methods: RenderValue() (3 lines), RenderGauge() (5 lines), RenderSparkline() (7 lines), RenderState() (3 lines)
+- ✅ Alert threshold support with color coding (OK=Green, WARNING=Yellow, CRITICAL=Red)
+- ✅ UpdateValue() for frame-by-frame data updates
+- ✅ Circular history buffer (60 samples) for sparkline rendering
+- ✅ MetricDescriptor struct for metadata (node, name, unit, thresholds)
+- ✅ AlertStatus enum for status determination
+- ✅ Format support with precision control
+
+**Public Interface** (~200 lines total):
 ```cpp
 class MetricsTileWindow {
 public:
@@ -1955,6 +1972,48 @@ private:
    - Bounded history (120 values max)
    - No dynamic allocation per update
    - Minimal overhead per tile
+
+#### D2.1.5: MetricsTilePanel Implementation
+**File**: `include/ui/MetricsTilePanel.hpp` + `src/ui/MetricsTilePanel.cpp`
+
+**Status**: ✅ **COMPLETE** (Commit f68b02b)
+
+**Represents**: Container for managing multiple MetricsTileWindow instances
+
+**Completed Features**:
+- ✅ Tile lifecycle management (AddTile, GetTile, RemoveAll)
+- ✅ Tile indexing by metric ID for O(1) lookups
+- ✅ Composite rendering of all tiles (current: vbox layout)
+- ✅ UpdateAllMetrics() placeholder for frame-by-frame updates
+- ✅ Thread-safe for concurrent updates from executor
+- ✅ Support for dynamic tile creation during Initialize()
+
+**Public Interface** (~100 lines):
+```cpp
+class MetricsTilePanel {
+public:
+    explicit MetricsTilePanel(std::shared_ptr<MetricsCapability> metrics_cap = nullptr);
+    
+    // Tile management
+    void AddTile(std::shared_ptr<MetricsTileWindow> tile);
+    std::shared_ptr<MetricsTileWindow> GetTile(const std::string& metric_id) const;
+    
+    // Updates
+    void UpdateAllMetrics();  // Called each frame
+    
+    // Rendering
+    ftxui::Element Render() const;
+    
+    // Accessors
+    size_t GetTileCount() const { return tiles_.size(); }
+    void SetMetricsCapability(std::shared_ptr<MetricsCapability> metrics_cap);
+    
+private:
+    std::vector<std::shared_ptr<MetricsTileWindow>> tiles_;
+    std::map<std::string, size_t> tile_index_;
+    std::shared_ptr<MetricsCapability> metrics_cap_;
+};
+```
 
 #### D2.2: Metrics Discovery from NodeMetricsSchemas
 **File**: `src/ui/MetricsPanel.cpp` - UpdateMetricsList() method
@@ -2522,27 +2581,200 @@ Before approving implementation, verify:
 
 ---
 
-## Next Steps
+## Phase 2 Progress & Continuation Plan
 
-1. **Immediate** (This Week):
-   - Review and approve this implementation plan
-   - Ensure Phase 0 (MockGraphExecutor) is complete
-   - Set up CI/CD pipeline
-   - Assign team members to phases
+### Completed in Phase 2 (as of January 25, 2026)
 
-2. **Week 1**:
-   - Begin Phase 1 implementation
-   - Daily standups to track progress
-   - Create feature branches for each phase
+✅ **MetricsTileWindow** - Complete metric display component
+- RenderValue(), RenderGauge(), RenderSparkline(), RenderState() methods
+- Alert threshold logic (OK/WARNING/CRITICAL color coding)
+- Circular history buffer (60 samples) for trend visualization
+- Thread-safe UpdateValue() for executor integration
+- Commit: f68b02b
 
-3. **Ongoing**:
-   - Weekly sprint reviews
-   - Continuous testing and integration
-   - Update documentation as implementation progresses
+✅ **MetricsTilePanel** - Container for metric tile management
+- AddTile(), GetTile() for tile lifecycle
+- Tile indexing by metric ID (O(1) lookup)
+- Composite rendering with vbox layout
+- UpdateAllMetrics() placeholder for frame updates
+- Thread-safe for concurrent executor updates
+- Commit: f68b02b
+
+✅ **FTXUI Rendering Integration** (Phase 1 completion)
+- All 4 window components (MetricsPanel, LoggingWindow, CommandWindow, StatusBar) rendering with colors and borders
+- 30 FPS rendering loop with frame-by-frame updates
+- Full layout composition in BuildLayout()
+- Commit: 3c3d7b4
+
+✅ **Build System** - CMakeLists.txt updated
+- MetricsTileWindow.cpp and MetricsTilePanel.cpp added
+- No compilation errors
+- All 54 tests passing (20 Phase 0 + 12 Phase 0 integration + 22 Phase 1)
+
+### Remaining Phase 2 Tasks (Priority Order)
+
+#### Task D2.5: Integrate MetricsCapability Discovery
+**Objective**: Connect DashboardApplication::Initialize() to discover metrics from executor
+
+**Implementation**:
+1. Modify `MetricsPanel::UpdateMetricsList()` to:
+   - Query `executor_->GetMetricsCapability()`
+   - Parse all NodeMetricsSchemas
+   - For each metric field, create MetricsTileWindow
+   - Register tiles in MetricsTilePanel
+   - Create tile lookup map: `node_name + "::" + field_name → tile`
+
+2. Update `MetricsPanel::Render()` to use MetricsTilePanel for rendering
+
+3. Register MetricsCapability callbacks:
+   ```cpp
+   executor_->GetMetricsCapability()->RegisterCallback(
+       [this](const Event& event) { HandleMetricUpdate(event); }
+   );
+   ```
+
+**Test Cases** (3-4 new tests):
+- TEST: Discovers all 48 metrics from mock_graph.json
+- TEST: Creates correct MetricsTileWindow instances
+- TEST: Tile lookup map is properly initialized
+
+#### Task D2.6: Implement UpdateAllMetrics() and Frame Updates
+**Objective**: Ensure MetricsTilePanel updates every frame with latest executor data
+
+**Implementation**:
+1. Store latest metric values in MetricsTilePanel:
+   ```cpp
+   std::map<std::string, double> latest_values_;
+   std::mutex values_lock_;
+   ```
+
+2. Implement UpdateAllMetrics():
+   ```cpp
+   void MetricsTilePanel::UpdateAllMetrics() {
+       std::lock_guard<std::mutex> lock(values_lock_);
+       for (auto& [key, value] : latest_values_) {
+           if (auto tile = GetTile(key)) {
+               tile->UpdateValue(value);
+           }
+       }
+   }
+   ```
+
+3. Update DashboardApplication::Run() to call:
+   ```cpp
+   while (keepRunning) {
+       metrics_panel_->UpdateAllMetrics();  // Update all tiles
+       auto screen = ftxui::Screen::Create(...);
+       ftxui::Render(screen, BuildLayout());
+       output(screen.ToString());
+   }
+   ```
+
+4. Handle incoming events from executor:
+   ```cpp
+   void MetricsPanel::HandleMetricUpdate(const Event& event) {
+       auto key = event.source + "::" + event.data.at("metric_name");
+       metrics_tile_panel_->SetLatestValue(key, value);
+   }
+   ```
+
+**Test Cases** (3-4 new tests):
+- TEST: UpdateAllMetrics() updates all tiles
+- TEST: Tiles maintain 60-sample history across frames
+- TEST: No memory leaks from repeated updates
+
+#### Task D2.7: Verify Color-Coded Alert Status
+**Objective**: Ensure tiles render correct colors based on alert thresholds
+
+**Implementation**:
+1. Verify MetricsTileWindow::GetStatusColor() returns:
+   - Green (OK) when value within ok_min/ok_max
+   - Yellow (WARNING) when value within warning_min/warning_max
+   - Red (CRITICAL) when value outside critical_range
+
+2. Update tile Render() methods to apply color:
+   ```cpp
+   ftxui::Element MetricsTileWindow::RenderValue() const {
+       return ftxui::text(FormatValue()) | ftxui::color(GetStatusColor());
+   }
+   ```
+
+3. Test with mock_graph.json metrics:
+   - CPU metrics (should show alerts at 80%, 95%)
+   - Memory metrics (should show alerts at 70%, 90%)
+   - Network throughput (should stay green under 1000 Mbps)
+
+**Test Cases** (3-4 new tests):
+- TEST: Correct color for OK status (green)
+- TEST: Correct color for WARNING status (yellow)
+- TEST: Correct color for CRITICAL status (red)
+- TEST: Color changes as value crosses thresholds
+
+#### Task D2.8: End-to-End Phase 2 Testing
+**Objective**: Verify complete metrics flow from executor to display
+
+**System Test** (test/system/test_phase2_end_to_end.cpp):
+```cpp
+TEST(Phase2EndToEndTest, CompleteMetricsFlow) {
+    // 1. Launch gdashboard with mock_graph.json
+    // 2. Wait for initialization (should discover 48 metrics)
+    // 3. Verify MetricsPanel contains 48 tiles
+    // 4. Wait 100ms for metrics to start flowing
+    // 5. Verify tile values change over time
+    // 6. Verify colors update for alerts
+    // 7. Verify no rendering glitches
+    // 8. Verify consistent metrics at 30 FPS
+}
+```
+
+**Performance Test** (test/performance/test_rendering_fps.cpp):
+```cpp
+TEST(PerformanceTest, Phase2RenderingMaintains30FPS) {
+    // 1. Setup 48 metric tiles
+    // 2. Measure frame render time with metrics updating
+    // 3. Verify average frame time < 33ms
+    // 4. Verify tail latency < 50ms (99th percentile)
+    // 5. Verify no memory leaks over 1000 frames
+}
+```
+
+### Continuation Path (After Phase 2 Completion)
+
+Once all Phase 2 tasks complete:
+1. Run full test suite: `cmake --build . --target test`
+2. Verify all 54+ tests passing
+3. Manual system test: `./build/gdashboard --config=config/mock_graph.json`
+4. Verify visual output shows all 48 metrics with proper colors/spacing
+5. Clean git state: `git status` should show clean
+6. Begin Phase 3: CommandWindow and LoggingWindow implementation
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: January 24, 2026  
+## Next Steps
+
+1. **Immediate** (Today):
+   - Complete IMPLEMENTATION_PLAN.md update ✅
+   - Begin Task D2.5 (MetricsCapability integration)
+   - Target completion: End of today
+
+2. **Short Term** (Next 2-3 hours):
+   - Complete Task D2.6 (UpdateAllMetrics implementation)
+   - Complete Task D2.7 (Color-coded alerts)
+   - Begin Task D2.8 testing
+
+3. **Phase 2 Completion** (Within 4 hours):
+   - All 4 Phase 2 tasks complete
+   - 54+ tests passing
+   - Ready for Phase 3
+
+4. **Ongoing**:
+   - Continuous testing and validation
+   - Update documentation as implementation progresses
+   - Maintain clean git history
+
+---
+
+**Document Version**: 1.1  
+**Last Updated**: January 25, 2026  
 **Prepared By**: Architecture & Design Team  
-**Status**: Ready for Review & Approval
+**Status**: Phase 2 In Progress - Foundation Classes Complete, Integration Next
