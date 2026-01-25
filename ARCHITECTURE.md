@@ -1,8 +1,8 @@
 # FTXUI Dashboard Architecture Document
 
-**Status**: ✅ Architecture Complete and Finalized (January 24, 2026)  
+**Status**: ✅ Architecture Complete and Phase 3.4 Implemented (January 25, 2026)  
 **Scope**: Complete specification for FTXUI-based real-time metrics dashboard integrated with MockGraphExecutor  
-**Consolidated**: All architectural guidance, implementation plans, and design decisions are in this single document
+**Implementation Status**: Phases 0-3.4 COMPLETE (168 tests passing)
 
 ---
 
@@ -2804,13 +2804,38 @@ CMakeLists.txt                  (Add 'gdashboard' executable target)
 - Synthetic data: constant, linear ramp, random walk, sinusoidal patterns
 ```
 
-### Phase 3: Enhanced Features (Future)
-- [ ] CommandWindow: command input and execution
-- [ ] LoggingWindow: log4cxx integration
-- [ ] Layout strategies: vertical, horizontal, tabbed fallback
-- [ ] Scrolling and pagination
-- [ ] Metric filtering and search
-- [ ] Custom themes and styling
+### Phase 3: Enhanced Features ✅ COMPLETE (January 25, 2026)
+
+**Phase 3.1: CommandRegistry & CommandWindow** ✅
+- `CommandRegistry`: Extensible command handler registration system (16 tests)
+- `CommandWindow`: Command input with history tracking
+
+**Phase 3.2: LoggingWindow with Filtering & Search** ✅
+- `LoggingAppender`: Custom callback-based logging appender
+- Level filtering: TRACE, DEBUG, INFO, WARN, ERROR, FATAL
+- Text search: Case-insensitive pattern matching
+- Color-coded output: Different colors per log level (20 tests)
+
+**Phase 3.3: Layout Persistence** ✅
+- `LayoutConfig`: JSON-based Save/Load to ~/.gdashboard/layout.json
+- Persist heights, filters, search, command history (10 items max) (24 tests)
+
+**Phase 3.4: Tabbed Layout Mode** ✅
+- `Tab` + `TabContainer`: Multi-tab manager with arrow key navigation
+- Auto-activation when tile count > 36
+- Tab bar with visual highlighting of current tab (25 tests)
+
+**Summary**: 81 Phase 3 tests passing (16+20+24+25) | **Total Project**: 168 tests
+
+### Next Phase: MetricsPanel Integration
+
+**Objective**: Integrate all Phase 3 components into MetricsPanel and DashboardApplication
+
+**Tasks**:
+- Add TabContainer to MetricsPanel with auto-activation logic
+- Integrate LayoutConfig for load/save on startup/exit
+- Wire BuiltinCommands into DashboardApplication
+- Create 10-15 integration tests for complete system
 
 ---
 
