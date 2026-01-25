@@ -316,6 +316,16 @@ The `gdashboard` application emphasizes:
 - Dashboard exit while graph running: gracefully stops executor, allowing callbacks to drain
 - No memory leaks: executor's destructor ensures callback cleanup
 
+**Decision 11: Metrics Organization - Grouping by NodeName (Phase 2.9+)**
+- **Phase 1-2**: Flat list of tiles in insertion order (no grouping)
+- **Phase 2.9+**: Group tiles by NodeName with visual section headers
+- **Rationale**: Improves visual organization when metrics exceed 48 (e.g., 12-node graph × 4-8 metrics/node)
+- **Implementation**: MetricsTilePanel uses `NodeGroup` structure with `std::vector<NodeGroup>` and `std::map<NodeName, index>`
+- **Rendering**: Each NodeGroup rendered with header ("DataValidator (4 metrics)") + 3-column grid of tiles
+- **Benefits**: Scalability, visual clarity, enables future expand/collapse and node-level filtering
+- **Impact**: Breaking change to MetricsTilePanel rendering (layout), zero impact to discovery/update logic
+- **Timeline**: Optional enhancement for Phase 2.9; not blocking Phase 2 completion; Phase 3 can proceed with flat or grouped layout
+
 ---
 
 ## Table of Contents
@@ -651,6 +661,181 @@ private:
     ftxui::Element RenderGrid() const;  // 3-column grid layout
 };
 ```
+
+### Metrics Organization Strategy: Grouping by NodeName
+
+**Current Implementation**: Metrics are stored and rendered as a flat list in `MetricsTilePanel`, organized in rendering order (insertion order).
+
+**Proposed Enhancement**: Group metrics by NodeName to improve:
+1. **Visual Organization**: Metrics from the same node are displayed together
+2. **Scalability**: Easier to navigate when graph has many nodes with many metrics
+3. **Context**: Users see which node each metric belongs to (section header)
+4. **Interaction**: In Phase 3+, can expand/collapse nodes or filter by node
+
+#### Analysis: Grouping Benefits and Implementation Options
+
+**Benefit 1: Visual Clarity**
+- Current: 48 metrics in flat list is difficult to scan
+- Grouped: Metrics clustered by node with visual separators (borders, headers)
+- Example output:
+  ```
+  ╭─ DataValidator ────────────────────┐
+  │ validation_errors │ processing_time │
+  │ throughput_hz     │ node_active     │
+  ╰─────────────────────────────────────┘
+  
+  ╭─ DataProcessor ────────────────────┐
+  │ throughput_hz     │ queue_depth     │
+  │ processing_time   │ error_count     │
+  ╰─────────────────────────────────────┘
+  ```
+
+**Benefit 2: Scalability**
+- Current algorithm: O(1) tile lookup, but O(n) rendering for all tiles
+- Grouped algorithm: O(1) node lookup, O(m) rendering where m = visible metrics
+- With tabbed or scrollable node groups: Can hide entire node sections
+- Supports lazy rendering: Only render visible node groups
+
+**Benefit 3: Future Extensibility**
+- Phase 3: Expand/collapse nodes (show/hide entire node's metrics)
+- Phase 3: Node-level commands (pause/resume single node)
+- Phase 4: Node-level filtering and search
+- Phase 4: Node-level performance profiling and statistics
+
+#### Implementation Option 1: Node Group Structure (Recommended)
+
+**Data Structure Change** in MetricsTilePanel:
+```cpp
+class MetricsTilePanel {
+private:
+    // Group tiles by NodeName
+    struct NodeGroup {
+        std::string node_name;
+        std::vector<std::shared_ptr<MetricsTileWindow>> tiles;
+    };
+    
+    std::vector<NodeGroup> node_groups_;                    // Ordered by discovery
+    std::map<std::string, size_t> node_index_;               // NodeName → group index
+    std::map<std::string, double> latest_values_;            // metric_id → latest value
+    mutable std::mutex values_lock_;
+};
+```
+
+**AddTile() Behavior**:
+1. Extract NodeName from MetricId (e.g., "DataValidator" from "DataValidator::validation_errors")
+2. Check if NodeGroup exists for that NodeName
+3. If not, create new NodeGroup and add to node_groups_
+4. Add tile to appropriate NodeGroup's tiles vector
+5. Add tile_id → (node_index, tile_index) mapping for O(1) lookup
+
+**UpdateAllMetrics() Behavior**:
+- No change: Still iterates all tiles to update values
+- Optimization opportunity: Could defer updates for collapsed/hidden nodes
+
+**Render() Behavior**:
+```cpp
+// Render each node group as a collapsible/expandable section
+for (const auto& group : node_groups_) {
+    // Node header with count
+    elements.push_back(
+        text("[" + group.node_name + "] (" + to_string(group.tiles.size()) + " metrics)")
+            | bold | color(Color::Cyan) | border
+    );
+    
+    // Render node's metrics as 3-column grid
+    std::vector<Element> row;
+    for (size_t i = 0; i < group.tiles.size(); ++i) {
+        row.push_back(group.tiles[i]->Render());
+        
+        // Add row when full (3 columns)
+        if ((i + 1) % 3 == 0 || i == group.tiles.size() - 1) {
+            elements.push_back(hbox(row));
+            row.clear();
+        }
+    }
+}
+
+return vbox(elements) | border | color(Color::Green);
+```
+
+**Tile Lookup Optimization**:
+```cpp
+std::shared_ptr<MetricsTileWindow> GetTile(const std::string& metric_id) const {
+    // metric_id format: "NodeName::metric_name"
+    auto [node_name, metric_name] = ParseMetricId(metric_id);
+    
+    auto node_it = node_index_.find(node_name);
+    if (node_it == node_index_.end()) return nullptr;
+    
+    const auto& group = node_groups_[node_it->second];
+    
+    // Linear search in node group (typically 4-8 metrics per node)
+    for (const auto& tile : group.tiles) {
+        if (tile->GetMetricId() == metric_id) {
+            return tile;
+        }
+    }
+    return nullptr;
+}
+```
+
+#### Implementation Option 2: Separate Nodes Container
+
+Alternative structure with nodes as first-class concept:
+```cpp
+class MetricsTilePanel {
+private:
+    struct Node {
+        std::string name;
+        std::map<std::string, std::shared_ptr<MetricsTileWindow>> metrics;  // metric_name → tile
+    };
+    
+    std::vector<Node> nodes_;                    // Ordered by discovery
+    std::map<std::string, size_t> node_index_;   // NodeName → node vector index
+};
+```
+
+**Advantages**: Cleaner metric lookup per node
+**Disadvantages**: More complex AddTile() logic, slightly more memory overhead
+
+#### Comparison: Current vs Option 1 vs Option 2
+
+| Aspect | Current (Flat) | Option 1 (Groups) | Option 2 (Nodes) |
+|--------|---|---|---|
+| **Memory** | ~880 bytes/48 tiles | +128 bytes (groups) | +256 bytes (nodes) |
+| **AddTile()** | O(1) | O(log n) node lookup | O(log n) node lookup |
+| **GetTile()** | O(1) | O(log n) + O(m) where m=tiles/node | O(log n) + O(1) |
+| **Render()** | O(n) flat | O(n) with headers | O(n) with headers |
+| **Expand/Collapse** | Not possible | Easy (skip node group) | Easy (skip node) |
+| **Implementation Complexity** | Minimal | Medium (1-2 days) | Medium (1-2 days) |
+| **Breaking Changes** | None | Tile layout changes | Tile layout changes |
+
+#### Recommendation: Implement Option 1 in Phase 2.9 or Phase 3
+
+**Phase 2 Focus**: Current flat structure is acceptable for 48 tiles
+**Phase 2.9 Enhancement**: Group tiles by NodeName (after Phase 2 validation complete)
+**Phase 3+**: Add expand/collapse, node-level filtering, and other enhancements
+
+**Implementation Steps**:
+1. Refactor MetricsTilePanel to use NodeGroup structure
+2. Update DiscoverMetricsFromExecutor() to call AddTile() (no changes needed)
+3. Update Render() to output grouped layout with section headers
+4. Update GetTile() to search within appropriate NodeGroup
+5. Add unit tests for node grouping logic
+6. Update ARCHITECTURE.md with new rendering algorithm
+
+**Testing Strategy**:
+- Verify all 12 Phase 2 tests still pass (no behavior change to AddTile/UpdateAllMetrics)
+- Add new tests for NodeGroup creation and lookup
+- Add integration tests for grouped rendering with multiple nodes
+- Benchmark performance: Render time with flat vs grouped layout
+
+**Impact Assessment**:
+- ✅ Zero impact on MetricsCapability integration (callback-driven)
+- ✅ Zero impact on metrics discovery (same tiles created)
+- ✅ Zero impact on MetricsTileWindow rendering (each tile unchanged)
+- ⚠️ MetricsTilePanel rendering changes (grouped layout, section headers)
+- ⚠️ Layout height increases due to node headers (~1 line per node = ~12 lines for 12-node graph)
 
 ---
 
