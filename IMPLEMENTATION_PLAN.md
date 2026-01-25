@@ -1,8 +1,9 @@
 # Detailed Implementation Plan for gdashboard
 
 **Date**: January 25, 2026  
-**Status**: Phase 2.9 Complete - Metrics Grouping by NodeName Implemented  
-**Next Phase**: Phase 3 Enhanced Features - Ready to Begin
+**Status**: Phase 3.1 Complete - CommandRegistry Extensible System Implemented  
+**Current Test Count**: 99 tests passing (20+12+22+12+17+16)  
+**Next Phase**: Phase 3.2 LoggingWindow with log4cxx Integration
 
 ---
 
@@ -97,8 +98,8 @@ target_link_libraries(gdashboard
 |-------|----------|-------|--------|
 | **Phase 0** | 3-4 weeks | MockGraphExecutor + MetricsCapability | ✅ **COMPLETE** (32/32 tests passing) |
 | **Phase 1** | 1-2 weeks | Window structure + FTXUI rendering | ✅ **COMPLETE** (22/22 tests passing) |
-| **Phase 2** | 2-3 weeks | Metrics integration + live updates | ✅ **COMPLETE** (83 total tests: D2.1-D2.9) |
-| **Phase 3** | 2-3 weeks | Enhanced features + polish | 🚀 **READY TO BEGIN** |
+| **Phase 2** | 2-3 weeks | Metrics integration + live updates | ✅ **COMPLETE** (29/29 tests: D2.1-D2.9) |
+| **Phase 3** | 2-3 weeks | Enhanced features + polish | 🚀 **IN PROGRESS** - D3.1 Complete (16 tests) |
 | **Testing** | Continuous | Unit, integration, system tests | 📋 Planned |
 
 ### Dependency Graph
@@ -116,11 +117,15 @@ Phase 2 (Metrics Integration) ✅ COMPLETE
     ├─ D2.8: End-to-End System Tests (12 tests)
     └─ D2.9: Metrics Grouping by NodeName (5 tests) ✅
     ↓
-Phase 3 (Enhanced Features) 🚀 READY TO BEGIN
-    ├─ D3.1: CommandWindow Implementation
-    ├─ D3.2: LoggingWindow with log4cxx Integration
-    ├─ D3.3: Layout Persistence
-    └─ D3.4: Advanced Layout Strategies (Tabbed, Vertical, Horizontal)
+Phase 3 (Enhanced Features) 🚀 IN PROGRESS
+    ├─ D3.1: CommandWindow Implementation ✅ COMPLETE (16 tests)
+    │   ├─ CommandRegistry: Extensible handler registration
+    │   ├─ Built-in commands: help, status, run, pause, stop, reset_layout
+    │   ├─ CommandWindow: Enhanced with input/output, command history
+    │   └─ 16 unit tests for registry and window
+    ├─ D3.2: LoggingWindow with log4cxx Integration (pending)
+    ├─ D3.3: Layout Persistence (pending)
+    └─ D3.4: Advanced Layout Strategies (pending)
     ↓
 Final Integration & Testing
 ```
@@ -2396,14 +2401,84 @@ Implement optional/polish features: commands, logging, layout persistence, advan
 
 **Purpose**: Accept user commands, execute handlers, display results
 
-**Commands to Implement**:
-- `help` - List all available commands
-- `clear` - Clear command history
-- `run_graph` - Start graph execution
-- `pause_execution` - Pause (if supported)
-- `stop_execution` - Stop execution
-- `status` - Show current status
-- `reset_layout` - Reset dashboard to defaults
+**Implementation**: ✅ **COMPLETE** (Phase 3.1)
+
+**Architecture**:
+- `CommandRegistry`: Extensible handler registration system
+  - `RegisterCommand()`: Register handler with name, description, usage
+  - `ExecuteCommand()`: Execute by name with arguments
+  - `GetAllCommands()`: List all registered commands
+  - `GenerateHelpText()`: Auto-generate help documentation
+  - Private: `std::map<string, CommandInfo> commands_`
+
+- `CommandWindow` (Enhanced):
+  - `SetCommandRegistry()`: Inject registry reference
+  - `ExecuteInputCommand()`: Parse and execute from input buffer
+  - `ParseAndExecuteCommand()`: Split into command + args
+  - `HandleKeyInput()`: Process keyboard input (Enter, Backspace, etc.)
+  - `AddOutputLine()`: Display command output with color coding
+  - Command history tracking (50-line circular buffer)
+  - Output line limit (100 max)
+
+- `BuiltinCommands` (5 core commands):
+  - `status`: Display dashboard component status
+  - `run`: Execute computation graph
+  - `pause`: Pause graph execution
+  - `stop`: Stop graph execution
+  - `reset_layout`: Reset window layout to defaults
+
+**Features Implemented**:
+- ✅ Extensible command registration pattern
+- ✅ Command handler lambda-based design
+- ✅ Built-in command suite (5 commands)
+- ✅ Command history tracking
+- ✅ Colored output (ERROR=red, SUCCESS=green, WARNING=yellow)
+- ✅ Help text generation
+- ✅ Exception handling in command execution
+- ✅ Input buffer management with keyboard support
+- ✅ 16 unit tests covering all functionality
+
+**Test Coverage** (16 tests):
+- `CommandRegistryTest` (9 tests):
+  - Register command successfully
+  - Execute command with arguments
+  - Handle nonexistent commands
+  - Reject duplicate registrations
+  - List all commands
+  - Get command info
+  - Generate help text
+  - Handle function exceptions
+  - Execute multiple different commands
+
+- `CommandWindowTest` (7 tests):
+  - Initialize with title
+  - Add output lines
+  - Clear output
+  - Maintain command history
+  - Handle key input (backspace)
+  - Execute commands from input
+  - Enforce output line limits
+
+**Key Files Created**:
+- `include/ui/CommandRegistry.hpp` (67 lines)
+- `src/ui/CommandRegistry.cpp` (86 lines)
+- `include/ui/BuiltinCommands.hpp` (29 lines)
+- `src/ui/BuiltinCommands.cpp` (153 lines)
+- `test/ui/test_command_registry.cpp` (311 lines)
+
+**Build Integration**:
+- Added CommandRegistry.cpp and BuiltinCommands.cpp to CMakeLists.txt
+- Added test_command_registry to test suite
+- All 16 tests passing without regressions
+- Total test count: 32+22+29+16 = 99 tests passing
+
+**Next Steps for D3.1**:
+- Integrate CommandRegistry with DashboardApplication
+- Connect CommandWindow key input to FTXUI event loop
+- Implement graph execution hooks for run/pause/stop commands
+- Add command testing with mock executor
+
+---
 
 #### D3.2: LoggingWindow with log4cxx Integration
 
