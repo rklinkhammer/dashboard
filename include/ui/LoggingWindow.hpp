@@ -1,12 +1,16 @@
 #pragma once
 
 #include "Window.hpp"
+#include <ftxui/dom/elements.hpp>
 #include <deque>
 #include <string>
 
 class LoggingWindow : public Window {
 public:
     explicit LoggingWindow(const std::string& title = "Logs");
+
+    // Rendering
+    ftxui::Element Render() const override;
 
     // Log management
     void AddLogLine(const std::string& line);

@@ -1,10 +1,15 @@
 #pragma once
 
+#include "Window.hpp"
+#include <ftxui/dom/elements.hpp>
 #include <string>
 
-class StatusBar {
+class StatusBar : public Window {
 public:
     StatusBar();
+
+    // Rendering
+    ftxui::Element Render() const override;
 
     void SetStatus(const std::string& status) { status_ = status; }
     void SetNodeCount(int active, int total) {

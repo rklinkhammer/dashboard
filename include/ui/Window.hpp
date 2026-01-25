@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include <ftxui/dom/elements.hpp>
 
 // Base class for all window components
 class Window {
@@ -16,6 +17,9 @@ public:
     // Title management
     void SetTitle(const std::string& title) { title_ = title; }
     const std::string& GetTitle() const { return title_; }
+
+    // Rendering - pure virtual, must be implemented by subclasses
+    virtual ftxui::Element Render() const = 0;
 
 protected:
     std::string title_;

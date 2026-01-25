@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <ftxui/dom/elements.hpp>
 #include "graph/mock/MockGraphExecutor.hpp"
 
 using graph::MockGraphExecutor;
@@ -64,7 +65,7 @@ private:
     // Window components (created in Initialize())
     std::shared_ptr<MetricsPanel> metrics_panel_;      // 40%
     std::shared_ptr<LoggingWindow> logging_window_;    // 35%
-    std::shared_ptr<CommandWindow> command_window_;    // 18%
+    std::shared_ptr<CommandWindow> command_window_;    // 23%
     std::shared_ptr<StatusBar> status_bar_;            // 2%
 
     // Layout state
@@ -75,4 +76,7 @@ private:
     // Private methods
     void ValidateHeights();
     void ApplyHeights();
+    
+    // Build the complete FTXUI layout from all window components
+    ftxui::Element BuildLayout() const;
 };

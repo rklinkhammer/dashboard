@@ -1,12 +1,16 @@
 #pragma once
 
 #include "Window.hpp"
+#include <ftxui/dom/elements.hpp>
 #include <deque>
 #include <string>
 
 class CommandWindow : public Window {
 public:
     explicit CommandWindow(const std::string& title = "Command");
+
+    // Rendering
+    ftxui::Element Render() const override;
 
     // Command/output management
     void AddOutputLine(const std::string& line);

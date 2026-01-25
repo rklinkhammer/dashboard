@@ -1,11 +1,15 @@
 #pragma once
 
 #include "Window.hpp"
+#include <ftxui/dom/elements.hpp>
 #include <vector>
 
 class MetricsPanel : public Window {
 public:
     explicit MetricsPanel(const std::string& title = "Metrics");
+
+    // Rendering
+    ftxui::Element Render() const override;
 
     // Metrics placeholder management
     void AddPlaceholderMetric(const std::string& metric_name, double value);
