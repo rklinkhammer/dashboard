@@ -1,19 +1,20 @@
 #pragma once
 
-#include "Window.hpp"
-#include "MetricsTilePanel.hpp"
-#include "TabContainer.hpp"
+#include "ui/Window.hpp"
+#include "ui/MetricsTilePanel.hpp"
+#include "ui/TabContainer.hpp"
 #include <ftxui/dom/elements.hpp>
+#include "app/metrics/IMetricsSubscriber.hpp"
 #include <vector>
 #include <memory>
 #include <set>
 
 // Forward declarations
 namespace graph {
-class MockGraphExecutor;
+class GraphExecutor;
 }
 
-class MetricsPanel : public Window {
+class MetricsPanel : public app::metrics::IMetricsSubscriber, public Window {
 public:
     explicit MetricsPanel(const std::string& title = "Metrics");
 
@@ -21,8 +22,8 @@ public:
     ftxui::Element Render() const override;
 
     // Metrics discovery and management
-    void DiscoverMetricsFromExecutor(std::shared_ptr<graph::MockGraphExecutor> executor);
-    void RegisterMetricsCapabilityCallback(std::shared_ptr<graph::MockGraphExecutor> executor);
+    void DiscoverMetricsFromExecutor(std::shared_ptr<graph::GraphExecutor> executor);
+    void RegisterMetricsCapabilityCallback(std::shared_ptr<graph::GraphExecutor> executor);
 
     // Metrics placeholder management (legacy)
     void AddPlaceholderMetric(const std::string& metric_name, double value);
@@ -42,6 +43,16 @@ public:
     TabContainer& GetTabContainer() { return tab_container_; }
     const TabContainer& GetTabContainer() const { return tab_container_; }
     bool IsInTabMode() const { return tab_mode_enabled_; }
+
+    /**
+     * @brief Called when a metrics event is published
+     *
+     * Async events from nodes are delivered here immediately.
+     * Implementations should be fast and avoid blocking operations.
+     *
+     * @param event Metrics event from node
+     */
+    void OnMetricsEvent(const app::metrics::MetricsEvent& event) override;
 
 private:
     struct PlaceholderMetric {

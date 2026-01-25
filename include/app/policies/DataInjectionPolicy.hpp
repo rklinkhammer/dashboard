@@ -2,41 +2,41 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
-#include "app/AppContext.hpp"
+#include "graph/GraphExecutorContext.hpp"
 
 
 
 namespace app::policies {
 
-static auto logger = log4cxx::Logger::getLogger("app.policies.DataInjectionPolicy");
+static auto datainjection_logger = log4cxx::Logger::getLogger("app.policies.DataInjectionPolicy");
 
-class DataInjectionPolicy : public graph::policies::IExecutionPolicy {
+class DataInjectionPolicy : public graph::IExecutionPolicy {
 public:
     DataInjectionPolicy() {
-        LOG4CXX_TRACE(logger, "DataInjectionPolicy initialized");
+        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy initialized");
     }   
 
     virtual ~DataInjectionPolicy() = default;
 
-    bool OnInit(app::AppContext& context) override {
-        LOG4CXX_TRACE(logger, "DataInjectionPolicy OnInit called");
+    bool OnInit(graph::GraphExecutorContext &) override {
+        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnInit called");
         // Initialize metrics system here if needed
         return true;
     }
 
-    bool OnStart(app::AppContext& context) override {
-        LOG4CXX_TRACE(logger, "DataInjectionPolicy OnStart called");
+    bool OnStart(graph::GraphExecutorContext &) override {
+        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnStart called");
         // Start metrics collection here if needed
         return true;
     }
 
-    void OnStop(app::AppContext& context) override {
-        LOG4CXX_TRACE(logger, "DataInjectionPolicy OnStop called");
+    void OnStop(graph::GraphExecutorContext &) override {
+        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnStop called");
         // Stop metrics collection and cleanup here if needed
     }
 
-    void OnJoin(app::AppContext& context) override {
-        LOG4CXX_TRACE(logger, "DataInjectionPolicy OnJoin called");
+    void OnJoin(graph::GraphExecutorContext &) override {
+        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnJoin called");
         // Finalize metrics reporting here if needed
     }   
 

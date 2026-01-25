@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "ui/DashboardApplication.hpp"
+#include "ui/Dashboard.hpp"
 #include "ui/CommandRegistry.hpp"
 #include "ui/CommandWindow.hpp"
 #include "ui/BuiltinCommands.hpp"
@@ -10,9 +10,9 @@ using graph::MockGraphExecutor;
 using commands::RegisterBuiltinCommands;
 
 // ============================================================================
-// D4.3: CommandRegistry Integration with DashboardApplication
+// D4.3: CommandRegistry Integration with Dashboard
 // ============================================================================
-// Tests for integrating built-in commands with DashboardApplication.
+// Tests for integrating built-in commands with Dashboard.
 // Built-in commands include: status, run, pause, stop, reset_layout
 
 class CommandRegistryIntegrationTest : public ::testing::Test {
@@ -28,7 +28,7 @@ protected:
 TEST_F(CommandRegistryIntegrationTest, RegisterBuiltinCommandsWithApp) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -50,7 +50,7 @@ TEST_F(CommandRegistryIntegrationTest, RegisterBuiltinCommandsWithApp) {
 TEST_F(CommandRegistryIntegrationTest, StatusCommandExecutesSuccessfully) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -67,7 +67,7 @@ TEST_F(CommandRegistryIntegrationTest, StatusCommandExecutesSuccessfully) {
 TEST_F(CommandRegistryIntegrationTest, RunCommandReturnsSuccess) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -83,7 +83,7 @@ TEST_F(CommandRegistryIntegrationTest, RunCommandReturnsSuccess) {
 TEST_F(CommandRegistryIntegrationTest, PauseCommandReturnsSuccess) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -99,7 +99,7 @@ TEST_F(CommandRegistryIntegrationTest, PauseCommandReturnsSuccess) {
 TEST_F(CommandRegistryIntegrationTest, StopCommandReturnsSuccess) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -115,7 +115,7 @@ TEST_F(CommandRegistryIntegrationTest, StopCommandReturnsSuccess) {
 TEST_F(CommandRegistryIntegrationTest, ResetLayoutCommandReturnsSuccess) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -131,7 +131,7 @@ TEST_F(CommandRegistryIntegrationTest, ResetLayoutCommandReturnsSuccess) {
 TEST_F(CommandRegistryIntegrationTest, CommandWindowExecutesBuiltinCommands) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -151,7 +151,7 @@ TEST_F(CommandRegistryIntegrationTest, CommandWindowExecutesBuiltinCommands) {
 TEST_F(CommandRegistryIntegrationTest, StatusCommandShowsActivePanels) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -174,7 +174,7 @@ TEST_F(CommandRegistryIntegrationTest, StatusCommandShowsActivePanels) {
 TEST_F(CommandRegistryIntegrationTest, BuiltinCommandsHaveHelpText) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -193,7 +193,7 @@ TEST_F(CommandRegistryIntegrationTest, BuiltinCommandsHaveHelpText) {
 TEST_F(CommandRegistryIntegrationTest, CommandsCanBeLookedUpByName) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();

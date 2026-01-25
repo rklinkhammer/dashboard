@@ -3,9 +3,7 @@
 #include <memory>
 #include <string>
 #include <ftxui/dom/elements.hpp>
-#include "graph/mock/MockGraphExecutor.hpp"
-
-using graph::MockGraphExecutor;
+#include "graph/GraphExecutor.hpp"
 
 // Forward declarations
 class MetricsPanel;
@@ -32,15 +30,15 @@ struct WindowHeightConfig {
     }
 };
 
-class DashboardApplication {
+class Dashboard {
 public:
     // Constructor receives executor and window heights
-    explicit DashboardApplication(
-        std::shared_ptr<graph::MockGraphExecutor> executor,
+    explicit Dashboard(
+        std::shared_ptr<graph::GraphExecutor> executor,
         const WindowHeightConfig& heights);
 
     // Destructor - cleanup resources
-    ~DashboardApplication();
+    ~Dashboard();
 
     // Initialization: create UI panels, validate heights, setup layout
     void Initialize();
@@ -60,7 +58,7 @@ public:
 
 private:
     // Executor reference
-    std::shared_ptr<graph::MockGraphExecutor> executor_;
+    std::shared_ptr<graph::GraphExecutor> executor_;
 
     // Window components (created in Initialize())
     std::shared_ptr<MetricsPanel> metrics_panel_;      // 40%

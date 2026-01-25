@@ -81,7 +81,7 @@
 #include "graph/TransferFunction.hpp"
 #include "graph/MergeFunction.hpp"
 
-namespace graph::nodes
+namespace graph
 {
 
     

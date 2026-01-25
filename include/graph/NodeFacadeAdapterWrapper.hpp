@@ -39,7 +39,7 @@
 #include "graph/INode.hpp"
 #include "graph/NodeFacade.hpp"
 
-namespace graph::nodes {
+namespace graph {
 
 /**
  * @class NodeFacadeAdapterWrapper
@@ -72,8 +72,8 @@ public:
     /**
      * Get the current lifecycle state of the wrapped node
      */
-    virtual graph::nodes::LifecycleState GetLifecycleState() const override {
-        return static_cast<graph::nodes::LifecycleState>(adapter_->GetLifecycleState());
+    virtual graph::LifecycleState GetLifecycleState() const override {
+        return static_cast<graph::LifecycleState>(adapter_->GetLifecycleState());
     }
 
     /**
@@ -268,5 +268,5 @@ public:
     }
 };
 
-}  // namespace graph::nodes
+}  // namespace graph
 

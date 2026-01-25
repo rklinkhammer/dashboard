@@ -28,7 +28,8 @@
 #include "graph/CapabilityBus.hpp"
 #include "graph/ExecutionResult.hpp"
 #include "graph/IExecutionPolicy.hpp"
-#include "app/AppContext.hpp"
+#include "graph/GraphExecutorContext.hpp"
+#include "graph/ExecutionState.hpp"
 #include <memory>
 #include <chrono>
 #include <vector>
@@ -40,6 +41,7 @@ namespace graph {
 
 class GraphExecutor {
 public:
+
     /**
      * Construct executor with GraphManager
      *
@@ -55,8 +57,7 @@ public:
      *
      * @throws std::invalid_argument if graph is nullptr
      */
-    explicit GraphExecutor(std::shared_ptr<app::AppContext> context, 
-                                         std::unique_ptr<ExecutionPolicyChain> policy_chain);
+    explicit GraphExecutor(std::unique_ptr<ExecutionPolicyChain> policy_chain);
 
     /**
      * Virtual destructor for proper cleanup of derived classes
@@ -92,16 +93,6 @@ public:
     bool IsPaused() const;
 
     /**
-     * @brief Check if execution is stopped
-     *
-     * @return True if in STOPPED state
-     *
-     * Thread-Safety: Lock-free atomic read, safe from any thread
-     * Time Complexity: O(1)
-     */
-    bool IsStopped() const;
-
-    /**
      * @brief Check if in error state
      *
      * @return True if in ERROR state
@@ -116,29 +107,65 @@ public:
 
     ExecutionResult Execute();
 
-    std::shared_ptr<app::AppContext> GetAppContext() const {
-        return context_;
-    }
+    // std::shared_ptr<app::AppContext> GetAppContext() const {
+    //     return context_;
+    // }
     
     template<typename CapabilityT>
-    std::shared_ptr<CapabilityT> Get() const {
+    std::shared_ptr<CapabilityT> GetCapability() const {
 
-        return capability_bus.Get<CapabilityT>();
+        return executor_context_.capability_bus.Get<CapabilityT>();
     }
     
     template<typename CapabilityT>
     bool Has() const {
-        return capability_bus.Has<CapabilityT>();
+        return executor_context_.capability_bus.Has<CapabilityT>();
+    }
+
+    template<typename CapabilityT>
+    void Register(std::shared_ptr<CapabilityT> capability) {
+        executor_context_.capability_bus.Register<CapabilityT>(capability);
+    }
+    
+    std::shared_ptr<graph::GraphManager> GetGraphManager() const {
+        return graph_manager_;
+    }
+
+    void SetGraphManager(std::shared_ptr<graph::GraphManager> graph_manager) {
+        graph_manager_ = graph_manager;
+        executor_context_.graph_manager = graph_manager_;
+    }
+
+    void SetExecutionState(graph::ExecutionState state) {
+        current_state_ = state;
+    }
+
+    graph::ExecutionState GetExecutionState() const {
+        return current_state_;
+    }   
+
+    /// @brief Check if stop has been requested
+    /// @return true if stop requested, false otherwise
+    bool IsStopped() const {
+        return is_stopped.load();
+    }
+
+    /// @brief Request application stop
+    void SetStopped() const {
+        is_stopped.store(true);
+        executor_context_.SetStopped();
     }
 
 private:
 
-    int CountNodesinLifecycleState(graph::nodes::LifecycleState state) const;
+    int CountNodesinLifecycleState(graph::LifecycleState state) const;
 
     std::unique_ptr<ExecutionPolicyChain> policy_chain_;
-    std::shared_ptr<app::AppContext> context_;
-     /// Capability bus for capability discovery and registration
-    graph::CapabilityBus capability_bus;
+    std::shared_ptr<graph::GraphManager> graph_manager_;
+    GraphExecutorContext executor_context_;
+    ExecutionState current_state_ = graph::ExecutionState::STOPPED;
+
+    mutable std::atomic<bool> is_stopped{false};
 
 };
 

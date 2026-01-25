@@ -30,7 +30,7 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 
-namespace graph::nodes
+namespace graph
 {
     /**
      * @brief Base interface for transfer (interior node) ports
@@ -217,12 +217,12 @@ namespace graph::nodes
         }
         
         /// Retrieve input-side metrics (Consume/Transfer timing)
-        const graph::nodes::ThreadMetrics& GetInputMetrics() const {
+        const graph::ThreadMetrics& GetInputMetrics() const {
             return input_thread_metrics_;
         }
         
         /// Retrieve output-side metrics (Produce/Transfer timing)
-        const graph::nodes::ThreadMetrics& GetOutputMetrics() const {
+        const graph::ThreadMetrics& GetOutputMetrics() const {
             return output_thread_metrics_;
         }
         
@@ -277,8 +277,8 @@ namespace graph::nodes
         const auto& GetOutputQueue() const {
             return IOutputFn<Pout>::GetQueue();
         }
-        mutable graph::nodes::ThreadMetrics input_thread_metrics_;
-        mutable graph::nodes::ThreadMetrics output_thread_metrics_;
+        mutable graph::ThreadMetrics input_thread_metrics_;
+        mutable graph::ThreadMetrics output_thread_metrics_;
         std::atomic<bool> input_metrics_enabled_{false};
         std::atomic<bool> output_metrics_enabled_{false};
         std::thread thread_;  // Separate worker thread for transfer function

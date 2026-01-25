@@ -1,5 +1,5 @@
 #include "ui/BuiltinCommands.hpp"
-#include "ui/DashboardApplication.hpp"
+#include "ui/Dashboard.hpp"
 #include "ui/MetricsPanel.hpp"
 #include "ui/LoggingWindow.hpp"
 #include "ui/StatusBar.hpp"
@@ -9,7 +9,7 @@
 
 namespace commands {
 
-CommandResult cmd::CmdStatus(DashboardApplication* app, const std::vector<std::string>& /* args */) {
+CommandResult cmd::CmdStatus(Dashboard* app, const std::vector<std::string>& /* args */) {
     if (!app) {
         return CommandResult(false, "Application context unavailable");
     }
@@ -61,7 +61,7 @@ CommandResult cmd::CmdStatus(DashboardApplication* app, const std::vector<std::s
     return CommandResult(true, oss.str());
 }
 
-CommandResult cmd::CmdRunGraph(DashboardApplication* app, const std::vector<std::string>& /* args */) {
+CommandResult cmd::CmdRunGraph(Dashboard* app, const std::vector<std::string>& /* args */) {
     if (!app) {
         return CommandResult(false, "Application context unavailable");
     }
@@ -71,7 +71,7 @@ CommandResult cmd::CmdRunGraph(DashboardApplication* app, const std::vector<std:
     return CommandResult(true, "Graph execution started");
 }
 
-CommandResult cmd::CmdPauseGraph(DashboardApplication* app, const std::vector<std::string>& /* args */) {
+CommandResult cmd::CmdPauseGraph(Dashboard* app, const std::vector<std::string>& /* args */) {
     if (!app) {
         return CommandResult(false, "Application context unavailable");
     }
@@ -79,7 +79,7 @@ CommandResult cmd::CmdPauseGraph(DashboardApplication* app, const std::vector<st
     return CommandResult(true, "Graph execution paused");
 }
 
-CommandResult cmd::CmdStopGraph(DashboardApplication* app, const std::vector<std::string>& /* args */) {
+CommandResult cmd::CmdStopGraph(Dashboard* app, const std::vector<std::string>& /* args */) {
     if (!app) {
         return CommandResult(false, "Application context unavailable");
     }
@@ -87,7 +87,7 @@ CommandResult cmd::CmdStopGraph(DashboardApplication* app, const std::vector<std
     return CommandResult(true, "Graph execution stopped");
 }
 
-CommandResult cmd::CmdResetLayout(DashboardApplication* app, const std::vector<std::string>& /* args */) {
+CommandResult cmd::CmdResetLayout(Dashboard* app, const std::vector<std::string>& /* args */) {
     if (!app) {
         return CommandResult(false, "Application context unavailable");
     }
@@ -101,7 +101,7 @@ CommandResult cmd::CmdResetLayout(DashboardApplication* app, const std::vector<s
 
 void RegisterBuiltinCommands(
     std::shared_ptr<CommandRegistry> registry,
-    DashboardApplication* app) {
+    Dashboard* app) {
     
     if (!registry || !app) {
         std::cerr << "[BuiltinCommands] Error: Invalid registry or app pointer\n";

@@ -3,18 +3,18 @@
 
 
 #include <memory>
-#include "app/AppContext.hpp"
+#include "graph/GraphExecutorContext.hpp"
 
+namespace graph {
 
 struct IExecutionPolicy {
     virtual ~IExecutionPolicy() = default;
 
-    virtual bool PreInit(app::AppContext& context) { (void)context; return true; }
-    virtual bool OnInit(app::AppContext& context) { (void)context; return true; }
-    virtual bool OnStart(app::AppContext& context) { (void)context; return true; }
-    virtual bool OnRun(app::AppContext& context) { (void)context; return true; }
-    virtual void OnStop(app::AppContext& context) { (void)context; }
-    virtual void OnJoin(app::AppContext& context) { (void)context; }
+    virtual bool OnInit(graph::GraphExecutorContext& context) { (void)context; return true; }
+    virtual bool OnStart(graph::GraphExecutorContext& context) { (void)context; return true; }
+    virtual bool OnRun(graph::GraphExecutorContext& context) { (void)context; return true; }
+    virtual void OnStop(graph::GraphExecutorContext& context) { (void)context; }
+    virtual void OnJoin(graph::GraphExecutorContext& context) { (void)context; }
 };
 
 class ExecutionPolicyChain : public IExecutionPolicy {
@@ -23,32 +23,27 @@ public:
                                   std::unique_ptr<ExecutionPolicyChain> next = nullptr)
         : policy_(std::move(policy)), next_(std::move(next)) {}
 
-    bool PreInit(app::AppContext& ctx) override {
-        if (!policy_->PreInit(ctx)) return false;
-        return next_ ? next_->PreInit(ctx) : true;
-    }   
-
-    bool OnInit(app::AppContext& ctx) override {
+    bool OnInit(graph::GraphExecutorContext& ctx) override {
         if (!policy_->OnInit(ctx)) return false;
         return next_ ? next_->OnInit(ctx) : true;
     }
 
-    bool OnStart(app::AppContext& ctx) override {
+    bool OnStart(graph::GraphExecutorContext& ctx) override {
         if (!policy_->OnStart(ctx)) return false;
         return next_ ? next_->OnStart(ctx) : true;
     }
 
-    bool OnRun(app::AppContext& ctx) override {
+    bool OnRun(graph::GraphExecutorContext& ctx) override {
         if (!policy_->OnRun(ctx)) return false;
         return next_ ? next_->OnRun(ctx) : true;
     }
 
-    void OnStop(app::AppContext& ctx) override {
+    void OnStop(graph::GraphExecutorContext& ctx) override {
         policy_->OnStop(ctx);
         if (next_) next_->OnStop(ctx);
     }
 
-    void OnJoin(app::AppContext& ctx) override {
+    void OnJoin(graph::GraphExecutorContext& ctx) override {
         policy_->OnJoin(ctx);
         if (next_) next_->OnJoin(ctx);
     }
@@ -77,3 +72,4 @@ private:
     std::unique_ptr<IExecutionPolicy> policy_;
     std::unique_ptr<ExecutionPolicyChain> next_;
 };
+}  // namespace graph

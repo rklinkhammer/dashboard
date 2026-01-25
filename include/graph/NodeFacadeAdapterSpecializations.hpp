@@ -43,10 +43,10 @@
 
 #include "graph/Nodes.hpp"
 #include "graph/NodeFacade.hpp"
-#include "capabilities/ICompletionCallback.hpp"
-#include "config/IConfigurable.hpp"
-#include "capabilities/IMetricsCallback.hpp"
-#include "capabilities/IDataInjectionSource.hpp"
+#include "graph/ICompletionCallback.hpp"
+#include "graph/IConfigurable.hpp"
+#include "graph/IMetricsCallback.hpp"
+#include "graph/IDataInjectionSource.hpp"
 
 namespace graph {
 
@@ -67,72 +67,72 @@ inline std::shared_ptr<graph::datasources::IDataInjectionSource> NodeFacadeAdapt
 }
 
 /**
- * Template specialization: TryGetInterface for graph::node_config::IConfigurable
+ * Template specialization: TryGetInterface for graph::IConfigurable
  *
  * Allows plugin-loaded nodes to expose their IConfigurable interface
  * through the NodeFacadeAdapter without requiring RTTI through wrapper layers.
  */
 template <>
-inline std::shared_ptr<graph::node_config::IConfigurable> NodeFacadeAdapter::TryGetInterface<graph::node_config::IConfigurable>() const {
+inline std::shared_ptr<graph::IConfigurable> NodeFacadeAdapter::TryGetInterface<graph::IConfigurable>() const {
     if (configurable_ptr_) {
-        return std::static_pointer_cast<graph::node_config::IConfigurable>(configurable_ptr_);
+        return std::static_pointer_cast<graph::IConfigurable>(configurable_ptr_);
     }
     return nullptr;
 }
 
 /**
- * Template specialization: TryGetInterface for graph::node_config::IDiagnosable
+ * Template specialization: TryGetInterface for graph::IDiagnosable
  *
  * Allows plugin-loaded nodes to expose their IDiagnosable interface
  * through the NodeFacadeAdapter without requiring RTTI through wrapper layers.
  */
 template <>
-inline std::shared_ptr<graph::node_config::IDiagnosable> NodeFacadeAdapter::TryGetInterface<graph::node_config::IDiagnosable>() const {
+inline std::shared_ptr<graph::IDiagnosable> NodeFacadeAdapter::TryGetInterface<graph::IDiagnosable>() const {
     if (diagnosable_ptr_) {
-        return std::static_pointer_cast<graph::node_config::IDiagnosable>(diagnosable_ptr_);
+        return std::static_pointer_cast<graph::IDiagnosable>(diagnosable_ptr_);
     }
     return nullptr;
 }
 
 /**
- * Template specialization: TryGetInterface for graph::node_config::IParameterized
+ * Template specialization: TryGetInterface for graph::IParameterized
  *
  * Allows plugin-loaded nodes to expose their IParameterized interface
  * through the NodeFacadeAdapter without requiring RTTI through wrapper layers.
  */
 template <>
-inline std::shared_ptr<graph::node_config::IParameterized> NodeFacadeAdapter::TryGetInterface<graph::node_config::IParameterized>() const {
+inline std::shared_ptr<graph::IParameterized> NodeFacadeAdapter::TryGetInterface<graph::IParameterized>() const {
     if (parameterized_ptr_) {
-        return std::static_pointer_cast<graph::node_config::IParameterized>(parameterized_ptr_);
+        return std::static_pointer_cast<graph::IParameterized>(parameterized_ptr_);
     }
     return nullptr;
 }
 
 /**
- * Template specialization: TryGetInterface for graph::nodes::callbacks::IMetricsCallbackProvider
+ * Template specialization: TryGetInterface for graph::IMetricsCallbackProvider
  *
  * Allows plugin-loaded nodes to expose their IMetricsCallbackProvider interface
  * through the NodeFacadeAdapter without requiring RTTI through wrapper layers.
  */
 template <>
-inline std::shared_ptr<graph::nodes::callbacks::IMetricsCallbackProvider> NodeFacadeAdapter::TryGetInterface<graph::nodes::callbacks::IMetricsCallbackProvider>() const {
+inline std::shared_ptr<graph::IMetricsCallbackProvider> NodeFacadeAdapter::TryGetInterface<graph::IMetricsCallbackProvider>() const {
     if (metrics_callback_provider_ptr_) {
-        return std::static_pointer_cast<graph::nodes::callbacks::IMetricsCallbackProvider>(metrics_callback_provider_ptr_);
+        return std::static_pointer_cast<graph::IMetricsCallbackProvider>(metrics_callback_provider_ptr_);
     }
     return nullptr;
 }
 
 /**
- * Template specialization: TryGetInterface for graph::nodes::callbacks::CompletionCallbackProvider
+ * Template specialization: TryGetInterface for graph::CompletionCallbackProvider
  *
  * Allows plugin-loaded nodes to expose their CompletionCallbackProvider interface
  * (ICompletionCallback<CompletionSignal>) through the NodeFacadeAdapter
  * without requiring RTTI through wrapper layers.
  */
 template <>
-inline std::shared_ptr<graph::nodes::callbacks::CompletionCallbackProvider> NodeFacadeAdapter::TryGetInterface<graph::nodes::callbacks::CompletionCallbackProvider>() const {
+inline std::shared_ptr<graph::CompletionCallbackProvider> NodeFacadeAdapter::TryGetInterface<graph::CompletionCallbackProvider>() const {
     if (completion_callback_provider_ptr_) {
-        return std::static_pointer_cast<graph::nodes::callbacks::CompletionCallbackProvider>(completion_callback_provider_ptr_);
+        return std::static_pointer_cast<graph::CompletionCallbackProvider>(completion_callback_provider_ptr_);
     }
     return nullptr;
 }

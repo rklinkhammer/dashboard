@@ -33,7 +33,7 @@
 #include <atomic>
 #include <cstdint>
 
-namespace graph::nodes
+namespace graph
 {
 
     /**
@@ -151,5 +151,5 @@ namespace graph::nodes
         }
     };
 
-} // namespace graph::nodes
+} // namespace graph
 

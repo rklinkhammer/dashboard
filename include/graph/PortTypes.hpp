@@ -41,7 +41,7 @@
 #include "core/TypeInfo.hpp"
 #include "graph/PortSpec.hpp"
 
-namespace graph::nodes
+namespace graph
 {
 
     // PortDirection is defined in PortSpec.hpp, no need to redefine it
@@ -211,5 +211,5 @@ namespace graph::nodes
         static constexpr bool value = decltype(test<Derived>(0))::value;
     };
 
-} // namespace graph::nodes
+} // namespace graph
 

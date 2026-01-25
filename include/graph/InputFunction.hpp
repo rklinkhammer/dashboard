@@ -30,7 +30,7 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 
-namespace graph::nodes
+namespace graph
 {
     /**
      * @brief Input port interface that uses a shared unified queue (for MergeNode)
@@ -173,7 +173,7 @@ namespace graph::nodes
         }
 
         /// Retrieve collected metrics (thread-safe read)
-        const graph::nodes::ThreadMetrics& GetThreadMetrics() const {
+        const graph::ThreadMetrics& GetThreadMetrics() const {
             return thread_metrics_;
         }
 
@@ -187,7 +187,7 @@ namespace graph::nodes
         }
 
     private:
-        mutable graph::nodes::ThreadMetrics thread_metrics_;
+        mutable graph::ThreadMetrics thread_metrics_;
         std::atomic<bool> metrics_enabled_{false};
 
         void InputFnThreadFunc()

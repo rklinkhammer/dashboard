@@ -1,0 +1,577 @@
+{
+  "name": "CSV Pipeline Dual-Port Integration",
+  "description": "Phase 2: Complete 11-node, 14-edge dual-port pipeline with CSV sensor inputs. Features 5 CSV sensor nodes with dual-port architecture (Port 0→main pipeline, Port 1→completion path), core avionics processing pipeline, and completion aggregator for scenario tracking.",
+  "version": "2.0",
+  "phase": "Phase 2 - CSV Integration",
+  "date": "January 2026",
+  
+  "execution": {
+      "thread_pool_size": 4,
+      "backpressure_enabled": true,
+      "deadlock_detection": {
+        "enabled": true,
+        "timeout_ms": 10000
+      },
+      "csv_injection_rate_ms": 10,
+      "execution_timeout_s": 10
+  },
+  
+  "nodes": [
+      {
+        "id": "csv_accel",
+        "type": "DataInjectionAccelerometerNode",
+        "description": "Reads accelerometer data from CSV file at 100 Hz",
+        "node_config": {
+          "sample_interval_us": 10000,
+          "sample_ignore": 0,
+          "sensor_type": "ACCELEROMETER"
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "Accel",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "AccelerometerData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 1,
+            "name": "Notify",
+            "direction": "output",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "csv_gyro",
+        "type": "DataInjectionGyroscopeNode",
+        "description": "Reads gyroscope data from CSV file at 100 Hz",
+        "node_config": {
+          "sample_interval_us": 10000,
+          "sample_ignore": 0,
+          "sensor_type": "GYROSCOPE"
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "Gyro",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "GyroscopeData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 1,
+            "name": "Notify",
+            "direction": "output",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "csv_mag",
+        "type": "DataInjectionMagnetometerNode",
+        "description": "Reads magnetometer data from CSV file at 100 Hz",
+        "node_config": {
+          "sample_interval_us": 10000,
+          "sample_ignore": 0,
+          "sensor_type": "MAGNETOMETER"
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "Mag",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "MagnetometerData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 1,
+            "name": "Notify",
+            "direction": "output",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "csv_baro",
+        "type": "DataInjectionBarometricNode",
+        "description": "Reads barometric pressure data from CSV file at 100 Hz",
+        "node_config": {
+          "sample_interval_us": 10000,
+          "sample_ignore": 0,
+          "sensor_type": "BAROMETRIC"
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "Baro",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "BarometricData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 1,
+            "name": "Notify",
+            "direction": "output",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "csv_gps",
+        "type": "DataInjectionGPSPositionNode",
+        "description": "Reads GPS position data from CSV file at 10 Hz (lower frequency)",
+        "node_config": {
+          "sample_interval_us": 100000,
+          "sample_ignore": 0,
+          "sensor_type": "GPS_POSITION"
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "GPS",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "GPSPositionData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 1,
+            "name": "Notify",
+            "direction": "output",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "flight_fsm",
+        "type": "FlightFSMNode",
+        "description": "Core flight state machine integrating 5 sensor inputs (accelerometer, gyroscope, magnetometer, barometer, GPS). Produces combined StateVector with attitude, velocity, and altitude estimates.",
+        "node_config": {
+          "flight_mode": "standard",
+          "state_buffer_size": 256,
+          "enable_metrics": true,
+        "filter": {
+            "type": "Kalman",
+            "params": {
+              "q": 0.01,
+              "r": 0.1,
+              "p": 1.0
+            }
+          },
+          "estimators": {
+            "altitude": {
+              "type": "KalmanFilter",
+              "process_noise": 0.1,
+              "measurement_noise": 0.5
+            },
+            "velocity": {
+              "type": "KalmanFilter",
+              "process_noise": 0.1,
+              "measurement_noise": 0.5
+            },
+            "angular_rate": {
+              "type": "DirectIntegration",
+              "enable_filtering": true
+            }
+          }
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "Accel In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "AccelerometerData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 1,
+            "name": "Gyro In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "GyroscopeData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 2,
+            "name": "Mag In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "MagnetometerData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 3,
+            "name": "Baro In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "BarometricData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 4,
+            "name": "GPS In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "GPSPositionData",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 0,
+            "name": "StateVector Out",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "StateVector",
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "altitude_fusion",
+        "type": "AltitudeFusionNode",
+        "description": "Fuses barometric and GPS altitude estimates. Applies confidence-weighted blending to produce optimal altitude estimate.",
+        "node_config": {
+          "confidence_weight_barometer": 0.7,
+          "confidence_weight_gps": 0.3,
+          "outlier_threshold": 3.0,
+          "enable_adaptive_weighting": true,
+          "process_noise": 0.05,
+          "measurement_noise": 0.1
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "StateVector In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "StateVector",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 0,
+            "name": "StateVector Out",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "StateVector",
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "estimation_pipeline",
+        "type": "EstimationPipelineNode",
+        "description": "Phase 6 refined estimation pipeline. Applies outlier detection, adaptive weighting, and advanced filtering for refined altitude and velocity estimates.",
+        "node_config": {
+          "outlier_threshold": 3.0,
+          "altitude_confidence_weight": 1.0,
+          "velocity_confidence_weight": 1.0,
+          "enable_adaptive_weighting": true,
+          "process_noise_altitude": 0.1,
+          "process_noise_velocity": 0.1,
+          "measurement_noise_altitude": 0.5,
+          "measurement_noise_velocity": 0.5,
+          "time_delta_s": 0.01,
+          "enable_metrics": true
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "StateVector In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "StateVector",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 0,
+            "name": "StateVector Out",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "StateVector",
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "flight_monitor",
+        "type": "FlightMonitorNode",
+        "description": "Monitors flight state and generates phase-adaptive feedback. Tracks state transitions and system metrics.",
+        "node_config": {
+          "enable_phase_adaptation": true,
+          "feedback_rate_hz": 10,
+          "enable_metrics": true,
+          "state_transition_logging": true
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "StateVector In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "StateVector",
+            "buffer_size": 256
+          },
+          {
+            "port_id": 0,
+            "name": "Feedback Out",
+            "direction": "output",
+            "message_type": "Message",
+            "payload_type": "PhaseAdaptiveFeedbackMsg",
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "feedback_sink",
+        "type": "FeedbackTestSinkNode",
+        "description": "Final sink for flight feedback messages. Captures and stores PhaseAdaptiveFeedbackMsg for test verification.",
+        "node_config": {
+          "enable_logging": true,
+          "buffer_size": 1024
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "Feedback In",
+            "direction": "input",
+            "message_type": "Message",
+            "payload_type": "PhaseAdaptiveFeedbackMsg",
+            "buffer_size": 256
+          }
+        ]
+      },
+      {
+        "id": "completion_aggregator",
+        "type": "CompletionAggregatorNode",
+        "description": "Phase 2B: Aggregates completion signals from 5 CSV sensor nodes (Port 1). Waits for all sensors to signal completion before marking test scenario complete.",
+        "node_config": {
+          "expected_sensors": 5,
+          "timeout_ms": 30000,
+          "enable_logging": true,
+          "completion_policy": "all_sensors_required"
+        },
+        "ports": [
+          {
+            "port_id": 0,
+            "name": "Accel Complete",
+            "direction": "input",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          },
+          {
+            "port_id": 1,
+            "name": "Gyro Complete",
+            "direction": "input",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          },
+          {
+            "port_id": 2,
+            "name": "Mag Complete",
+            "direction": "input",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          },
+          {
+            "port_id": 3,
+            "name": "Baro Complete",
+            "direction": "input",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          },
+          {
+            "port_id": 4,
+            "name": "GPS Complete",
+            "direction": "input",
+            "message_type": "CompletionSignal",
+            "payload_type": null,
+            "buffer_size": 256
+          }
+        ]
+    }
+  ],
+  
+  "edges": [
+      {
+        "edge_id": 1,
+        "source_node_id": "csv_accel",
+        "source_port": 0,
+        "target_node_id": "flight_fsm",
+        "target_port": 0,
+        "buffer_size": 256,
+        "name": "Accelerometer→FSM (Main Pipeline)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 2,
+        "source_node_id": "csv_gyro",
+        "source_port": 0,
+        "target_node_id": "flight_fsm",
+        "target_port": 1,
+        "buffer_size": 256,
+        "name": "Gyroscope→FSM (Main Pipeline)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 3,
+        "source_node_id": "csv_mag",
+        "source_port": 0,
+        "target_node_id": "flight_fsm",
+        "target_port": 2,
+        "buffer_size": 256,
+        "name": "Magnetometer→FSM (Main Pipeline)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 4,
+        "source_node_id": "csv_baro",
+        "source_port": 0,
+        "target_node_id": "flight_fsm",
+        "target_port": 3,
+        "buffer_size": 256,
+        "name": "Barometric→FSM (Main Pipeline)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 5,
+        "source_node_id": "csv_gps",
+        "source_port": 0,
+        "target_node_id": "flight_fsm",
+        "target_port": 4,
+        "buffer_size": 256,
+        "name": "GPS→FSM (Main Pipeline)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 6,
+        "source_node_id": "flight_fsm",
+        "source_port": 0,
+        "target_node_id": "altitude_fusion",
+        "target_port": 0,
+        "buffer_size": 256,
+        "name": "FSM→AltitudeFusion (StateVector)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 7,
+        "source_node_id": "altitude_fusion",
+        "source_port": 0,
+        "target_node_id": "estimation_pipeline",
+        "target_port": 0,
+        "buffer_size": 256,
+        "name": "AltitudeFusion→EstimationPipeline (Fused StateVector)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 8,
+        "source_node_id": "estimation_pipeline",
+        "source_port": 0,
+        "target_node_id": "flight_monitor",
+        "target_port": 0,
+        "buffer_size": 256,
+        "name": "EstimationPipeline→FlightMonitor (Refined StateVector)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 9,
+        "source_node_id": "flight_monitor",
+        "source_port": 0,
+        "target_node_id": "feedback_sink",
+        "target_port": 0,
+        "buffer_size": 256,
+        "name": "FlightMonitor→FeedbackSink (Feedback)",
+        "path": "main_pipeline"
+      },
+      {
+        "edge_id": 10,
+        "source_node_id": "csv_accel",
+        "source_port": 1,
+        "target_node_id": "completion_aggregator",
+        "target_port": 0,
+        "buffer_size": 256,
+        "name": "Accel Completion Signal",
+        "path": "completion_path"
+      },
+      {
+        "edge_id": 11,
+        "source_node_id": "csv_gyro",
+        "source_port": 1,
+        "target_node_id": "completion_aggregator",
+        "target_port": 1,
+        "buffer_size": 256,
+        "name": "Gyro Completion Signal",
+        "path": "completion_path"
+      },
+      {
+        "edge_id": 12,
+        "source_node_id": "csv_mag",
+        "source_port": 1,
+        "target_node_id": "completion_aggregator",
+        "target_port": 2,
+        "buffer_size": 256,
+        "name": "Mag Completion Signal",
+        "path": "completion_path"
+      },
+      {
+        "edge_id": 13,
+        "source_node_id": "csv_baro",
+        "source_port": 1,
+        "target_node_id": "completion_aggregator",
+        "target_port": 3,
+        "buffer_size": 256,
+        "name": "Baro Completion Signal",
+        "path": "completion_path"
+      },
+      {
+        "edge_id": 14,
+        "source_node_id": "csv_gps",
+        "source_port": 1,
+        "target_node_id": "completion_aggregator",
+        "target_port": 4,
+        "buffer_size": 256,
+        "name": "GPS Completion Signal",
+        "path": "completion_path"
+    }
+  ],
+  
+  "topology_summary": {
+    "total_nodes": 11,
+    "total_edges": 14,
+    "node_breakdown": {
+      "csv_sensors": 5,
+      "core_pipeline": 5,
+      "completion_tracking": 1
+    },
+    "edge_breakdown": {
+      "main_pipeline_edges": 9,
+      "completion_path_edges": 5
+    },
+    "message_paths": {
+      "main_pipeline": "CSV Sensors→FSM→AltitudeFusion→EstimationPipeline→FlightMonitor→FeedbackSink",
+      "completion_path": "CSV Sensors (Port 1)→CompletionAggregator"
+    },
+    "dual_port_architecture": {
+      "port_0": "Main data processing pipeline (sensor data)",
+      "port_1": "Completion signals for scenario tracking"
+    }
+  }
+}

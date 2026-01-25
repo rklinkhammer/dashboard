@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "ui/DashboardApplication.hpp"
+#include "ui/Dashboard.hpp"
 #include "ui/MetricsPanel.hpp"
 #include "ui/LoggingWindow.hpp"
 #include "ui/CommandWindow.hpp"
@@ -45,7 +45,7 @@ TEST_F(Phase4IntegrationTest, CompleteInitializationFlow) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
     
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     ASSERT_NO_THROW({
         app.Initialize();
     });
@@ -135,7 +135,7 @@ TEST_F(Phase4IntegrationTest, WindowHeightsPersistence) {
     heights.logging_height_percent = 30;
     heights.command_height_percent = 23;
     
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     EXPECT_TRUE(app.AreHeightsValid());
     EXPECT_EQ(app.GetWindowHeights().metrics_height_percent, 45);
 }
@@ -170,7 +170,7 @@ TEST_F(Phase4IntegrationTest, CommandRegistryWithDashboard) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
     
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     auto registry = std::make_shared<CommandRegistry>();
@@ -279,7 +279,7 @@ TEST_F(Phase4IntegrationTest, CompletePhase4EndToEndFlow) {
     WindowHeightConfig heights;
     
     // 2. Initialize app
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
     
     // 3. Get panels

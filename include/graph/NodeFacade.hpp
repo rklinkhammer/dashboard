@@ -30,7 +30,7 @@
 #include <log4cxx/logger.h>
 
 // Forward declaration to avoid circular dependency
-namespace graph::plugins {
+namespace graph {
 template <typename NodeT>
 struct NodePluginInstance;
 }
@@ -414,7 +414,7 @@ struct NodeFacade {
      * Get pointer to IConfigurable interface (if node supports configuration)
      * 
      * @param handle Opaque node handle
-     * @return void* pointer that can be cast to graph::node_config::IConfigurable*, or nullptr
+     * @return void* pointer that can be cast to graph::IConfigurable*, or nullptr
      * @note Returned pointer is valid for the lifetime of the node
      * @note Do not delete the returned pointer
      */
@@ -424,7 +424,7 @@ struct NodeFacade {
      * Get pointer to IDiagnosable interface (if node provides diagnostics)
      * 
      * @param handle Opaque node handle
-     * @return void* pointer that can be cast to graph::node_config::IDiagnosable*, or nullptr
+     * @return void* pointer that can be cast to graph::IDiagnosable*, or nullptr
      * @note Returned pointer is valid for the lifetime of the node
      * @note Do not delete the returned pointer
      */
@@ -434,7 +434,7 @@ struct NodeFacade {
      * Get pointer to IParameterized interface (if node exposes parameters)
      * 
      * @param handle Opaque node handle
-     * @return void* pointer that can be cast to graph::node_config::IParameterized*, or nullptr
+     * @return void* pointer that can be cast to graph::IParameterized*, or nullptr
      * @note Returned pointer is valid for the lifetime of the node
      * @note Do not delete the returned pointer
      */
@@ -444,7 +444,7 @@ struct NodeFacade {
      * Get pointer to IMetricsCallbackProvider interface (if node supports metrics callbacks)
      * 
      * @param handle Opaque node handle
-     * @return void* pointer that can be cast to graph::nodes::callbacks::IMetricsCallbackProvider*, or nullptr
+     * @return void* pointer that can be cast to graph::IMetricsCallbackProvider*, or nullptr
      * @note Returned pointer is valid for the lifetime of the node
      * @note Do not delete the returned pointer
      */
@@ -454,7 +454,7 @@ struct NodeFacade {
      * Get pointer to ICompletionCallback interface (if node supports completion callbacks)
      * 
      * @param handle Opaque node handle
-     * @return void* pointer that can be cast to graph::nodes::callbacks::CompletionCallbackProvider*, or nullptr
+     * @return void* pointer that can be cast to graph::CompletionCallbackProvider*, or nullptr
      * @note Returned pointer is valid for the lifetime of the node
      * @note Do not delete the returned pointer
      */
@@ -931,7 +931,7 @@ public:
         
         // First, try direct cast as concrete type
         // This works when NodeT is the exact plugin node type
-        using ConcreteInstance = graph::plugins::NodePluginInstance<NodeT>;
+        using ConcreteInstance = graph::NodePluginInstance<NodeT>;
         if (auto instance = static_cast<ConcreteInstance*>(handle_)) {
             if (instance && instance->node) {
                 return instance->node;

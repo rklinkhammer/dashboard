@@ -26,7 +26,7 @@
 #include "InputFunction.hpp"
 #include <optional>
 
-namespace graph::nodes
+namespace graph
 {
     // ===================================================================================
     // ExpandInputPorts - Generate N InputFn<Port<T, i>> base classes

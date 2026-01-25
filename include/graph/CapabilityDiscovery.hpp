@@ -72,10 +72,10 @@ namespace graph {
  * @code
  *   #include "graph/CapabilityDiscovery.hpp"
  *   #include "graph/NodeFacadeAdapterSpecializations.hpp"  // REQUIRED!
- *   #include "capabilities/IMetricsCallback.hpp"
+ *   #include "graph/IMetricsCallback.hpp"
  *
  *   // Later in code:
- *   auto metrics = graph::DiscoverCapability<graph::nodes::callbacks::IMetricsCallbackProvider>(node);
+ *   auto metrics = graph::DiscoverCapability<graph::IMetricsCallbackProvider>(node);
  *   if (metrics) {
  *       metrics->SetMetricsCallback(subscriber.get());
  *   }
@@ -96,7 +96,7 @@ namespace graph {
  */
 template <typename CapabilityT>
 inline std::shared_ptr<CapabilityT> DiscoverCapability(
-    const std::shared_ptr<nodes::INode>& node) {
+    const std::shared_ptr<INode>& node) {
     
     if (!node) {
         return nullptr;
@@ -109,7 +109,7 @@ inline std::shared_ptr<CapabilityT> DiscoverCapability(
     }
     
     // Phase 2: Try NodeFacadeAdapterWrapper for plugin nodes
-    auto wrapper = std::dynamic_pointer_cast<nodes::NodeFacadeAdapterWrapper>(node);
+    auto wrapper = std::dynamic_pointer_cast<NodeFacadeAdapterWrapper>(node);
     if (wrapper) {
         capability = wrapper->TryGetInterface<CapabilityT>();
         if (capability) {
@@ -138,10 +138,10 @@ inline std::shared_ptr<CapabilityT> DiscoverCapability(
  * @code
  *   #include "graph/CapabilityDiscovery.hpp"
  *   #include "graph/NodeFacadeAdapterSpecializations.hpp"
- *   #include "capabilities/IMetricsCallback.hpp"
+ *   #include "graph/IMetricsCallback.hpp"
  *
  *   // Wire metrics callback if available
- *   graph::DiscoverAndUseCapability<graph::nodes::callbacks::IMetricsCallbackProvider>(
+ *   graph::DiscoverAndUseCapability<graph::IMetricsCallbackProvider>(
  *       node,
  *       [subscriber](const auto& metrics) {
  *           metrics->SetMetricsCallback(subscriber.get());
@@ -151,7 +151,7 @@ inline std::shared_ptr<CapabilityT> DiscoverCapability(
  */
 template <typename CapabilityT, typename FunctionT>
 inline bool DiscoverAndUseCapability(
-    const std::shared_ptr<nodes::INode>& node,
+    const std::shared_ptr<INode>& node,
     FunctionT fn) {
     
     auto capability = DiscoverCapability<CapabilityT>(node);
@@ -191,13 +191,13 @@ inline bool DiscoverAndUseCapability(
  *   }
  * @endcode
  */
-inline std::string GetNodeName(const std::shared_ptr<nodes::INode>& node) {
+inline std::string GetNodeName(const std::shared_ptr<INode>& node) {
     if (!node) {
         return "";
     }
     
     // Phase 1: Try NodeFacadeAdapterWrapper (plugin nodes)
-    auto wrapper = std::dynamic_pointer_cast<nodes::NodeFacadeAdapterWrapper>(node);
+    auto wrapper = std::dynamic_pointer_cast<NodeFacadeAdapterWrapper>(node);
     if (wrapper) {
         return wrapper->GetName();
     }
@@ -211,13 +211,13 @@ inline std::string GetNodeName(const std::shared_ptr<nodes::INode>& node) {
     return "";
 }
 
-inline std::string GetTypeName(const std::shared_ptr<nodes::INode>& node) {
+inline std::string GetTypeName(const std::shared_ptr<INode>& node) {
     if (!node) {
         return "";
     }
     
     // Phase 1: Try NodeFacadeAdapterWrapper (plugin nodes)
-    auto wrapper = std::dynamic_pointer_cast<nodes::NodeFacadeAdapterWrapper>(node);
+    auto wrapper = std::dynamic_pointer_cast<NodeFacadeAdapterWrapper>(node);
     if (wrapper) {
         return wrapper->GetType();
     }
@@ -231,28 +231,28 @@ inline std::string GetTypeName(const std::shared_ptr<nodes::INode>& node) {
     return "";
 }
 
-inline nodes::LifecycleState GetLifecycleState(const std::shared_ptr<nodes::INode>& node) {
+inline LifecycleState GetLifecycleState(const std::shared_ptr<INode>& node) {
     if (!node) {
-        return nodes::LifecycleState::Invalid;
+        return LifecycleState::Invalid;
     }
     
     // Phase 1: Try NodeFacadeAdapterWrapper (plugin nodes)
-    auto wrapper = std::dynamic_pointer_cast<nodes::NodeFacadeAdapterWrapper>(node);
+    auto wrapper = std::dynamic_pointer_cast<NodeFacadeAdapterWrapper>(node);
     if (wrapper) {
-        return static_cast<nodes::LifecycleState>(wrapper->GetLifecycleState());
+        return static_cast<LifecycleState>(wrapper->GetLifecycleState());
     }
     
     // Phase 2: Try NodeFacadeAdapter (built-in nodes with adapter)
     auto adapter = std::dynamic_pointer_cast<NodeFacadeAdapter>(node);
     if (adapter) {
-        return static_cast<nodes::LifecycleState>(adapter->GetLifecycleState());
+        return static_cast<LifecycleState>(adapter->GetLifecycleState());
     }
     
-    return nodes::LifecycleState::Invalid;
+    return LifecycleState::Invalid;
 }
 
 inline std::shared_ptr<NodeFacadeAdapter> GetAsNodeFacadeAdapter(
-    const std::shared_ptr<nodes::INode>& node) {
+    const std::shared_ptr<INode>& node) {
     
     if (!node) {
         return nullptr;
@@ -265,7 +265,7 @@ inline std::shared_ptr<NodeFacadeAdapter> GetAsNodeFacadeAdapter(
     }
     
     // Phase 2: Try NodeFacadeAdapterWrapper (plugin nodes)
-    auto wrapper = std::dynamic_pointer_cast<nodes::NodeFacadeAdapterWrapper>(node);
+    auto wrapper = std::dynamic_pointer_cast<NodeFacadeAdapterWrapper>(node);
     if (wrapper) {
         return wrapper->GetAdapter();
     }

@@ -5,7 +5,7 @@
 #include <string>
 
 // Forward declarations
-class DashboardApplication;
+class Dashboard;
 
 namespace commands {
 
@@ -22,16 +22,16 @@ namespace commands {
  */
 void RegisterBuiltinCommands(
     std::shared_ptr<CommandRegistry> registry,
-    DashboardApplication* app);
+    Dashboard* app);
 
 // Individual command implementations
 namespace cmd {
 
-CommandResult CmdStatus(DashboardApplication* app, const std::vector<std::string>& args);
-CommandResult CmdRunGraph(DashboardApplication* app, const std::vector<std::string>& args);
-CommandResult CmdPauseGraph(DashboardApplication* app, const std::vector<std::string>& args);
-CommandResult CmdStopGraph(DashboardApplication* app, const std::vector<std::string>& args);
-CommandResult CmdResetLayout(DashboardApplication* app, const std::vector<std::string>& args);
+CommandResult CmdStatus(Dashboard* app, const std::vector<std::string>& args);
+CommandResult CmdRunGraph(Dashboard* app, const std::vector<std::string>& args);
+CommandResult CmdPauseGraph(Dashboard* app, const std::vector<std::string>& args);
+CommandResult CmdStopGraph(Dashboard* app, const std::vector<std::string>& args);
+CommandResult CmdResetLayout(Dashboard* app, const std::vector<std::string>& args);
 
 }  // namespace cmd
 

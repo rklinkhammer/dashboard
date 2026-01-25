@@ -27,7 +27,7 @@
 #include <atomic>
 #include <log4cxx/logger.h>
 
-namespace graph::nodes
+namespace graph
 {
     /**
      * @brief Base class for all port functions

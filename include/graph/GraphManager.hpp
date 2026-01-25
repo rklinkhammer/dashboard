@@ -37,7 +37,7 @@
  * ## Core Architecture
  * 
  * **Ownership Model**: GraphManager owns all nodes and edges via shared_ptr/unique_ptr.
- * - Nodes stored as shared_ptr<nodes::INode> in nodes_ vector
+ * - Nodes stored as shared_ptr<INode> in nodes_ vector
  * - Edges stored as unique_ptr<IEdgeBase> with type erasure via EdgeWrapper
  * - Type metadata captured at AddEdge() time to recover message types
  * - Single ThreadPool shared by all graph components
@@ -254,8 +254,6 @@
 
 namespace graph {
 
-using namespace nodes;
-
 // Metrics structures are defined in Metrics.hpp
 #include "graph/GraphMetrics.hpp"
 
@@ -463,7 +461,7 @@ public:
      * 
      * Registers an existing node for lifecycle management.
      */
-    void AddNode(std::shared_ptr<nodes::INode> node) {
+    void AddNode(std::shared_ptr<INode> node) {
         std::unique_lock lock(lifecycle_mtx_);
         
         if (!node) {
@@ -1576,7 +1574,7 @@ public:
      * @return Vector of shared_ptr to all nodes in the graph
      * @note Caller must not modify returned collection
      */
-    const std::vector<std::shared_ptr<nodes::INode>>& GetNodes() const {
+    const std::vector<std::shared_ptr<INode>>& GetNodes() const {
         return nodes_;
     }
     
@@ -1604,7 +1602,7 @@ private:
     ThreadPool::DeadlockConfig thread_pool_config_;
     std::unique_ptr<ThreadPool> thread_pool_;
     size_t num_threads_;
-    std::vector<std::shared_ptr<nodes::INode>> nodes_;
+    std::vector<std::shared_ptr<INode>> nodes_;
     std::vector<std::unique_ptr<IEdgeBase>> edges_;  // Owns edges through type-erased interface
     std::vector<EdgeMetadata> edge_metadata_;  // Parallel vector to recover type information (Phase 14a)
     std::vector<std::shared_ptr<EdgeMetrics>> edge_metrics_;    // Parallel vector for per-edge metrics (Phase 14d)

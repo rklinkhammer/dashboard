@@ -1,7 +1,4 @@
 // MIT License
-/// @file NodeCallback.hpp
-/// @brief Core NodeCallback functionality for the graph framework
-
 //
 // Copyright (c) 2025 graphlib contributors
 //
@@ -25,17 +22,43 @@
 
 #pragma once
 
-#include <functional>
-#include <vector>
-#include <string>
-#include <chrono>
-#include <optional>
-#include <map>
-#include <any>
-#include <log4cxx/logger.h>
+/**
+ * @brief Base class for nodes that support callbacks
+ *
+ * Provides unified interface for installing and querying callbacks on wrapped nodes.
+ * This is an optional interface - nodes without callback support don't inherit from it.
+ *
+ * Wrappers inherit from both NodeCallback and INode:
+ *   class SensorNodeWrapper : public NodeCallback, public INode { ... };
+ *
+ * Implementation Notes:
+ * - Callback installation is idempotent (calling again replaces previous)
+ * - All callbacks are optional (node can work without any callbacks installed)
+ * - Callbacks are invoked asynchronously during node Run()
+ * - Callback handlers are expected to be thread-safe
+ */
 
-namespace graph::nodes::callbacks {
+namespace graph {
+ class NodeCallback {
+public:
+    virtual ~NodeCallback() = default;
 
+protected:
+    /**
+     * @brief Helper for derived classes to log installation
+     * @param logger Log4cxx logger instance
+     * @param node_name Name of node
+     * @param callback_type Type of callback (metrics, completion, error)
+     */
+    static void LogCallbackInstallation(
+        log4cxx::LoggerPtr logger,
+        const std::string& node_name,
+        const std::string& callback_type) {
+        if (logger && logger->isDebugEnabled()) {
+            LOG4CXX_TRACE(logger, "Callback installed - Node: " << node_name
+                                  << ", Type: " << callback_type);
+        }
+    }
+};
 
-
-}  // namespace activegraph::engine::callbacks
+}  // namespace graph

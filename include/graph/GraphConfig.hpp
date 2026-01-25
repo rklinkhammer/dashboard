@@ -38,7 +38,7 @@
 #include <map>
 #include <nlohmann/json.hpp>
 
-namespace graph::config {
+namespace graph {
 
 /**
  * @struct NodeConfig

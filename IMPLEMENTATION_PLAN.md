@@ -70,7 +70,7 @@ gdashboard (executable)
 # Key CMakeLists.txt additions
 add_executable(gdashboard
     src/gdashboard/dashboard_main.cpp
-    src/gdashboard/DashboardApplication.cpp
+    src/gdashboard/Dashboard.cpp
     src/ui/MetricsPanel.cpp
     src/ui/LoggingWindow.cpp
     src/ui/CommandWindow.cpp
@@ -929,7 +929,7 @@ Create static dashboard layout with 4 sections (metrics, logging, command, statu
 # Add gdashboard executable target
 add_executable(gdashboard
     src/gdashboard/dashboard_main.cpp
-    src/gdashboard/DashboardApplication.cpp
+    src/gdashboard/Dashboard.cpp
 )
 
 # Link with FTXUI and other dependencies
@@ -968,11 +968,11 @@ src/gdashboard/
 ├── dashboard_main.cpp              (Entry point, CLI parsing)
 │                                   ~150 lines
 │
-└── DashboardApplication.cpp        (Orchestrator, layout, event loop)
+└── Dashboard.cpp        (Orchestrator, layout, event loop)
                                     ~350 lines
 
 include/ui/
-├── DashboardApplication.hpp        (Public interface, 60 lines)
+├── Dashboard.hpp        (Public interface, 60 lines)
 ├── Window.hpp                      (Base class for all windows, 40 lines)
 ├── MetricsPanel.hpp                (Metrics section header, 50 lines)
 ├── LoggingWindow.hpp               (Logs section header, 50 lines)
@@ -1094,8 +1094,8 @@ int main(int argc, char* argv[]) {
         // For Phase 1, use a mock/stub executor
         // auto executor = std::make_shared<StubGraphExecutor>();
         
-        // 3. Create DashboardApplication
-        // auto app = std::make_shared<DashboardApplication>(executor, heights);
+        // 3. Create Dashboard
+        // auto app = std::make_shared<Dashboard>(executor, heights);
         
         // 4-9: Initialize → Run
         // app->Initialize();
@@ -1149,8 +1149,8 @@ void CommandLineParser::PrintUsage() const {
 - ✅ Print usage on --help (future: add --help)
 - ✅ Handle arguments in any order
 
-#### D1.3: DashboardApplication Core Class
-**File**: `include/ui/DashboardApplication.hpp` + `src/gdashboard/DashboardApplication.cpp`
+#### D1.3: Dashboard Core Class
+**File**: `include/ui/Dashboard.hpp` + `src/gdashboard/Dashboard.cpp`
 
 **Design Principles**:
 1. Single responsibility: Orchestrate layout and event loop
@@ -1182,15 +1182,15 @@ struct WindowHeightConfig {
     int status_height_percent = 2;         // Fixed
 };
 
-class DashboardApplication {
+class Dashboard {
 public:
     // Constructor receives executor and window heights
-    explicit DashboardApplication(
+    explicit Dashboard(
         std::shared_ptr<GraphExecutor> executor,
         const WindowHeightConfig& heights);
     
     // Destructor - cleanup resources
-    ~DashboardApplication();
+    ~Dashboard();
     
     // Initialization: create UI panels, validate heights, setup layout
     void Initialize();
@@ -1236,7 +1236,7 @@ private:
 
 **Implementation File** (~350 lines):
 ```cpp
-#include "ui/DashboardApplication.hpp"
+#include "ui/Dashboard.hpp"
 #include "ui/MetricsPanel.hpp"
 #include "ui/LoggingWindow.hpp"
 #include "ui/CommandWindow.hpp"
@@ -1245,7 +1245,7 @@ private:
 #include <thread>
 #include <chrono>
 
-DashboardApplication::DashboardApplication(
+Dashboard::Dashboard(
     std::shared_ptr<GraphExecutor> executor,
     const WindowHeightConfig& heights)
     : executor_(executor), window_heights_(heights) {
@@ -1255,16 +1255,16 @@ DashboardApplication::DashboardApplication(
     }
     
     ValidateHeights();
-    std::cerr << "DashboardApplication constructed: " 
+    std::cerr << "Dashboard constructed: " 
               << window_heights_.DebugString() << "\n";
 }
 
-DashboardApplication::~DashboardApplication() {
+Dashboard::~Dashboard() {
     // RAII cleanup - components destroyed automatically via shared_ptr
-    std::cerr << "DashboardApplication destroyed\n";
+    std::cerr << "Dashboard destroyed\n";
 }
 
-void DashboardApplication::Initialize() {
+void Dashboard::Initialize() {
     std::cerr << "[Initialize] Starting dashboard setup\n";
     
     try {
@@ -1302,7 +1302,7 @@ void DashboardApplication::Initialize() {
     }
 }
 
-void DashboardApplication::ValidateHeights() {
+void Dashboard::ValidateHeights() {
     const int total = window_heights_.metrics_height_percent +
                       window_heights_.logging_height_percent +
                       window_heights_.command_height_percent +
@@ -1316,7 +1316,7 @@ void DashboardApplication::ValidateHeights() {
     }
 }
 
-void DashboardApplication::ApplyHeights() {
+void Dashboard::ApplyHeights() {
     if (metrics_panel_) metrics_panel_->SetHeight(window_heights_.metrics_height_percent);
     if (logging_window_) logging_window_->SetHeight(window_heights_.logging_height_percent);
     if (command_window_) command_window_->SetHeight(window_heights_.command_height_percent);
@@ -1324,7 +1324,7 @@ void DashboardApplication::ApplyHeights() {
     std::cerr << "[ApplyHeights] Applied: " << window_heights_.DebugString() << "\n";
 }
 
-ftxui::Element DashboardApplication::BuildLayout() {
+ftxui::Element Dashboard::BuildLayout() {
     // Using FTXUI flexbox with percentages
     // Metrics (40%) | Logging (35%) | Command (18%) | Status (2%)
     
@@ -1358,7 +1358,7 @@ ftxui::Element DashboardApplication::BuildLayout() {
     });
 }
 
-void DashboardApplication::Run() {
+void Dashboard::Run() {
     std::cerr << "[Run] Starting event loop (30 FPS)\n";
     
     const auto frame_time = std::chrono::milliseconds(33);  // ~30 FPS
@@ -1401,7 +1401,7 @@ void DashboardApplication::Run() {
     std::cerr << "[Run] Event loop exited after " << frame_count << " frames\n";
 }
 
-void DashboardApplication::HandleUserInput(ftxui::Event event) {
+void Dashboard::HandleUserInput(ftxui::Event event) {
     // TODO: Implement event handling (Phase 2)
     // if (event == ftxui::Event::Character('q')) {
     //     should_exit_ = true;
@@ -1409,27 +1409,27 @@ void DashboardApplication::HandleUserInput(ftxui::Event event) {
 }
 
 // Getters
-const std::shared_ptr<MetricsPanel>& DashboardApplication::GetMetricsPanel() const {
+const std::shared_ptr<MetricsPanel>& Dashboard::GetMetricsPanel() const {
     return metrics_panel_;
 }
 
-const std::shared_ptr<LoggingWindow>& DashboardApplication::GetLoggingWindow() const {
+const std::shared_ptr<LoggingWindow>& Dashboard::GetLoggingWindow() const {
     return logging_window_;
 }
 
-const std::shared_ptr<CommandWindow>& DashboardApplication::GetCommandWindow() const {
+const std::shared_ptr<CommandWindow>& Dashboard::GetCommandWindow() const {
     return command_window_;
 }
 
-const std::shared_ptr<StatusBar>& DashboardApplication::GetStatusBar() const {
+const std::shared_ptr<StatusBar>& Dashboard::GetStatusBar() const {
     return status_bar_;
 }
 
-const WindowHeightConfig& DashboardApplication::GetWindowHeights() const {
+const WindowHeightConfig& Dashboard::GetWindowHeights() const {
     return window_heights_;
 }
 
-bool DashboardApplication::AreHeightsValid() const {
+bool Dashboard::AreHeightsValid() const {
     const int total = window_heights_.metrics_height_percent +
                       window_heights_.logging_height_percent +
                       window_heights_.command_height_percent +
@@ -1827,10 +1827,10 @@ ftxui::Element StatusBar::Render() const {
 #### Unit Tests
 ```cpp
 // test/ui/test_dashboard_application.cpp
-TEST(DashboardApplicationTest, ConstructsWithValidParameters) { }
-TEST(DashboardApplicationTest, ValidatesWindowHeights) { }
-TEST(DashboardApplicationTest, RaisesErrorOnInvalidHeights) { }
-TEST(DashboardApplicationTest, GettersReturnValidPointers) { }
+TEST(DashboardTest, ConstructsWithValidParameters) { }
+TEST(DashboardTest, ValidatesWindowHeights) { }
+TEST(DashboardTest, RaisesErrorOnInvalidHeights) { }
+TEST(DashboardTest, GettersReturnValidPointers) { }
 
 // test/ui/test_metrics_panel.cpp
 TEST(MetricsPanelTest, RendersPlaceholderContent) { }
@@ -1878,13 +1878,13 @@ TEST(Phase1LayoutTest, ExitsCleanlyOnQuit) { }
 
 **Phase 1 Summary**:
 - **Test Results**: 22/22 passing ✅
-  - DashboardApplication: 5 tests
+  - Dashboard: 5 tests
   - MetricsPanel: 4 tests
   - LoggingWindow: 4 tests  
   - CommandWindow: 4 tests
   - StatusBar: 4 tests
   - Plus integration tests
-- **Components Implemented**: DashboardApplication, MetricsPanel, LoggingWindow, CommandWindow, StatusBar
+- **Components Implemented**: Dashboard, MetricsPanel, LoggingWindow, CommandWindow, StatusBar
 - **FTXUI Rendering**: ✅ **RESTORED** - All windows render with borders, colors, and styled text at 30 FPS
   - MetricsPanel: Green bordered box with metric list
   - LoggingWindow: Blue bordered box with log lines (dim text)
@@ -2103,8 +2103,8 @@ void MetricsPanel::DiscoverAndCreateTiles(
 }
 ```
 
-#### D2.3: DashboardApplication Integration with Metrics
-**File**: `src/gdashboard/DashboardApplication.cpp` - Update Initialize()
+#### D2.3: Dashboard Integration with Metrics
+**File**: `src/gdashboard/Dashboard.cpp` - Update Initialize()
 
 **Execution Order**:
 1. Get MetricsCapability from executor
@@ -2114,7 +2114,7 @@ void MetricsPanel::DiscoverAndCreateTiles(
 
 **Code** (~100 lines):
 ```cpp
-void DashboardApplication::Initialize() {
+void Dashboard::Initialize() {
     // Get MetricsCapability from executor
     metrics_cap_ = executor_->GetCapability<MetricsCapability>();
     
@@ -2128,10 +2128,10 @@ void DashboardApplication::Initialize() {
         }
     );
     
-    LOG(INFO) << "DashboardApplication initialized";
+    LOG(INFO) << "Dashboard initialized";
 }
 
-void DashboardApplication::OnMetricsEvent(const MetricsEvent& event) {
+void Dashboard::OnMetricsEvent(const MetricsEvent& event) {
     // Called by MetricsPublisher thread
     // Must be extremely fast (<1ms)
     
@@ -2211,8 +2211,8 @@ int main(int argc, char* argv[]) {
             .SetTimeout(timeout_ms)
             .Build();
         
-        // Step 3: Create DashboardApplication
-        auto app = std::make_shared<DashboardApplication>(executor, heights);
+        // Step 3: Create Dashboard
+        auto app = std::make_shared<Dashboard>(executor, heights);
         
         // Step 4: Initialize (discovers metrics, creates tiles, registers callback)
         app->Initialize();
@@ -2316,7 +2316,7 @@ TEST(Phase2EndToEndTest, DiscoverMetrics) {
 8. ✅ **D2.9 Analysis**: Metrics grouping by NodeName documented in ARCHITECTURE.md (Decision 11)
 
 **Key Achievements**:
-- Callback-based metrics flow: GraphExecutor queue → MetricsPublisher callbacks → DashboardApplication buffer → tiles
+- Callback-based metrics flow: GraphExecutor queue → MetricsPublisher callbacks → Dashboard buffer → tiles
 - Thread-safe buffering via mutex on `latest_values_` in MetricsTilePanel
 - UpdateAllMetrics() called each frame (33ms at 30 FPS) to propagate buffered values
 - All 48 metrics discoverable before executor starts via 9-step initialization sequence
@@ -2494,7 +2494,7 @@ Implement optional/polish features: commands, logging, layout persistence, advan
 - Total test count: 32+22+29+16 = 99 tests passing
 
 **Next Steps for D3.1**:
-- Integrate CommandRegistry with DashboardApplication
+- Integrate CommandRegistry with Dashboard
 - Connect CommandWindow key input to FTXUI event loop
 - Implement graph execution hooks for run/pause/stop commands
 - Add command testing with mock executor
@@ -2519,7 +2519,7 @@ Implement optional/polish features: commands, logging, layout persistence, advan
 **Implemented**:
 - LayoutConfig class with JSON-based persistence to ~/.gdashboard/layout.json
 - Saves: window heights (validated to sum to 100%), log level filter, search filters, command history (10 items max)
-- Loads: on DashboardApplication initialization with fallback to defaults
+- Loads: on Dashboard initialization with fallback to defaults
 - Validates: Heights sum to 100%, log level is valid (TRACE-FATAL), command history deduplication
 - 24 unit tests covering all functionality
 
@@ -2555,7 +2555,7 @@ Implement optional/polish features: commands, logging, layout persistence, advan
 1. Add TabContainer member to MetricsPanel
 2. Implement auto-activation logic: If tile count > 36, create tabs and distribute tiles
 3. Add key handlers for arrow key navigation between tabs
-4. Integrate LayoutConfig into DashboardApplication initialization
+4. Integrate LayoutConfig into Dashboard initialization
 5. Wire command execution into built-in commands (run_graph, pause_graph, etc.)
 6. Load/save layout on application startup/exit
 
@@ -2858,7 +2858,7 @@ Before approving implementation, verify:
 ### Remaining Phase 2 Tasks (Priority Order)
 
 #### Task D2.5: Integrate MetricsCapability Discovery
-**Objective**: Connect DashboardApplication::Initialize() to discover metrics from executor
+**Objective**: Connect Dashboard::Initialize() to discover metrics from executor
 
 **Implementation**:
 1. Modify `MetricsPanel::UpdateMetricsList()` to:
@@ -2904,7 +2904,7 @@ Before approving implementation, verify:
    }
    ```
 
-3. Update DashboardApplication::Run() to call:
+3. Update Dashboard::Run() to call:
    ```cpp
    while (keepRunning) {
        metrics_panel_->UpdateAllMetrics();  // Update all tiles
@@ -2997,7 +2997,7 @@ Once all Phase 2 tasks complete:
 ## Detailed Phase 4: MetricsPanel Integration & Tabbed Mode Activation (Final Integration Phase)
 
 ### Objective
-Complete the dashboard MVP by integrating all Phase 3 components (CommandRegistry, LoggingWindow, LayoutConfig, TabContainer) into MetricsPanel and DashboardApplication to enable full feature functionality.
+Complete the dashboard MVP by integrating all Phase 3 components (CommandRegistry, LoggingWindow, LayoutConfig, TabContainer) into MetricsPanel and Dashboard to enable full feature functionality.
 
 ### Duration
 **1 week** (All Phase 3 components complete)
@@ -3012,7 +3012,7 @@ Complete the dashboard MVP by integrating all Phase 3 components (CommandRegistr
 ### Integration Architecture
 
 ```
-DashboardApplication (Orchestrator)
+Dashboard (Orchestrator)
 ├── LayoutConfig (Startup: Load layout, Shutdown: Save layout)
 ├── CommandRegistry (Initialize with 5 commands + handlers)
 ├── MetricsPanel
@@ -3099,12 +3099,12 @@ ftxui::Element MetricsPanel::Render() const {
 - ✅ Arrow key events handled by MetricsPanel
 - ✅ IsTabMode() returns correct state
 
-#### D4.2: DashboardApplication Layout Integration
+#### D4.2: Dashboard Layout Integration
 
 **Purpose**: Load LayoutConfig on startup, save on shutdown, integrate into all components
 
 **Implementation**:
-1. Create `LayoutConfig` member in DashboardApplication
+1. Create `LayoutConfig` member in Dashboard
 2. Call `LoadConfig()` in Initialize() method
 3. Call `SaveConfig()` in destructor or cleanup method
 4. Apply loaded heights to window components
@@ -3113,7 +3113,7 @@ ftxui::Element MetricsPanel::Render() const {
 
 **Initialization Sequence**:
 ```cpp
-void DashboardApplication::Initialize() {
+void Dashboard::Initialize() {
     // 1. Load layout configuration
     layout_config_ = std::make_unique<LayoutConfig>();
     layout_config_->LoadFromFile();  // Returns success/failure, uses defaults if missing
@@ -3146,11 +3146,11 @@ void DashboardApplication::Initialize() {
     // 7. Register callback for metrics updates
     RegisterMetricsCallback();
     
-    LOG(INFO) << "DashboardApplication initialized with layout: " 
+    LOG(INFO) << "Dashboard initialized with layout: " 
               << layout_config_->DebugString();
 }
 
-void DashboardApplication::Shutdown() {
+void Dashboard::Shutdown() {
     // Save current state before cleanup
     layout_config_->SetWindowHeights(window_heights_);
     layout_config_->SetLogFilter(logging_window_->GetFilterLevel());
@@ -3170,7 +3170,7 @@ void DashboardApplication::Shutdown() {
 - ✅ Restore filters from config
 - ✅ Restore command history from config
 
-#### D4.3: CommandRegistry Integration with DashboardApplication
+#### D4.3: CommandRegistry Integration with Dashboard
 
 **Purpose**: Wire commands to dashboard state, enable graph control
 
@@ -3196,7 +3196,7 @@ void DashboardApplication::Shutdown() {
 
 **Implementation**:
 ```cpp
-void DashboardApplication::InitializeCommands() {
+void Dashboard::InitializeCommands() {
     // Register each built-in command with closure over 'this'
     
     // status command
@@ -3311,9 +3311,9 @@ bool MetricsPanel::HandleEvent(ftxui::Event event) {
 }
 ```
 
-**Integration with DashboardApplication**:
+**Integration with Dashboard**:
 ```cpp
-void DashboardApplication::HandleUserInput(ftxui::Event event) {
+void Dashboard::HandleUserInput(ftxui::Event event) {
     // Route events to appropriate component
     if (metrics_panel_->HandleEvent(event)) {
         return;  // Handled by metrics panel
@@ -3462,11 +3462,11 @@ kill %1
 **Files Modified**:
 - `include/ui/MetricsPanel.hpp` - Add TabContainer member, tab mode logic
 - `src/ui/MetricsPanel.cpp` - Implement tab mode activation and navigation
-- `include/gdashboard/DashboardApplication.hpp` - Add LayoutConfig member
-- `src/gdashboard/DashboardApplication.cpp` - Implement config loading/saving
+- `include/gdashboard/Dashboard.hpp` - Add LayoutConfig member
+- `src/gdashboard/Dashboard.cpp` - Implement config loading/saving
 - `include/ui/LoggingWindow.hpp` - Add filter level management
 - `src/ui/LoggingWindow.cpp` - Implement filtering logic
-- `src/ui/CommandRegistry.cpp` - Register built-in commands in DashboardApplication
+- `src/ui/CommandRegistry.cpp` - Register built-in commands in Dashboard
 
 **Test Files**:
 - `test/integration/test_phase4_metrics_panel_integration.cpp` - 4 tests
@@ -3512,7 +3512,7 @@ kill %1
 | Deliverable | Component | Status | Tests | Commit |
 |-------------|-----------|--------|-------|--------|
 | D4.1 | MetricsPanel TabContainer Integration | ✅ COMPLETE | — | 7d851bd |
-| D4.2 | DashboardApplication Layout Integration | ✅ COMPLETE | — | (src/gdashboard) |
+| D4.2 | Dashboard Layout Integration | ✅ COMPLETE | — | (src/gdashboard) |
 | D4.3 | CommandRegistry Integration Tests | ✅ COMPLETE | 10 | 33067b4 |
 | D4.4 | Arrow Key Navigation Tests | ✅ COMPLETE | 15 | 3de48aa |
 | D4.5 | LoggingWindow Filter Integration Tests | ✅ COMPLETE | 15 | ace5a44 |

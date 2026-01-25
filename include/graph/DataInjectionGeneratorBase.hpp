@@ -35,7 +35,7 @@
 #include "graph/DataGeneratorBase.hpp"
 #include "core/ActiveQueue.hpp"
 
-namespace graph::nodes {
+namespace graph {
 
 /**
  * @class DataInjectionGeneratorBase
@@ -107,5 +107,5 @@ private:
     core::ActiveQueue<PayloadType>& queue_;
 };
 
-} // namespace graph::nodes
+} // namespace graph
 

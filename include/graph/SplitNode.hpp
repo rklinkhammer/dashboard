@@ -29,7 +29,7 @@
 #include <vector>
 #include <memory>
 
-namespace graph::nodes
+namespace graph
 { 
 
 /**

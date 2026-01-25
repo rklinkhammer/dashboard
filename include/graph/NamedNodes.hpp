@@ -134,7 +134,7 @@
 #include "graph/Message.hpp"
 #include <log4cxx/logger.h>
 
-namespace graph::nodes {
+namespace graph {
 
 
 /**
@@ -415,5 +415,5 @@ public:
 };
 #endif
 
-} // namespace graph::nodes
+} // namespace graph
 

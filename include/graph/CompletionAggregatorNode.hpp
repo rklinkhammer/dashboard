@@ -29,13 +29,13 @@
 #include <vector>
 #include <memory>
 #include <log4cxx/logger.h>
-#include "config/IConfigurable.hpp"
+#include "graph/IConfigurable.hpp"
 #include "config/ConfigError.hpp"
 #include "config/JsonView.hpp"
 #include "graph/CompletionSignal.hpp"
-#include "capabilities/ICompletionCallback.hpp"
+#include "graph/ICompletionCallback.hpp"
 
-namespace graph::nodes {
+namespace graph {
 
 class CompletionAggregatorNode : public NamedSinkNode<
     CompletionAggregatorNode,
@@ -44,8 +44,8 @@ class CompletionAggregatorNode : public NamedSinkNode<
     graph::message::CompletionSignal, 
     graph::message::CompletionSignal, 
     graph::message::CompletionSignal>,
-    public graph::node_config::IConfigurable,
-    public graph::nodes::callbacks::ICompletionCallback<graph::message::CompletionSignal> {
+    public graph::IConfigurable,
+    public graph::ICompletionCallback<graph::message::CompletionSignal> {
 public:
  
      /**
@@ -93,8 +93,8 @@ public:
         return CheckForAllCompletions();
     }
     
-    void Configure(const graph::node_config::JsonView& config_json) override {
-        using namespace graph::node_config;
+    void Configure(const graph::JsonView& config_json) override {
+        using namespace graph;
         try {
             LOG4CXX_TRACE(completion_logger_, "Configuring CompletionAggregatorNode from JSON");
             // Configure expected_sensors parameter if present
@@ -221,5 +221,5 @@ private:
 
 };
 
-}  // namespace graph::nodes
+}  // namespace graph
 

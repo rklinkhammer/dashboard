@@ -47,7 +47,7 @@
 #include "core/ActiveQueue.hpp"
 #include "core/TypeInfo.hpp"
 
-namespace graph::nodes {
+namespace graph {
 
     // ===================================================================================
     // Concrete Port Function Implementation
@@ -260,5 +260,5 @@ namespace graph::nodes {
         core::ActiveQueue<T> queue_;
     };
 
-}  // namespace graph::nodes
+}  // namespace graph
 

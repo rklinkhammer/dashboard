@@ -3,8 +3,7 @@
 #include <string>
 #include <map>
 #include <cstdint>
-#include "app/AppContext.hpp"
-
+#include "graph/ExecutionState.hpp"
 namespace graph {
 
 /**
@@ -48,7 +47,7 @@ struct ExecutionResult {
     std::string message;
 
     /// Current execution state after operation
-    app::ExecutionState current_state = app::ExecutionState::ERROR;
+    graph::ExecutionState current_state = graph::ExecutionState::ERROR;
 
     /// Time taken for operation (milliseconds)
     uint32_t elapsed_time_ms = 0;

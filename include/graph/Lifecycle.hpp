@@ -33,7 +33,7 @@
 #include <atomic>
 #include <chrono>
 
-namespace graph::nodes
+namespace graph
 {
 
     /**
@@ -119,5 +119,5 @@ namespace graph::nodes
 
     };
 
-} // namespace graph::nodes
+} // namespace graph
 

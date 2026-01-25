@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.23)
 project(gdashboard 
     VERSION 0.1.0
     DESCRIPTION "Real-time metrics visualization dashboard for graph execution engines"
@@ -18,6 +18,22 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# Set output directories
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Add cmake modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+# Add Homebrew CMake modules path (for macOS)
+if(APPLE)
+    list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew")
+    # Add Eigen path for Homebrew on macOS
+    list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/eigen")
+endif()
+
+
 # ============================================================================
 # Dependencies
 # ============================================================================
@@ -26,6 +42,8 @@ endif()
 find_package(nlohmann_json REQUIRED)
 find_package(FTXUI REQUIRED)
 find_package(GTest)
+find_package(log4cxx REQUIRED)
+find_package(Eigen3 REQUIRED NO_MODULE)
 
 # Include directories (for all targets)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -36,6 +54,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Add subdirectories in order of dependencies
 add_subdirectory(src)
+
+# Plugins
+add_subdirectory(plugins)
 
 # Add tests (optional, controlled by ENABLE_TESTS)
 if(GTest_FOUND)

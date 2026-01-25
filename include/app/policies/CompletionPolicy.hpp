@@ -2,44 +2,88 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
-#include "app/AppContext.hpp"
+#include "graph/GraphExecutorContext.hpp"
 
+namespace app::policies
+{
 
+    static auto completion_logger = log4cxx::Logger::getLogger("app.policies.CompletionPolicy");
 
-namespace app::policies {
+    class CompletionPolicy : public graph::IExecutionPolicy
+    {
+    public:
+        CompletionPolicy()
+        {
+            LOG4CXX_TRACE(completion_logger, "CompletionPolicy initialized");
+        }
 
-static auto logger = log4cxx::Logger::getLogger("app.policies.CompletionPolicy");
+        virtual ~CompletionPolicy() = default;
 
-class CompletionPolicy : public graph::policies::IExecutionPolicy {
-public:
-    CompletionPolicy() {
-        LOG4CXX_TRACE(logger, "CompletionPolicy initialized");
-    }   
+        bool OnInit(graph::GraphExecutorContext &context) override
+        {
+            LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnInit called");
+            // Initialize metrics system here if needed
+            InitCompletionCallbacks(context);
+            return true;
+        }
 
-    virtual ~CompletionPolicy() = default;
+        bool OnStart(graph::GraphExecutorContext &context) override
+        {
+            LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnStart called");
 
-    bool OnInit(app::AppContext& context) override {
-        LOG4CXX_TRACE(logger, "CompletionPolicy OnInit called");
-        // Initialize metrics system here if needed
-        return true;
-    }
+            auto fn = [this, &context]()
+            {
+                LOG4CXX_TRACE(completion_logger, "CompletionPolicy::OnRun() - waiting for completion signal or timeout");
+                std::unique_lock lock(completion_mutex_);
+                if (!completion_signaled_)
+                {
+                    auto completed = completion_cv_.wait_for(lock, max_duration_);
+                    LOG4CXX_TRACE(completion_logger, "CompletionPolicy::OnRun() - wait completed, signaled=" 
+                        << (completed == std::cv_status::no_timeout));
+                }
+                else
+                {
+                    LOG4CXX_TRACE(completion_logger, "CompletionPolicy::OnRun() - completion already signaled");
+                }
+                context.SetStopped();
+                LOG4CXX_TRACE(completion_logger, "CompletionPolicy::OnRun() - signaling shutdown");
+            };
+            completion_thread_ = std::thread(fn);
+            return true;
+        }
 
-    bool OnStart(app::AppContext& context) override {
-        LOG4CXX_TRACE(logger, "CompletionPolicy OnStart called");
-        // Start metrics collection here if needed
-        return true;
-    }
+        void OnStop(graph::GraphExecutorContext &) override
+        {
+            LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnStop called");
+            // Stop metrics collection and cleanup here if needed
+        }
 
-    void OnStop(app::AppContext& context) override {
-        LOG4CXX_TRACE(logger, "CompletionPolicy OnStop called");
-        // Stop metrics collection and cleanup here if needed
-    }
+        void OnJoin(graph::GraphExecutorContext &) override
+        {
+            LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnJoin called");
+            if (completion_thread_.joinable()) {
+                completion_thread_.join();
+            }   
+            // Finalize metrics reporting here if needed
+        }
 
-    void OnJoin(app::AppContext& context) override {
-        LOG4CXX_TRACE(logger, "CompletionPolicy OnJoin called");
-        // Finalize metrics reporting here if needed
-    }   
+        void SetMaxDuration(std::chrono::milliseconds duration)
+        {
+            max_duration_ = duration;
+            LOG4CXX_TRACE(completion_logger, "CompletionPolicy max duration set to "
+                                                 << max_duration_.count() << " ms");
+        }
 
-}; // class CompletionPolicy
-    
-}// namespace app::policies
+    private:
+        bool InitCompletionCallbacks(graph::GraphExecutorContext &context);
+
+        std::thread completion_thread_;
+        std::condition_variable completion_cv_;
+        std::mutex completion_mutex_;
+        bool completion_signaled_ = false;
+        std::chrono::milliseconds max_duration_;
+        std::vector<std::shared_ptr<void>> completion_callbacks_;
+
+    }; // class CompletionPolicy
+
+} // namespace app::policies

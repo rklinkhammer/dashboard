@@ -37,42 +37,14 @@ namespace graph {
 static log4cxx::LoggerPtr logger_ = 
     log4cxx::Logger::getLogger("graph.GraphExecutor");
 
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-std::string GetExecutionStateName(app::ExecutionState state) {
-  switch (state) {
-    case app::ExecutionState::INITIALIZED:
-      return "INITIALIZED";
-    case app::ExecutionState::PAUSED:
-      return "PAUSED";
-    case app::ExecutionState::RUNNING:
-      return "RUNNING";
-    case app::ExecutionState::STEPPING:
-      return "STEPPING";
-    case app::ExecutionState::STOPPING:
-      return "STOPPING";
-    case app::ExecutionState::STOPPED:
-      return "STOPPED";
-    case app::ExecutionState::ERROR:
-      return "ERROR";
-    default:
-      return "UNKNOWN";
-  }
-}
 
 // ============================================================================
 // GraphExecutor Implementation
 // ============================================================================
 
-GraphExecutor::GraphExecutor(std::shared_ptr<app::AppContext> context, 
-                            std::unique_ptr<ExecutionPolicyChain> policy_chain) :
-            policy_chain_(std::move(policy_chain)), context_(context) {
+GraphExecutor::GraphExecutor( std::unique_ptr<ExecutionPolicyChain> policy_chain) :
+            policy_chain_(std::move(policy_chain)) {
     LOG4CXX_TRACE(logger_, "GraphExecutor constructed");
-    if (!context_->GetGraphManager()) {
-        throw std::invalid_argument("GraphManager cannot be null");
-    }
 }
 
 InitializationResult GraphExecutor::Init() {
@@ -80,22 +52,22 @@ InitializationResult GraphExecutor::Init() {
 
     LOG4CXX_TRACE(logger_, "GraphExecutor::Init() called");
     InitializationResult init_result;
-    bool policy_result = policy_chain_ ? policy_chain_->OnInit(*context_) : true;
+    bool policy_result = policy_chain_ ? policy_chain_->OnInit(executor_context_) : true;
     if(!policy_result) {
         init_result.success = false;
         init_result.message = "ExecutionPolicyChain::OnInit() failed";
         return init_result;
     }
     // Initialize the graph
-    if (!context_->GetGraphManager()->Init()) {
+    if (!graph_manager_->Init()) {
         init_result.success = false;
         init_result.message = "GraphManager::Init() failed";
         return init_result;
     }
-    init_result.nodes_initialized = CountNodesinLifecycleState(graph::nodes::LifecycleState::Initialized);
-    init_result.nodes_failed = CountNodesinLifecycleState(graph::nodes::LifecycleState::Invalid) +
-                               CountNodesinLifecycleState(graph::nodes::LifecycleState::Uninitialized);
-    context_->SetExecutionState(app::ExecutionState::INITIALIZED);
+    init_result.nodes_initialized = CountNodesinLifecycleState(graph::LifecycleState::Initialized);
+    init_result.nodes_failed = CountNodesinLifecycleState(graph::LifecycleState::Invalid) +
+                               CountNodesinLifecycleState(graph::LifecycleState::Uninitialized);
+    SetExecutionState(ExecutionState::INITIALIZED);
     init_result.success = true;
     init_result.message = "GraphExecutor initialized successfully";
     LOG4CXX_TRACE(logger_, "GraphExecutor::Init() completed");
@@ -110,19 +82,19 @@ ExecutionResult GraphExecutor::Start() {
 
     LOG4CXX_TRACE(logger_, "GraphExecutor::Start() called");
     ExecutionResult result;
-    bool policy_result = policy_chain_ ? policy_chain_->OnStart(*context_) : true;
+    bool policy_result = policy_chain_ ? policy_chain_->OnStart(executor_context_) : true;
     if(!policy_result) {
         result.success = false;
         result.message = "ExecutionPolicyChain::OnStart() failed";
         return result;
     }
     // Start the graph
-    if (!context_->GetGraphManager()->Start()) {
+    if (!graph_manager_->Start()) {
         result.success = false;
         result.message = "GraphManager::Start() failed";
         return result;
     }
-    context_->SetExecutionState(app::ExecutionState::RUNNING);
+    SetExecutionState(ExecutionState::RUNNING);
     LOG4CXX_TRACE(logger_, "GraphExecutor::Start() completed");
 
     result.success = true;
@@ -137,14 +109,14 @@ ExecutionResult GraphExecutor::Run() {
 
     LOG4CXX_TRACE(logger_, "GraphExecutor::Run() called");
     ExecutionResult result;   
-    bool policy_result =  policy_chain_ ? policy_chain_->OnRun(*context_) : false;
+    bool policy_result =  policy_chain_ ? policy_chain_->OnRun(executor_context_) : false;
     if(!policy_result) {
         result.success = false;
         result.message = "ExecutionPolicyChain::OnRun() failed";
         return result;
     }
 
-    while(!context_->IsStopRequested()) {
+    while(!IsStopped() || executor_context_.IsStopped()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     LOG4CXX_TRACE(logger_, "GraphExecutor::Run() completed, success=" << result.success);
@@ -161,9 +133,9 @@ ExecutionResult GraphExecutor::Stop() {
     LOG4CXX_TRACE(logger_, "GraphExecutor::Stop() called");
     ExecutionResult result;
     // Stop the graph
-    context_->GetGraphManager()->Stop();
+    graph_manager_->Stop();
     if (policy_chain_) {
-        policy_chain_->OnStop(*context_);
+        policy_chain_->OnStop(executor_context_);
     }
     LOG4CXX_TRACE(logger_, "GraphExecutor::Stop() completed");
 
@@ -181,9 +153,9 @@ ExecutionResult GraphExecutor::Join() {
     ExecutionResult result;
 
     // Join all threads
-    context_->GetGraphManager()->Join();
+    graph_manager_->Join();
     if (policy_chain_) {
-        policy_chain_->OnJoin(*context_);
+        policy_chain_->OnJoin(executor_context_);
     }
     LOG4CXX_TRACE(logger_, "GraphExecutor::Join() completed");
 
@@ -248,9 +220,9 @@ ExecutionResult GraphExecutor::Execute() {
 
 // ========== Private Methods ==========
 
-int GraphExecutor::CountNodesinLifecycleState(graph::nodes::LifecycleState state) const {
+int GraphExecutor::CountNodesinLifecycleState(graph::LifecycleState state) const {
     int count = 0;
-    auto graph_manager = context_->GetGraphManager();
+    auto graph_manager = graph_manager_;
     auto nodes = graph_manager->GetNodes();
     for (const auto& node : nodes) {
         if (node->GetLifecycleState() == state) {

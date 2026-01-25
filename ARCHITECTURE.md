@@ -66,14 +66,14 @@ This document defines the complete architectural framework for building **`gdash
 **`gdashboard`** is a first-class CMake executable target that:
 - Serves as the main entry point for the dashboard system
 - Creates GraphExecutor (MockGraphExecutor for development)
-- Creates and manages a `DashboardApplication` instance
+- Creates and manages a `Dashboard` instance
 - Orchestrates initialization: get metrics from capability, create panels with defaults, Init executor, Start executor, Run loop
 - Runs the main 30 FPS event loop until user exits
 - Integrates with GraphExecutor's MetricsCapability to display real-time metrics
 
 **Location**: `src/gdashboard/` (new module)  
 **Main Entry Point**: `src/gdashboard/dashboard_main.cpp`  
-**Application Class**: `DashboardApplication` (defined in `include/ui/DashboardApplication.hpp`)
+**Application Class**: `Dashboard` (defined in `include/ui/Dashboard.hpp`)
 
 **Command-line Usage**:
 ```bash
@@ -135,7 +135,7 @@ The architecture has been refined and finalized with two major improvements:
 
 This means:
 - ✅ All dashboard components, layout, rendering logic, and event handling are **production quality**
-- ✅ All application code (DashboardApplication, gdashboard entry point) follows production standards
+- ✅ All application code (Dashboard, gdashboard entry point) follows production standards
 - ✅ The integration with MetricsCapability is **final and production-grade**
 - ✅ Data structures (MetricsEvent, MetricsSnapshot, MetricDescriptor) are final
 - ✅ Thread safety, concurrency patterns, and state management are production-ready
@@ -144,7 +144,7 @@ This means:
 **Consequence**: When the real GraphExecutor becomes available, integration is seamless:
 1. Real GraphExecutor implements the same GraphExecutor interface as MockGraphExecutor
 2. Real GraphExecutor provides MetricsCapability with the same API
-3. DashboardApplication calls `executor_->GetCapability<MetricsCapability>()` - works with both
+3. Dashboard calls `executor_->GetCapability<MetricsCapability>()` - works with both
 4. Metrics flow from real executor through same MetricsCapability interface
 
 No changes needed to the dashboard itself, application logic, or UI rendering.
@@ -317,7 +317,7 @@ The `gdashboard` application emphasizes:
 - Users diagnose errors by reviewing LoggingWindow with filter set to ERROR/FATAL
 
 **Decision 10: Callback Lifecycle**
-- Callbacks are installed once during `DashboardApplication::Initialize()` (after `executor.Start()`)
+- Callbacks are installed once during `Dashboard::Initialize()` (after `executor.Start()`)
 - Callbacks remain **active for the entire lifetime of the graph execution**
 - Callbacks are automatically cleaned up after `executor.Join()` completes
 - Dashboard exit while graph running: gracefully stops executor, allowing callbacks to drain
@@ -362,7 +362,7 @@ The `gdashboard` application emphasizes:
 
 ```
 ┌────────────────────────────────────────────┐
-│  DashboardApplication (Main)               │
+│  Dashboard (Main)               │
 │  - Orchestrates initialization & run       │
 ├────────────────────────────────────────────┤
 │  FTXUI Components & Layout                 │
@@ -419,7 +419,7 @@ This dashboard is built using FTXUI 6.1.9 components without custom wrapper clas
 **Real-time Update Pattern**:
 ```cpp
 // Dashboard main loop - 30 FPS
-void DashboardApplication::Run() {
+void Dashboard::Run() {
     while (!should_exit_) {
         // Poll capability for latest metric values
         for (auto& [metric_id, tile] : metric_tiles_) {
@@ -438,7 +438,7 @@ void DashboardApplication::Run() {
 
 **State Management**:
 - Main dashboard holds reference to `GraphExecutor` (with MetricsCapability)
-- DashboardApplication implements `IMetricsSubscriber` interface
+- Dashboard implements `IMetricsSubscriber` interface
 - Local state: `std::map<MetricId, MetricsTileWindow>` for tiles
 - MetricsCapability invokes OnMetricsEvent() callback when metrics are published
 - Tile state updated immediately on metric event (callback model)
@@ -1080,7 +1080,7 @@ private:
 ### Example 3: Multi-View Dashboard with Navigation
 
 ```cpp
-class DashboardApplication {
+class Dashboard {
 public:
     void Initialize() {
         // Create main container
@@ -1641,7 +1641,7 @@ private:
 
 **Key Log4cxx Integration Points**:
 - Custom `FTXUILog4cxxAppender` redirects log4cxx output from stdout to LoggingWindow
-- Appender is registered during `DashboardApplication::Initialize()` (after window creation)
+- Appender is registered during `Dashboard::Initialize()` (after window creation)
 - All subsequent log messages appear in LoggingWindow with timestamp, level, logger name, and message
 - Circular buffer maintains recent logs (default 1000 lines); older entries are automatically discarded
 - Users can filter by log level (Debug/Info/Warn/Error/Fatal) and search by text
@@ -2090,7 +2090,7 @@ This section defines the **concrete interfaces and data flows** required for the
 - Exposes `RegisterMetricsCallback()` for live streaming updates
 - Works with both MockGraphExecutor and real GraphExecutor (identical interface)
 
-**DashboardApplication**: Orchestrates UI
+**Dashboard**: Orchestrates UI
 - Queries MetricsCapability to discover available metrics (before Init)
 - Creates UI tiles for each discovered metric with default values
 - Registers callback to receive live metric updates
@@ -2099,7 +2099,7 @@ This section defines the **concrete interfaces and data flows** required for the
 
 **MetricsTileWindow**: Displays single metric
 - Initialized with default value from MetricDescriptor
-- Receives value updates via OnMetricsEvent() callbacks from DashboardApplication
+- Receives value updates via OnMetricsEvent() callbacks from Dashboard
 - Maintains local min/max history
 - Renders gauge with color coding
 - Updates immediately when metrics are published (callback-driven)
@@ -2141,12 +2141,12 @@ struct MetricsSnapshot {
 
 ### 2b. MetricsCapability Integration Pattern
 
-**DashboardApplication implements IMetricsSubscriber and receives metric callbacks**:
+**Dashboard implements IMetricsSubscriber and receives metric callbacks**:
 
 ```cpp
 #include "app/metrics/IMetricsSubscriber.hpp"
 
-class DashboardApplication : public IMetricsSubscriber {
+class Dashboard : public IMetricsSubscriber {
 private:
     std::shared_ptr<GraphExecutor> executor_;
     std::shared_ptr<MetricsCapability> metrics_cap_;
@@ -2201,7 +2201,7 @@ private:
 };
 ```
 
-**Key insight**: DashboardApplication implements IMetricsSubscriber and receives metric updates via OnMetricsEvent() callbacks. MetricsCapability invokes callbacks asynchronously when metrics are published by the executor.
+**Key insight**: Dashboard implements IMetricsSubscriber and receives metric updates via OnMetricsEvent() callbacks. MetricsCapability invokes callbacks asynchronously when metrics are published by the executor.
 
 ### 3. Initialization Sequence (Strict Ordering)
 
@@ -2228,8 +2228,8 @@ Step 2: Build GraphExecutor Using GraphExecutorBuilder (Builder Pattern)
         - Capabilities are now AVAILABLE via CapabilityBus
         - MetricsCapability accessible for panel creation
 
-Step 3: Create DashboardApplication with Executor Reference
-        - DashboardApplication receives executor instance
+Step 3: Create Dashboard with Executor Reference
+        - Dashboard receives executor instance
         - Window height configuration passed to constructor
         - Call app.Initialize()
           * Get MetricsCapability from executor via CapabilityBus
@@ -2287,7 +2287,7 @@ Step 9: Call executor.Stop() and executor.Join()
 
 ### 4. Discovery Interface
 
-**MetricsCapability exposes these methods to DashboardApplication:**
+**MetricsCapability exposes these methods to Dashboard:**
 
 ```cpp
 class MetricsCapability : public Capability {
@@ -2306,10 +2306,10 @@ public:
 
 ### 5. Update Callback Pattern
 
-DashboardApplication receives metric updates via IMetricsSubscriber callbacks:
+Dashboard receives metric updates via IMetricsSubscriber callbacks:
 
 ```cpp
-// In DashboardApplication::Initialize()
+// In Dashboard::Initialize()
 // Get NodeMetricsSchema from all nodes - completely describes metrics
 auto node_schemas = metrics_cap_->GetNodeMetricsSchemas();
 for (const auto& node_schema : node_schemas) {
@@ -2339,8 +2339,8 @@ metrics_cap_->RegisterMetricsCallback(
     }
 );
 
-// In DashboardApplication::OnMetricsEvent() callback (IMetricsSubscriber implementation)
-void DashboardApplication::OnMetricsEvent(const MetricsEvent& event) {
+// In Dashboard::OnMetricsEvent() callback (IMetricsSubscriber implementation)
+void Dashboard::OnMetricsEvent(const MetricsEvent& event) {
     // Called asynchronously when metrics are published by executor
     std::string key = event.source + "::" + event.data.at("metric_name");
     auto it = metric_tiles_.find(key);
@@ -2350,7 +2350,7 @@ void DashboardApplication::OnMetricsEvent(const MetricsEvent& event) {
     }
 }
 
-// In DashboardApplication::Run() main loop
+// In Dashboard::Run() main loop
 for (;;) {
     // FTXUI renders current state
     // Tiles are updated via OnMetricsEvent() callbacks, not polling
@@ -2408,14 +2408,14 @@ MetricsPublisher Thread (executor's dedicated thread)
     reads event from ActiveQueue
     invokes registered IMetricsSubscriber::OnMetricsEvent() callbacks
           ↓
-DashboardApplication::OnMetricsEvent() (called in MetricsPublisher thread context)
+Dashboard::OnMetricsEvent() (called in MetricsPublisher thread context)
     updates tile state atomically (atomic<double> or mutex-protected)
     very fast operation (<1ms)
           ↓
 MetricsTileWindow (tile state updated)
     current_value_, min_value_, max_value_ are now current
           ↓
-DashboardApplication::Run() loop (FTXUI main thread, each 33ms)
+Dashboard::Run() loop (FTXUI main thread, each 33ms)
     reads tile state (set by callbacks from MetricsPublisher thread)
     FTXUI renders screen with latest tile values
 ```
@@ -2495,8 +2495,8 @@ DashboardApplication::Run() loop (FTXUI main thread, each 33ms)
 
 **Implementation Detail**:
 ```cpp
-// In DashboardApplication::Run()
-void DashboardApplication::Run() {
+// In Dashboard::Run()
+void Dashboard::Run() {
     while (!should_exit_) {
         // Check if user pressed 'q' to exit
         if (user_pressed_quit && executor_->GetState() == ExecutorState::Running) {
@@ -2524,7 +2524,7 @@ void DashboardApplication::Run() {
 ### Callback Lifecycle (Decisions 8 & 10)
 
 **Callback Installation**:
-- Callbacks are registered **once** during `DashboardApplication::Initialize()`
+- Callbacks are registered **once** during `Dashboard::Initialize()`
 - This happens after `executor.Start()` has begun metrics publishing
 - All metric callbacks are installed before `app.Run()` starts the FTXUI loop
 
@@ -2544,7 +2544,7 @@ void DashboardApplication::Run() {
 
 **Memory Safety**:
 - Executor holds references to callbacks until destruction
-- Dashboard (DashboardApplication) lifetime must outlive executor OR
+- Dashboard (Dashboard) lifetime must outlive executor OR
 - Executor is destroyed after Dashboard (recommended)
 - Callbacks use weak pointers to Dashboard to safely handle destruction
 
@@ -2554,7 +2554,7 @@ int main() {
     auto executor = std::make_shared<MockGraphExecutor>(config);
     executor->Init();
     
-    auto app = std::make_shared<DashboardApplication>(executor);
+    auto app = std::make_shared<Dashboard>(executor);
     app->Initialize();  // Registers callbacks HERE
     
     executor->Start();
@@ -2630,11 +2630,11 @@ Create the first-class executable target with this structure:
 ```
 src/gdashboard/
 ├── dashboard_main.cpp          (Main entry point, follows 10-step initialization)
-├── DashboardApplication.hpp    (Core orchestrator class)
-└── DashboardApplication.cpp    (Implementation)
+├── Dashboard.hpp    (Core orchestrator class)
+└── Dashboard.cpp    (Implementation)
 
 include/ui/
-├── DashboardApplication.hpp    (Public interface)
+├── Dashboard.hpp    (Public interface)
 ├── LayoutWindow.hpp            (Basic container component)
 ├── MetricsPanel.hpp            (Metrics section placeholder)
 ├── LoggingWindow.hpp           (Logging section placeholder)
@@ -2651,11 +2651,11 @@ CMakeLists.txt                  (Add 'gdashboard' executable target)
    - Link with FTXUI, core libraries
    - Set output directory and installation rules
 
-2. **Implement `DashboardApplication` Class**:
+2. **Implement `Dashboard` Class**:
    ```cpp
-   class DashboardApplication {
+   class Dashboard {
    public:
-       explicit DashboardApplication(
+       explicit Dashboard(
            std::shared_ptr<GraphExecutor> executor);
        
        // Initialization: discover metrics and create tiles
@@ -2686,7 +2686,7 @@ CMakeLists.txt                  (Add 'gdashboard' executable target)
 3. **Implement `dashboard_main.cpp` Entry Point**:
    ```cpp
    #include <memory>
-   #include "ui/DashboardApplication.hpp"
+   #include "ui/Dashboard.hpp"
    #include "graph/GraphExecutor.hpp"
    
    int main(int argc, char* argv[]) {
@@ -2704,7 +2704,7 @@ CMakeLists.txt                  (Add 'gdashboard' executable target)
            executor->Init();
            
            // Step 3: Create dashboard with executor
-           auto app = std::make_shared<DashboardApplication>(executor);
+           auto app = std::make_shared<Dashboard>(executor);
            
            // Step 4: Initialize dashboard (discovers metrics)
            app->Initialize();
@@ -2751,7 +2751,7 @@ CMakeLists.txt                  (Add 'gdashboard' executable target)
 
 **Deliverables**:
 - [ ] `src/gdashboard/` directory created with dashboard_main.cpp
-- [ ] `DashboardApplication` class fully implemented
+- [ ] `Dashboard` class fully implemented
 - [ ] `LayoutWindow` base container class
 - [ ] Static window shells: MetricsPanel, LoggingWindow, CommandWindow, StatusBar
 - [ ] CMakeLists.txt updated with `gdashboard` executable target
@@ -2787,7 +2787,7 @@ CMakeLists.txt                  (Add 'gdashboard' executable target)
   - [ ] Implement GetLatestMetricValue(node_name, metric_name) API
   - [ ] Implement RegisterMetricsCallback() API
 - [ ] Dashboard metrics integration:
-  - [ ] DashboardApplication receives executor in constructor
+  - [ ] Dashboard receives executor in constructor
   - [ ] Discover metrics from MetricsCapability on Initialize()
   - [ ] Create MetricsTileWindow for each discovered metric
   - [ ] Populate metrics panel with tiles (using grid layout)
@@ -2841,7 +2841,7 @@ CMakeLists.txt                  (Add 'gdashboard' executable target)
 - Auto-activation at 37+ tiles (6×6 grid threshold)
 - Tabs created by NodeName with 18 tiles per tab
 
-**Phase 4.2: DashboardApplication Layout Integration** ✅
+**Phase 4.2: Dashboard Layout Integration** ✅
 - Integrated LayoutConfig for load on startup, save on shutdown
 - Applied window heights, filters, and command history on initialization
 - Persists all configuration to ~/.gdashboard/layout.json
@@ -2893,13 +2893,13 @@ CMakeLists.txt                  (Add 'gdashboard' executable target)
 **Purpose**: 
 - Command-line application that launches the FTXUI dashboard
 - Manages the 10-step initialization sequence
-- Orchestrates the DashboardApplication and executor integration
+- Orchestrates the Dashboard and executor integration
 
 **Structure**:
 ```
 gdashboard (executable)
   ├── dashboard_main.cpp (entry point, ~50-100 lines)
-  │   └── DashboardApplication (orchestrator, ~200-300 lines)
+  │   └── Dashboard (orchestrator, ~200-300 lines)
   │       ├── MetricsPanel (40% height)
   │       ├── LoggingWindow (35% height)
   │       ├── CommandWindow (18% height)
@@ -2916,7 +2916,7 @@ gdashboard (executable)
 # In CMakeLists.txt
 add_executable(gdashboard
     src/gdashboard/dashboard_main.cpp
-    src/gdashboard/DashboardApplication.cpp
+    src/gdashboard/Dashboard.cpp
     # ... other UI sources when created
 )
 target_link_libraries(gdashboard
@@ -2941,7 +2941,7 @@ target_link_libraries(gdashboard
 | Aspect | Status | Lifespan | Replaceability |
 |--------|--------|----------|-----------------|
 | **MockGraphExecutor** | Test Harness | Phases 1-2 (validation) | ❌ Temporary - replaced by real GraphExecutor |
-| **DashboardApplication** | Production | Permanent | ✅ Final and permanent |
+| **Dashboard** | Production | Permanent | ✅ Final and permanent |
 | **MetricsCapability** | Production | Permanent | ✅ Final and permanent |
 | **Dashboard UI Components** | Production | Permanent | ✅ Final and permanent |
 | **gdashboard Application** | Production | Permanent | ✅ Final and permanent |
@@ -2972,7 +2972,7 @@ auto executor = std::make_shared<MockGraphExecutor>(config);
 executor->Init();
 
 // Step 3: Create application with executor
-auto app = std::make_shared<DashboardApplication>(executor);
+auto app = std::make_shared<Dashboard>(executor);
 
 // Step 4: Initialize application (discovers metrics)
 app->Initialize();
@@ -3029,7 +3029,7 @@ executor->Join();    // Join threads
 - **Buffer**: Circular queue, auto-discards old events when full
 - **Files**: Provided by executor (MockGraphExecutor or GraphExecutor)
 
-#### 3. **DashboardApplication** (Main Thread)
+#### 3. **Dashboard** (Main Thread)
 - **What**: Orchestrates UI, discovers metrics, runs 30 FPS pull loop
 - **Key Methods**:
   ```cpp
@@ -3069,7 +3069,7 @@ executor->Join();    // Join threads
       }
   }
   ```
-- **Files**: `include/ui/DashboardApplication.hpp/cpp`
+- **Files**: `include/ui/Dashboard.hpp/cpp`
 
 ### Data Structures: The Three Key Types
 
@@ -4033,7 +4033,7 @@ private:
 };
 
 // In main FTXUI loop:
-void DashboardApplication::MainLoop() {
+void Dashboard::MainLoop() {
     while (!should_exit_) {
         frame_limiter_.BeginFrame();
         
@@ -4946,8 +4946,8 @@ private:
 - Implemented ActivateTabMode(), FindOrCreateTabForNode(), RenderFlatGrid(), RenderTabbed()
 - ✅ Builds successfully, all 168 tests still passing
 
-**D4.2: DashboardApplication Layout Integration**
-- Created: `src/gdashboard/DashboardApplication.cpp` (285 lines)
+**D4.2: Dashboard Layout Integration**
+- Created: `src/gdashboard/Dashboard.cpp` (285 lines)
 - Integrated LayoutConfig loading on Initialize()
 - Implemented config persistence in destructor
 - Applied heights, filters, and history on startup

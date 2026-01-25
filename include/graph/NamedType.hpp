@@ -32,7 +32,7 @@
 #include <string>
 #include "core/TypeInfo.hpp"
 
-namespace graph::nodes
+namespace graph
 {
 
     /**
@@ -74,5 +74,5 @@ namespace graph::nodes
         std::string name_;
     };
 
-} // namespace graph::nodes
+} // namespace graph
 

@@ -252,7 +252,7 @@ public:
     /// Get edge thread metrics (transfer operations, timing)
     /// @return Const reference to ThreadMetrics (valid until edge destroyed)
     /// @note Returns const reference to internal metrics
-    virtual const graph::nodes::ThreadMetrics& GetEdgeThreadMetrics() const = 0;
+    virtual const graph::ThreadMetrics& GetEdgeThreadMetrics() const = 0;
     
     // === State Queries (NEW) ===
     
@@ -273,7 +273,7 @@ public:
 template <typename SrcNode, std::size_t SrcPort, typename DstNode, std::size_t DstPort>
 class EdgeWrapper : public IEdgeBase {
 public:
-    using EdgeType = nodes::Edge<SrcNode, SrcPort, DstNode, DstPort>;
+    using EdgeType = graph::Edge<SrcNode, SrcPort, DstNode, DstPort>;
     using ValueType = typename EdgeType::ValueType;
     
     /// Constructor
@@ -357,7 +357,7 @@ public:
     }
     
     // === Thread Metrics ===
-    const graph::nodes::ThreadMetrics& GetEdgeThreadMetrics() const override {
+    const graph::ThreadMetrics& GetEdgeThreadMetrics() const override {
         // Delegate to wrapped edge's thread metrics (now available after Part 2 instrumentation)
         return edge_->GetThreadMetrics();
     }

@@ -1,0 +1,1 @@
+./bin/gdashboard --json-config ../config/graph_csv_pipeline_dual_port_integration.json  --executor-timeout 30 --plugin-dir ./plugins --csv-input ../tests/data/phase7_scenarios/scenario_realistic_ascent_apogee.csv --log-config ../log4cxx.properties

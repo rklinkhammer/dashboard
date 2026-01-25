@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "ui/DashboardApplication.hpp"
+#include "ui/Dashboard.hpp"
 #include "ui/MetricsPanel.hpp"
 #include "ui/MetricsTilePanel.hpp"
 #include "graph/mock/MockGraphExecutor.hpp"
@@ -36,7 +36,7 @@ TEST_F(Phase2EndToEndTest, DiscoverMetricsFromExecutor) {
 
     // Create dashboard
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     // Check that metrics were discovered
@@ -58,7 +58,7 @@ TEST_F(Phase2EndToEndTest, MetricsValuesUpdateFromExecutorEvents) {
 
     // Create dashboard (discovers metrics)
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto metrics_panel = app.GetMetricsPanel();
@@ -77,7 +77,7 @@ TEST_F(Phase2EndToEndTest, MetricsValuesUpdateFromExecutorEvents) {
 // Test 3: MetricsTilePanel can handle rapid updates
 TEST_F(Phase2EndToEndTest, MetricsTilePanelHandlesRapidUpdates) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -92,12 +92,12 @@ TEST_F(Phase2EndToEndTest, MetricsTilePanelHandlesRapidUpdates) {
     EXPECT_EQ(tile_panel->GetTileCount(), 0);  // No tiles created, just updates
 }
 
-// Test 4: DashboardApplication Run loop works with metrics
-TEST_F(Phase2EndToEndTest, DashboardApplicationRunLoopWithMetrics) {
+// Test 4: Dashboard Run loop works with metrics
+TEST_F(Phase2EndToEndTest, DashboardRunLoopWithMetrics) {
     executor_->Init();
 
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     // Don't actually run the full loop (would block), just verify it's callable
@@ -109,7 +109,7 @@ TEST_F(Phase2EndToEndTest, DashboardApplicationRunLoopWithMetrics) {
 // Test 5: Multiple metric updates in sequence
 TEST_F(Phase2EndToEndTest, SequentialMetricUpdates) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -129,7 +129,7 @@ TEST_F(Phase2EndToEndTest, SequentialMetricUpdates) {
 // Test 6: Metrics panel rendering doesn't crash with no discovered metrics
 TEST_F(Phase2EndToEndTest, MetricsPanelRendersWithoutDiscoveredMetrics) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto metrics_panel = app.GetMetricsPanel();
@@ -143,7 +143,7 @@ TEST_F(Phase2EndToEndTest, MetricsPanelRendersWithoutDiscoveredMetrics) {
 // Test 7: Metrics panel with placeholder metrics falls back correctly
 TEST_F(Phase2EndToEndTest, MetricsPanelFallsBackToPlaceholders) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto metrics_panel = app.GetMetricsPanel();
@@ -160,7 +160,7 @@ TEST_F(Phase2EndToEndTest, MetricsPanelFallsBackToPlaceholders) {
 // Test 8: Thread safety of metric updates
 TEST_F(Phase2EndToEndTest, ThreadSafeMetricUpdates) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -199,7 +199,7 @@ TEST_F(Phase2EndToEndTest, AlertStatusReflectedInRendering) {
     // This test would need actual metrics discovery
     // For now, verify the rendering path exists
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto metrics_panel = app.GetMetricsPanel();
@@ -212,7 +212,7 @@ TEST_F(Phase2EndToEndTest, AlertStatusReflectedInRendering) {
 // Test 10: MetricsTilePanel returns nullptr for non-existent tiles
 TEST_F(Phase2EndToEndTest, GetTileReturnsNullForNonExistent) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -224,7 +224,7 @@ TEST_F(Phase2EndToEndTest, GetTileReturnsNullForNonExistent) {
 // Test 11: UpdateAllMetrics is idempotent
 TEST_F(Phase2EndToEndTest, UpdateAllMetricsIsIdempotent) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -241,7 +241,7 @@ TEST_F(Phase2EndToEndTest, UpdateAllMetricsIsIdempotent) {
 // Test 12: Metrics panel metric count accuracy
 TEST_F(Phase2EndToEndTest, MetricsPanelCountAccuracy) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto metrics_panel = app.GetMetricsPanel();
@@ -269,7 +269,7 @@ TEST_F(Phase2EndToEndTest, MetricsPanelCountAccuracy) {
 // Test D2.9-1: Node Grouping - Adding tiles to proper node groups
 TEST_F(Phase2EndToEndTest, NodeGroupingAddTiles) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -295,7 +295,7 @@ TEST_F(Phase2EndToEndTest, NodeGroupingAddTiles) {
 // Test D2.9-2: Node Grouping - GetTilesForNode returns correct tiles
 TEST_F(Phase2EndToEndTest, NodeGroupingGetTilesForNode) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -329,7 +329,7 @@ TEST_F(Phase2EndToEndTest, NodeGroupingGetTilesForNode) {
 // Test D2.9-3: Node Grouping - GetNodeCount returns correct count
 TEST_F(Phase2EndToEndTest, NodeGroupingGetNodeCount) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -354,7 +354,7 @@ TEST_F(Phase2EndToEndTest, NodeGroupingGetNodeCount) {
 // Test D2.9-4: Node Grouping - Grouped rendering with section headers
 TEST_F(Phase2EndToEndTest, NodeGroupingGroupedRendering) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();
@@ -382,7 +382,7 @@ TEST_F(Phase2EndToEndTest, NodeGroupingGroupedRendering) {
 // Test D2.9-5: Node Grouping - GetTile lookup within node
 TEST_F(Phase2EndToEndTest, NodeGroupingGetTileLookup) {
     WindowHeightConfig heights;
-    DashboardApplication app(executor_, heights);
+    Dashboard app(executor_, heights);
     app.Initialize();
 
     auto tile_panel = app.GetMetricsPanel()->GetMetricsTilePanel();

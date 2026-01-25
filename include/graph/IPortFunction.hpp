@@ -50,7 +50,7 @@
 #include "core/ActiveQueue.hpp"
 #include "core/TypeInfo.hpp"
 
-namespace graph::nodes {
+namespace graph {
 
     // ===================================================================================
     // Port Function Interface - Unified Metadata + Queue + Threading
@@ -258,5 +258,5 @@ namespace graph::nodes {
         virtual const void* GetQueueVoid() const = 0;
     };
 
-}  // namespace graph::nodes
+}  // namespace graph
 

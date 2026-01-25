@@ -31,7 +31,7 @@
 #include <optional>
 #include <log4cxx/logger.h>
 
-namespace graph::nodes
+namespace graph
 {
     /**
      * @brief Output port with thread synchronization primitives
@@ -174,7 +174,7 @@ namespace graph::nodes
         }
 
         /// Retrieve collected metrics (thread-safe read)
-        const graph::nodes::ThreadMetrics& GetThreadMetrics() const {
+        const graph::ThreadMetrics& GetThreadMetrics() const {
             return thread_metrics_;
         }
 

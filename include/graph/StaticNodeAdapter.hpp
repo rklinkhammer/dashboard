@@ -94,7 +94,7 @@ public:
          * @param type_name Runtime type name for debugging
          */
         StaticNodeInstance(
-            std::shared_ptr<graph::nodes::INode> node,
+            std::shared_ptr<graph::INode> node,
             const std::string& type_name);
 
         /**
@@ -118,7 +118,7 @@ public:
 
     private:
         // The actual node being wrapped
-        std::shared_ptr<graph::nodes::INode> node_;
+        std::shared_ptr<graph::INode> node_;
         
         // Runtime type name
         std::string type_name_;
@@ -163,7 +163,7 @@ public:
      * @endcode
      */
     static NodeFacadeAdapter Adapt(
-        std::shared_ptr<graph::nodes::INode> node,
+        std::shared_ptr<graph::INode> node,
         const std::string& type_name);
 };
 

@@ -23,13 +23,7 @@ class MetricsCapability {
 public:
     virtual ~MetricsCapability() = default;
     
-    // Discovery: Get all node metrics schemas
-    // Called during dashboard Initialize() to create tiles
-    virtual std::vector<app::metrics::NodeMetricsSchema> GetNodeMetricsSchemas() {
-        std::lock_guard<std::mutex> lock(callbacks_lock_);
-        return schemas_;
-    }
-    
+
     // Registration: Register callback for metrics updates
     // Called during dashboard Initialize()
     // Callback invoked by MetricsPublisher thread
@@ -47,7 +41,6 @@ public:
             subscribers_.end());
     }   
 
-    // // Status
     // virtual bool IsPublishing() const = 0;
     virtual size_t GetCallbackCount() {
         std::lock_guard<std::mutex> lock(callbacks_lock_);
@@ -60,6 +53,11 @@ public:
     virtual void SetNodeMetricsSchemas(std::vector<app::metrics::NodeMetricsSchema> schemas) {
         std::lock_guard<std::mutex> lock(callbacks_lock_);
         schemas_ = schemas;
+    }
+
+    std::vector<app::metrics::NodeMetricsSchema> GetNodeMetricsSchemas() {
+        std::lock_guard<std::mutex> lock(callbacks_lock_);
+        return schemas_;
     }
     
     /**
@@ -77,10 +75,9 @@ public:
     
 protected:
 
-    std::vector<app::metrics::NodeMetricsSchema> schemas_; 
     std::mutex callbacks_lock_;
     std::vector<app::metrics::IMetricsSubscriber*> subscribers_;   
-
+    std::vector<app::metrics::NodeMetricsSchema> schemas_;
 };
 
 }  // namespace app::capabilities

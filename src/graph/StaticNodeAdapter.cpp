@@ -37,7 +37,7 @@ static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("graph.config.Static
 static std::map<void*, std::shared_ptr<StaticNodeAdapter::StaticNodeInstance>> g_adapter_instances;
 
 NodeFacadeAdapter StaticNodeAdapter::Adapt(
-    std::shared_ptr<graph::nodes::INode> node,
+    std::shared_ptr<graph::INode> node,
     const std::string& type_name) {
     
     if (!node) {
@@ -68,7 +68,7 @@ NodeFacadeAdapter StaticNodeAdapter::Adapt(
 }
 
 StaticNodeAdapter::StaticNodeInstance::StaticNodeInstance(
-    std::shared_ptr<graph::nodes::INode> node,
+    std::shared_ptr<graph::INode> node,
     const std::string& type_name)
     : node_(std::move(node)), type_name_(type_name) {
     

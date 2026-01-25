@@ -40,11 +40,11 @@
 #include "graph/CompletionSignal.hpp"
 #include "sensor/SensorClassificationType.hpp"
 #include "core/ActiveQueue.hpp"
-#include "capabilities/NodeCallback.hpp"
-#include "capabilities/ICallbackProvider.hpp"
+#include "graph/NodeCallback.hpp"
+#include "graph/ICallbackProvider.hpp"
 #include <log4cxx/logger.h>
 
-namespace graph::nodes {
+namespace graph {
 
 /**
  * @brief Data producer node with typed notifications and completion signals
@@ -124,7 +124,7 @@ template <typename NodeType, typename DataGenerator, typename DataType, typename
     sensors::SensorClassificationType Classification = sensors::SensorClassificationType::UNKNOWN>
 class DataProducerWithNotification : 
     public NamedSourceNode<NodeType, graph::message::Message, NotificationType>,
-    public graph::nodes::callbacks::ISourceCallbackProvider<DataType> {
+    public graph::ISourceCallbackProvider<DataType> {
 public:
     /**
      * @brief Constructor for typed data producer with notifications
@@ -604,5 +604,5 @@ public:
         std::string producer_name_ = "DataProducerWithNotification";
 };
 
-} // namespace graph::nodes
+} // namespace graph
 

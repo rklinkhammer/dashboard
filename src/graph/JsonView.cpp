@@ -21,10 +21,11 @@
 // SOFTWARE.
 
 #include "config/JsonView.hpp"
+#include "config/ConfigError.hpp"
 #include <format>
 #include <limits>
 
-namespace graph::node_config {
+namespace graph {
 
 bool JsonView::Contains(const std::string& key) const {
     return json_.contains(key) && !json_[key].is_null();
@@ -155,4 +156,4 @@ std::string JsonView::FormatError(const std::string& key,
     );
 }
 
-}  // namespace graph::node_config
+}  // namespace graph

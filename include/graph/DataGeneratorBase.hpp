@@ -33,7 +33,7 @@
 #include <optional>
 #include <chrono>
 
-namespace graph::nodes {
+namespace graph {
 
 /**
  * @class DataGeneratorBase
@@ -80,5 +80,5 @@ public:
     }
 };
 
-} // namespace graph::nodes
+} // namespace graph
 

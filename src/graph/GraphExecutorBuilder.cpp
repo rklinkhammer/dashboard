@@ -27,15 +27,16 @@
 
 #include "graph/GraphExecutorBuilder.hpp"
 #include "graph/GraphExecutor.hpp"
-#include "policies/CompletionPolicy.hpp"
-#include "policies/DataInjectionPolicy.hpp"
-#include "policies/MetricsPolicy.hpp"
-#include "policies/DashboardPolicy.hpp"
-#include "policies/CSVDataInjectionPolicy.hpp"
-#include "app/policies/CommandProcessingPolicy.hpp"
+#include "app/policies/CompletionPolicy.hpp"
+#include "app/policies/DataInjectionPolicy.hpp"
+#include "app/policies/MetricsPolicy.hpp"
+#include "app/policies/DashboardPolicy.hpp"
+#include "app/policies/CSVInjectionPolicy.hpp"
+#include "app/policies/CommandPolicy.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include "app/FactoryManager.hpp"
 #include "app/GraphBuilder.hpp"
-#include "app/AppContext.hpp"
+#include "graph/GraphExecutorContext.hpp"
 #include <log4cxx/logger.h>
 #include <filesystem>
 #include <stdexcept>
@@ -239,21 +240,24 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
 
         // Step 3: Create AppContext with loaded configuration
         LOG4CXX_TRACE(g_logger, "Step 3: Creating AppContext");
-        auto context = std::make_shared<app::AppContext>();
-        context->SetFactory(factory);
-        context->SetPluginLoader(loader);  // Keep loader alive
-        context->graph_impl.json_config_path = json_config_;  
+        std::shared_ptr<app::capabilities::GraphCapability> graph_cap =
+            std::make_shared<app::capabilities::GraphCapability>();
 
+        graph_cap->SetNodeFactory(factory);
+        graph_cap->SetPluginLoader(loader);
+        graph_cap->SetPluginRegistry(factory->GetPluginRegistry());
+        graph_cap->SetJsonConfigPath(json_config_);
+        
         LOG4CXX_TRACE(g_logger, "AppContext created");
 
         if (graph_manager_) {
             // Step 4a: Build graph via GraphBuilder
-            context->SetGraphManager(graph_manager_);
+            graph_cap->SetGraphManager(graph_manager_);
             LOG4CXX_TRACE(g_logger, "Using provided shared GraphManager instance");
         } else {
             // Step 4b: Build graph via GraphBuilder
             LOG4CXX_TRACE(g_logger, "Step 4: Building graph");
-            auto graph_builder = std::make_shared<app::GraphBuilder>(context);
+            auto graph_builder = std::make_shared<app::GraphBuilder>(graph_cap);
             auto build_result = graph_builder->Build();
     
             if (!build_result.success) {
@@ -261,9 +265,9 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
                     "GraphExecutorBuilder: Graph building failed: " + build_result.error_message);
             }
 
-            context->SetNodeNames(build_result.node_names);
-            context->SetEdgeDescriptions(build_result.edge_descriptions);
-            context->SetGraphManager(build_result.graph);
+            graph_cap->SetNodeNames(build_result.node_names);
+            graph_cap->SetEdgeDescriptions(build_result.edge_descriptions);
+            graph_cap->SetGraphManager(build_result.graph);
 
             LOG4CXX_TRACE(g_logger, "Graph built successfully");
         }
@@ -271,11 +275,11 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
         // Step 5: Return appropriate executor type based on CSV configuration
         LOG4CXX_TRACE(g_logger, "Step 5: Creating executor");
 
-        auto completion_policy = std::make_unique<graph::policies::CompletionPolicy>();
+        auto completion_policy = std::make_unique<app::policies::CompletionPolicy>();
         completion_policy->SetMaxDuration(std::chrono::duration_cast<std::chrono::milliseconds>(executor_timeout_));
-        auto injection_policy = std::make_unique<graph::policies::DataInjectionPolicy>();  
-        auto metrics_policy = std::make_unique<graph::policies::MetricsPolicy>();
-        auto dashboard_policy = std::make_unique<graph::policies::DashboardPolicy>();
+        auto injection_policy = std::make_unique<app::policies::DataInjectionPolicy>();  
+        auto metrics_policy = std::make_unique<app::policies::MetricsPolicy>();
+        auto dashboard_policy = std::make_unique<app::policies::DashboardPolicy>();
 
         auto chain = std::make_unique<graph::ExecutionPolicyChain>(
             std::move(completion_policy), std::make_unique<graph::ExecutionPolicyChain>(
@@ -287,7 +291,7 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
             // CSV: return CSVGraphExecutor with configuration
             LOG4CXX_TRACE(g_logger, "Creating GraphExecutor (" << csv_inputs_.size() 
                          << " CSV inputs, rate=" << csv_injection_rate_ms_ << "ms)");
-            auto csv_injection_policy = std::make_unique<graph::policies::CSVDataInjectionPolicy>();
+            auto csv_injection_policy = std::make_unique<app::policies::CSVInjectionPolicy>();
             
             // Configure CSV injection - extract paths from pairs
               // csv_injection_policy->SetCSVInjectionRate(csv_injection_rate_ms_);
@@ -297,10 +301,13 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
             LOG4CXX_TRACE(g_logger, "GraphExecutor configured successfully with CSVDataInjectionPolicy");         
         }
   
-        auto command_policy = std::make_unique<app::policies::CommandProcessingPolicy>();
+        auto command_policy = std::make_unique<app::policies::CommandPolicy>();
         chain->AppendNext(std::make_unique<graph::ExecutionPolicyChain>(std::move(command_policy), nullptr));
-        auto executor = std::make_shared<GraphExecutor>(context, std::move(chain));
-        
+
+        auto executor = std::make_shared<GraphExecutor>(std::move(chain));
+
+        executor->Register<app::capabilities::GraphCapability>(graph_cap);
+
         return executor;
 
     } catch (const std::exception& e) {

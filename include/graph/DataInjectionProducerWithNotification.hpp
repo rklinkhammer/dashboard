@@ -48,8 +48,8 @@
 #include "graph/DataInjectionGeneratorBase.hpp"
 #include "core/ActiveQueue.hpp"
 #include "graph/DataProducerWithNotification.hpp"
-#include "capabilities/IDataInjectionSource.hpp"
-#include "config/IConfigurable.hpp"
+#include "graph/IDataInjectionSource.hpp"
+#include "graph/IConfigurable.hpp"
 #include "config/JsonView.hpp"
 #include <nlohmann/json.hpp>
 #include <log4cxx/logger.h>
@@ -57,7 +57,7 @@
 // Forward declarations handled by includes above
 
 
-namespace graph::nodes {
+namespace graph {
     /**
      * @brief Example sensor node with metrics and notifications
      * 
@@ -91,7 +91,7 @@ namespace graph::nodes {
         SensorNodeType, DataInjectionGeneratorBase<DataType, PayloadType>, 
         DataType, PayloadType, graph::message::CompletionSignal, Classification>,
         public graph::datasources::IDataInjectionSource,
-        public graph::node_config::IConfigurable {
+        public graph::IConfigurable {
     public:
         using BaseType = DataProducerWithNotification<
             SensorNodeType, DataInjectionGeneratorBase<DataType, PayloadType>, 
@@ -234,7 +234,7 @@ namespace graph::nodes {
          * 
          * @param cfg JSON configuration view
          */
-        void Configure(const graph::node_config::JsonView& cfg) override {
+        void Configure(const graph::JsonView& cfg) override {
             try {
                 // Parse sample_interval_ms if provided
                 if (cfg.Contains("sample_interval_ms")) {
@@ -261,5 +261,5 @@ namespace graph::nodes {
 
     };
 
-} // namespace graph::nodes
+} // namespace graph
 

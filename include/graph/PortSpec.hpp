@@ -50,7 +50,7 @@
 #include <string_view>
 #include "core/TypeInfo.hpp"
 
-namespace graph::nodes {
+namespace graph {
 
 // ===================================================================================
 // Port Direction Enumeration
@@ -235,5 +235,5 @@ std::string PayloadListToString(PayloadList<Ts...>) {
 //     };
 // }
 
-}  // namespace graph::nodes
+}  // namespace graph
 

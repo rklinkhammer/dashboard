@@ -3,41 +3,41 @@
 #include "ui/LoggingWindow.hpp"
 #include "ui/CommandWindow.hpp"
 #include "ui/StatusBar.hpp"
-#include "ui/DashboardApplication.hpp"
+#include "ui/Dashboard.hpp"
 #include "graph/mock/MockGraphExecutor.hpp"
 #include <memory>
 
 using graph::MockGraphExecutor;
 
 // ============================================================================
-// DashboardApplication Tests
+// Dashboard Tests
 // ============================================================================
 
-TEST(DashboardApplicationTest, ConstructsWithValidParameters) {
+TEST(DashboardTest, ConstructsWithValidParameters) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
 
     ASSERT_NO_THROW({
-        DashboardApplication app(executor, heights);
+        Dashboard app(executor, heights);
     });
 }
 
-TEST(DashboardApplicationTest, ConstructsWithNullExecutorThrows) {
+TEST(DashboardTest, ConstructsWithNullExecutorThrows) {
     WindowHeightConfig heights;
 
     EXPECT_THROW({
-        DashboardApplication app(nullptr, heights);
+        Dashboard app(nullptr, heights);
     }, std::invalid_argument);
 }
 
-TEST(DashboardApplicationTest, ValidatesWindowHeights) {
+TEST(DashboardTest, ValidatesWindowHeights) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
     heights.metrics_height_percent = 50;  // Invalid
     heights.logging_height_percent = 50;
     heights.command_height_percent = 0;
 
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     // Heights should be reset to defaults
     EXPECT_EQ(app.GetWindowHeights().metrics_height_percent, 40);
     EXPECT_EQ(app.GetWindowHeights().logging_height_percent, 35);
@@ -45,12 +45,12 @@ TEST(DashboardApplicationTest, ValidatesWindowHeights) {
     EXPECT_EQ(app.GetWindowHeights().status_height_percent, 2);
 }
 
-TEST(DashboardApplicationTest, HeightsResetToDefaultsWhenInvalid) {
+TEST(DashboardTest, HeightsResetToDefaultsWhenInvalid) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig invalid_heights;
     invalid_heights.metrics_height_percent = 50;  // Will sum to 107% with other defaults
 
-    DashboardApplication app(executor, invalid_heights);
+    Dashboard app(executor, invalid_heights);
     // Constructor should validate and reset to defaults
     EXPECT_EQ(app.GetWindowHeights().metrics_height_percent, 40);
     EXPECT_EQ(app.GetWindowHeights().logging_height_percent, 35);
@@ -59,11 +59,11 @@ TEST(DashboardApplicationTest, HeightsResetToDefaultsWhenInvalid) {
     EXPECT_TRUE(app.AreHeightsValid());
 }
 
-TEST(DashboardApplicationTest, InitializeCreatesComponents) {
+TEST(DashboardTest, InitializeCreatesComponents) {
     auto executor = std::make_shared<MockGraphExecutor>();
     WindowHeightConfig heights;
 
-    DashboardApplication app(executor, heights);
+    Dashboard app(executor, heights);
     app.Initialize();
 
     EXPECT_NE(app.GetMetricsPanel(), nullptr);

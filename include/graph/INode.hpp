@@ -38,7 +38,7 @@
 #include <chrono>
 #include "PortTypes.hpp"
 
-namespace graph::nodes
+namespace graph
 {
     /*
      * @enum LifecycleState
@@ -344,5 +344,5 @@ namespace graph::nodes
         std::mutex edge_mutex_;  // Synchronizes concurrent edge registration
     };
 
-} // namespace graph::nodes
+} // namespace graph
 

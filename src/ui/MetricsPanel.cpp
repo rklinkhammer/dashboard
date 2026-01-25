@@ -1,7 +1,7 @@
 #include "ui/MetricsPanel.hpp"
 #include "ui/MetricsTileWindow.hpp"
 #include "ui/MetricsTilePanel.hpp"
-#include "graph/mock/MockGraphExecutor.hpp"
+#include "graph/GraphExecutor.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
 #include "app/metrics/NodeMetricsSchema.hpp"
 #include <iostream>
@@ -66,7 +66,7 @@ ftxui::Element MetricsPanel::Render() const {
         | color(Color::Green);
 }
 
-void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<graph::MockGraphExecutor> executor) {
+void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<graph::GraphExecutor> executor) {
     if (!executor) {
         std::cerr << "[MetricsPanel::DiscoverMetricsFromExecutor] ERROR: executor is null\n";
         return;
@@ -137,7 +137,7 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<graph::MockGraphE
     }
 }
 
-void MetricsPanel::RegisterMetricsCapabilityCallback(std::shared_ptr<graph::MockGraphExecutor> executor) {
+void MetricsPanel::RegisterMetricsCapabilityCallback(std::shared_ptr<graph::GraphExecutor> executor) {
     if (!executor) {
         std::cerr << "[MetricsPanel::RegisterMetricsCapabilityCallback] ERROR: executor is null\n";
         return;
@@ -150,29 +150,7 @@ void MetricsPanel::RegisterMetricsCapabilityCallback(std::shared_ptr<graph::Mock
             return;
         }
 
-        // Per ARCHITECTURE.md: 
-        // - GraphExecutor has internal metrics event queue
-        // - MetricsPublisher reads queue and invokes callback with MetricsEvent
-        // - Dashboard callback buffers events (metric_name and value from data map)
-        // - UpdateAllMetrics() polls buffer and updates tiles each frame
-        
-        executor->RegisterMetricsCallback([this](const app::metrics::MetricsEvent& event) {
-            // Extract metric details from event
-            // event.data contains: {"metric_name": "...", "value": "..."}
-            try {
-                if (event.data.count("metric_name") && event.data.count("value")) {
-                    std::string metric_id = event.source + "::" + event.data.at("metric_name");
-                    double value = std::stod(event.data.at("value"));
-                    
-                    // Buffer the value for UpdateAllMetrics() to propagate
-                    metrics_tile_panel_->SetLatestValue(metric_id, value);
-                }
-            } catch (const std::exception& e) {
-                std::cerr << "[MetricsPanel] Error processing event: " << e.what() << "\n";
-            }
-        });
-
-        std::cerr << "[MetricsPanel::RegisterMetricsCapabilityCallback] Callback registered\n";
+        metrics_cap->RegisterMetricsCallback(this);
 
     } catch (const std::exception& e) {
         std::cerr << "[MetricsPanel::RegisterMetricsCapabilityCallback] Exception: " << e.what() << "\n";
@@ -273,4 +251,25 @@ int MetricsPanel::FindTabForNode(const std::string& node_name) const {
         return it->second;
     }
     return -1;  // Not found
+}
+
+void MetricsPanel::OnMetricsEvent(const app::metrics::MetricsEvent &event)
+{
+    (void)event;   // // Extract metric details from event
+    // // event.data contains: {"metric_name": "...", "value": "..."}
+    // try
+    // {
+    //     if (event.data.count("metric_name") && event.data.count("value"))
+    //     {
+    //         std::string metric_id = event.source + "::" + event.data.at("metric_name");
+    //         double value = std::stod(event.data.at("value"));
+
+    //         // Buffer the value for UpdateAllMetrics() to propagate
+    //         metrics_tile_panel_->SetLatestValue(metric_id, value);
+    //     }
+    // }
+    // catch (const std::exception &e)
+    // {
+    //     std::cerr << "[MetricsPanel] Error processing event: " << e.what() << "\n";
+    // }
 }
