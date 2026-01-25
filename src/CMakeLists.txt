@@ -15,6 +15,7 @@ set(GDASHBOARD_SOURCES
     ui/CommandRegistry.cpp
     ui/BuiltinCommands.cpp
     ui/LayoutConfig.cpp
+    ui/TabContainer.cpp
     ui/StatusBar.cpp
     ui/MetricsTileWindow.cpp
     ui/MetricsTilePanel.cpp

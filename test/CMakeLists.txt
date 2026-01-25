@@ -301,12 +301,42 @@ add_test(
 )
 
 # Create custom targets for Phase 3
+# ============================================================================
+
+add_executable(test_tab_container
+    ui/test_tab_container.cpp
+)
+
+target_include_directories(test_tab_container
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_tab_container
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+)
+
+add_test(
+    NAME Phase3TabContainerTests
+    COMMAND test_tab_container
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# Update Phase 3 targets to include tab container
 add_custom_target(test_phase3
     COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -V
-    DEPENDS test_command_registry test_logging_window test_layout_config
+    DEPENDS test_command_registry test_logging_window test_layout_config test_tab_container
 )
 
 add_custom_target(test_phase3_verbose
     COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -VV --output-on-failure
-    DEPENDS test_command_registry test_logging_window test_layout_config
+    DEPENDS test_command_registry test_logging_window test_layout_config test_tab_container
 )
