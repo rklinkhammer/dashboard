@@ -2992,6 +2992,515 @@ Once all Phase 2 tasks complete:
 
 ---
 
+## Detailed Phase 4: MetricsPanel Integration & Tabbed Mode Activation (Final Integration Phase)
+
+### Objective
+Complete the dashboard MVP by integrating all Phase 3 components (CommandRegistry, LoggingWindow, LayoutConfig, TabContainer) into MetricsPanel and DashboardApplication to enable full feature functionality.
+
+### Duration
+**1 week** (All Phase 3 components complete)
+
+### Prerequisites
+- ✅ Phase 3.1: CommandRegistry with 5 built-in commands
+- ✅ Phase 3.2: LoggingWindow with filtering and search
+- ✅ Phase 3.3: LayoutConfig with JSON persistence
+- ✅ Phase 3.4: TabContainer with tab management and navigation
+- ✅ Phase 0-2: Complete metrics pipeline (discovery, updates, display)
+
+### Integration Architecture
+
+```
+DashboardApplication (Orchestrator)
+├── LayoutConfig (Startup: Load layout, Shutdown: Save layout)
+├── CommandRegistry (Initialize with 5 commands + handlers)
+├── MetricsPanel
+│   ├── MetricsTilePanel (Create/update tiles)
+│   ├── TabContainer (Conditional: Activate if tiles > 36)
+│   │   └── Tabs[] (Each tab: 18 tiles max in 3×6 grid)
+│   └── Navigation (Arrow keys: Left/Right for tab switching)
+├── LoggingWindow (Display log4cxx output, support filtering)
+├── CommandWindow (Display command results, execute inputs)
+└── StatusBar (Show dashboard state)
+```
+
+### Key Integration Points
+
+#### D4.1: MetricsPanel TabContainer Integration
+
+**Purpose**: Automatically activate tabbed mode when metrics exceed 36 tiles
+
+**Implementation**:
+1. Add `TabContainer` member to MetricsPanel
+2. Add `tab_mode_enabled_` boolean flag
+3. Modify constructor to initialize TabContainer
+4. Create `ActivateTabMode()` method triggered by tile count
+5. Add `IsTabMode()` accessor
+
+**Logic**:
+```cpp
+void MetricsPanel::AddTile(std::shared_ptr<MetricsTileWindow> tile) {
+    if (tiles_.size() == 36) {
+        // Transition to tab mode
+        ActivateTabMode();
+    }
+    
+    if (tab_mode_enabled_) {
+        // Distribute tiles across tabs by NodeName
+        std::string node_name = tile->GetNodeName();
+        int tab_index = FindOrCreateTabForNode(node_name);
+        tab_container_->AddTileToTab(tab_index, tile);
+    } else {
+        // Add to flat list
+        tiles_.push_back(tile);
+    }
+}
+
+void MetricsPanel::ActivateTabMode() {
+    // Create one tab per unique NodeName
+    std::set<std::string> node_names;
+    for (const auto& tile : tiles_) {
+        node_names.insert(tile->GetNodeName());
+    }
+    
+    for (const auto& node_name : node_names) {
+        tab_container_->CreateTab(node_name);
+    }
+    
+    // Redistribute all tiles to tabs
+    for (const auto& tile : tiles_) {
+        int tab_index = FindTabForNode(tile->GetNodeName());
+        tab_container_->AddTileToTab(tab_index, tile);
+    }
+    
+    tab_mode_enabled_ = true;
+}
+```
+
+**Rendering**:
+```cpp
+ftxui::Element MetricsPanel::Render() const {
+    if (tab_mode_enabled_) {
+        return tab_container_->RenderWithTabs();
+    } else {
+        return RenderGrid();  // Flat 3-column grid
+    }
+}
+```
+
+**Test Cases** (8 tests):
+- ✅ Tab mode inactive with < 36 tiles
+- ✅ Tab mode activates at 37th tile
+- ✅ Tiles distributed by NodeName
+- ✅ Tab navigation via NextTab/PreviousTab
+- ✅ SelectTab by index clamps properly
+- ✅ RenderWithTabs displays current tab correctly
+- ✅ Arrow key events handled by MetricsPanel
+- ✅ IsTabMode() returns correct state
+
+#### D4.2: DashboardApplication Layout Integration
+
+**Purpose**: Load LayoutConfig on startup, save on shutdown, integrate into all components
+
+**Implementation**:
+1. Create `LayoutConfig` member in DashboardApplication
+2. Call `LoadConfig()` in Initialize() method
+3. Call `SaveConfig()` in destructor or cleanup method
+4. Apply loaded heights to window components
+5. Apply loaded filters to LoggingWindow
+6. Restore command history to CommandWindow
+
+**Initialization Sequence**:
+```cpp
+void DashboardApplication::Initialize() {
+    // 1. Load layout configuration
+    layout_config_ = std::make_unique<LayoutConfig>();
+    layout_config_->LoadFromFile();  // Returns success/failure, uses defaults if missing
+    
+    // 2. Get window heights (loaded or default)
+    auto heights = layout_config_->GetWindowHeights();
+    window_heights_ = heights;  // Override CLI-provided defaults
+    
+    // 3. Create window components with loaded heights
+    metrics_panel_ = std::make_shared<MetricsPanel>();
+    metrics_panel_->SetHeight(window_heights_.metrics_height_percent);
+    
+    logging_window_ = std::make_shared<LoggingWindow>();
+    logging_window_->SetHeight(window_heights_.logging_height_percent);
+    
+    // 4. Apply loaded filters
+    auto log_filter = layout_config_->GetLogFilter();
+    logging_window_->SetFilterLevel(log_filter);
+    
+    auto search_filter = layout_config_->GetSearchFilter();
+    logging_window_->SetSearchFilter(search_filter);
+    
+    // 5. Restore command history
+    auto history = layout_config_->GetCommandHistory();
+    command_window_->SetCommandHistory(history);
+    
+    // 6. Continue with metrics discovery...
+    DiscoverAndCreateMetrics();
+    
+    // 7. Register callback for metrics updates
+    RegisterMetricsCallback();
+    
+    LOG(INFO) << "DashboardApplication initialized with layout: " 
+              << layout_config_->DebugString();
+}
+
+void DashboardApplication::Shutdown() {
+    // Save current state before cleanup
+    layout_config_->SetWindowHeights(window_heights_);
+    layout_config_->SetLogFilter(logging_window_->GetFilterLevel());
+    layout_config_->SetSearchFilter(logging_window_->GetSearchFilter());
+    layout_config_->SetCommandHistory(command_window_->GetCommandHistory());
+    layout_config_->SaveToFile();
+    
+    LOG(INFO) << "Layout configuration saved";
+}
+```
+
+**Test Cases** (6 tests):
+- ✅ Load valid configuration from file
+- ✅ Use defaults when file missing
+- ✅ Save configuration on shutdown
+- ✅ Restore window heights from config
+- ✅ Restore filters from config
+- ✅ Restore command history from config
+
+#### D4.3: CommandRegistry Integration with DashboardApplication
+
+**Purpose**: Wire commands to dashboard state, enable graph control
+
+**Built-in Commands**:
+1. **status**: Display dashboard state
+   - Returns: "Dashboard: Running | Nodes: X/Y | Errors: Z"
+   
+2. **run_graph**: Start graph execution
+   - Calls: `executor->Start()`
+   - Returns: "Graph execution started"
+   
+3. **pause_graph**: Pause graph execution
+   - Calls: `executor->Pause()` (if available)
+   - Returns: "Graph paused"
+   
+4. **stop_graph**: Stop graph execution
+   - Calls: `executor->Stop()`
+   - Returns: "Graph stopped"
+   
+5. **reset_layout**: Reset to default layout
+   - Calls: `layout_config_->ResetToDefaults()`
+   - Returns: "Layout reset to defaults"
+
+**Implementation**:
+```cpp
+void DashboardApplication::InitializeCommands() {
+    // Register each built-in command with closure over 'this'
+    
+    // status command
+    command_registry_->RegisterCommand(
+        "status",
+        "Display dashboard status",
+        "status",
+        [this](const std::vector<std::string>& args) -> std::string {
+            int active_nodes = metrics_panel_->GetTileCount() / 6;  // Approx
+            int total_nodes = 6;
+            int error_count = 0;  // TODO: Get from executor
+            
+            std::stringstream ss;
+            ss << "Dashboard: RUNNING\n"
+               << "Nodes: " << active_nodes << "/" << total_nodes << "\n"
+               << "Metrics: " << metrics_panel_->GetTileCount() << "\n"
+               << "Errors: " << error_count;
+            return ss.str();
+        }
+    );
+    
+    // run_graph command
+    command_registry_->RegisterCommand(
+        "run_graph",
+        "Start graph execution",
+        "run_graph",
+        [this](const std::vector<std::string>& args) -> std::string {
+            try {
+                executor_->Start();
+                return "Graph execution started";
+            } catch (const std::exception& e) {
+                return std::string("Error: ") + e.what();
+            }
+        }
+    );
+    
+    // pause_graph command (if executor supports pausing)
+    command_registry_->RegisterCommand(
+        "pause_graph",
+        "Pause graph execution",
+        "pause_graph",
+        [this](const std::vector<std::string>& args) -> std::string {
+            // TODO: Implement pause in GraphExecutor
+            return "Pause not yet implemented";
+        }
+    );
+    
+    // stop_graph command
+    command_registry_->RegisterCommand(
+        "stop_graph",
+        "Stop graph execution",
+        "stop_graph",
+        [this](const std::vector<std::string>& args) -> std::string {
+            try {
+                executor_->Stop();
+                return "Graph execution stopped";
+            } catch (const std::exception& e) {
+                return std::string("Error: ") + e.what();
+            }
+        }
+    );
+    
+    // reset_layout command
+    command_registry_->RegisterCommand(
+        "reset_layout",
+        "Reset window layout to defaults",
+        "reset_layout",
+        [this](const std::vector<std::string>& args) -> std::string {
+            layout_config_->ResetToDefaults();
+            window_heights_ = layout_config_->GetWindowHeights();
+            ApplyHeights();
+            return "Layout reset to defaults";
+        }
+    );
+    
+    LOG(INFO) << "Registered 5 built-in commands";
+}
+```
+
+**Test Cases** (10 tests):
+- ✅ status command returns correct output
+- ✅ run_graph command starts executor
+- ✅ pause_graph command pauses execution (placeholder)
+- ✅ stop_graph command stops executor
+- ✅ reset_layout command resets heights
+- ✅ Commands handle exceptions gracefully
+- ✅ help command lists all commands
+- ✅ Unknown commands return error
+- ✅ Command output is colored correctly
+- ✅ Commands update dashboard state
+
+#### D4.4: Arrow Key Navigation for Tab Switching
+
+**Purpose**: Enable left/right arrow keys to switch between tabs
+
+**Implementation**:
+```cpp
+bool MetricsPanel::HandleEvent(ftxui::Event event) {
+    if (!tab_mode_enabled_) {
+        return false;  // No tab navigation in flat mode
+    }
+    
+    if (event == ftxui::Event::ArrowLeft) {
+        tab_container_->PreviousTab();
+        return true;
+    } else if (event == ftxui::Event::ArrowRight) {
+        tab_container_->NextTab();
+        return true;
+    }
+    
+    return false;  // Event not handled
+}
+```
+
+**Integration with DashboardApplication**:
+```cpp
+void DashboardApplication::HandleUserInput(ftxui::Event event) {
+    // Route events to appropriate component
+    if (metrics_panel_->HandleEvent(event)) {
+        return;  // Handled by metrics panel
+    }
+    
+    if (logging_window_->HandleEvent(event)) {
+        return;  // Handled by logging window
+    }
+    
+    if (command_window_->HandleEvent(event)) {
+        return;  // Handled by command window
+    }
+    
+    // Global events
+    if (event == ftxui::Event::Character('q')) {
+        should_exit_ = true;
+    }
+}
+```
+
+**Test Cases** (5 tests):
+- ✅ Left arrow switches to previous tab
+- ✅ Right arrow switches to next tab
+- ✅ Navigation wraps at boundaries
+- ✅ Events ignored in flat mode
+- ✅ Other events pass through
+
+#### D4.5: LoggingWindow Filter Integration
+
+**Purpose**: Apply log level filter from LayoutConfig to LoggingWindow
+
+**Implementation**:
+```cpp
+class LoggingWindow : public Window {
+public:
+    // Set filtering level
+    void SetFilterLevel(const std::string& level);
+    std::string GetFilterLevel() const { return filter_level_; }
+    
+    // Add log line with filtering
+    void AddLogLine(const std::string& line) {
+        // Parse log level from line (if available)
+        auto level = ExtractLogLevel(line);
+        
+        // Check against filter
+        if (IsLevelAboveFilter(level)) {
+            log_lines_.push_back(line);
+            if (log_lines_.size() > MAX_LINES) {
+                log_lines_.pop_front();
+            }
+        }
+    }
+
+private:
+    std::string filter_level_ = "INFO";  // Default filter level
+    
+    bool IsLevelAboveFilter(const std::string& level) const {
+        // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
+        static const std::map<std::string, int> level_order = {
+            {"TRACE", 0}, {"DEBUG", 1}, {"INFO", 2}, 
+            {"WARN", 3}, {"ERROR", 4}, {"FATAL", 5}
+        };
+        
+        auto filter_priority = level_order.at(filter_level_);
+        auto line_priority = level_order.at(level);
+        return line_priority >= filter_priority;
+    }
+};
+```
+
+**Test Cases** (5 tests):
+- ✅ Filter set to TRACE shows all messages
+- ✅ Filter set to ERROR hides INFO/WARN
+- ✅ Invalid filter level handled gracefully
+- ✅ Filter persists across sessions
+- ✅ Filter can be changed dynamically
+
+### Integration Testing Strategy
+
+#### D4.6: Integration Test Suite (12-15 tests)
+
+**Categories**:
+
+1. **Metrics Panel Integration** (4 tests):
+   - TabContainer activates at 37 tiles
+   - Tabs created by NodeName
+   - Tab navigation works
+   - Rendering doesn't show artifacts
+
+2. **Layout Configuration** (3 tests):
+   - Load config from file
+   - Save config to file
+   - Restore all settings (heights, filters, history)
+
+3. **Command Execution** (4 tests):
+   - Execute status command
+   - Execute run_graph command
+   - Handle command errors
+   - Output displays correctly
+
+4. **Logging Integration** (3 tests):
+   - LoggingWindow displays log messages
+   - Filter level restricts output
+   - Search filters work
+
+5. **Event Handling** (3 tests):
+   - Arrow keys switch tabs
+   - 'q' key exits dashboard
+   - Command input processed
+
+#### Test Execution Plan
+
+```bash
+# Run all unit tests (should pass before integration)
+ctest -N | grep "test_" | wc -l  # Should show 168+ tests
+
+# Run Phase 4 integration tests specifically
+ctest -R "Phase4.*Integration" -V
+
+# Run full system test
+./build/gdashboard --graph-config config/mock_graph.json &
+sleep 2
+# Manual verification of tabs, commands, filters
+kill %1
+```
+
+### Acceptance Criteria (Phase 4)
+
+- ✅ TabContainer integrates with MetricsPanel
+- ✅ Tab mode activates at 37 tiles (transition from flat to tabbed)
+- ✅ Tabs created automatically by NodeName
+- ✅ Tab navigation works (left/right arrows, clamping)
+- ✅ LayoutConfig loads on startup, saves on shutdown
+- ✅ All window heights restored from config
+- ✅ All filters restored from config
+- ✅ Command history restored from config
+- ✅ All 5 built-in commands functional
+- ✅ Commands execute correctly and update state
+- ✅ Arrow key events handled properly
+- ✅ All 12-15 integration tests pass
+- ✅ Zero regressions (all 168+ previous tests still pass)
+- ✅ Total test count: 180+ tests passing
+
+### Deliverables (Phase 4)
+
+**Files Modified**:
+- `include/ui/MetricsPanel.hpp` - Add TabContainer member, tab mode logic
+- `src/ui/MetricsPanel.cpp` - Implement tab mode activation and navigation
+- `include/gdashboard/DashboardApplication.hpp` - Add LayoutConfig member
+- `src/gdashboard/DashboardApplication.cpp` - Implement config loading/saving
+- `include/ui/LoggingWindow.hpp` - Add filter level management
+- `src/ui/LoggingWindow.cpp` - Implement filtering logic
+- `src/ui/CommandRegistry.cpp` - Register built-in commands in DashboardApplication
+
+**Test Files**:
+- `test/integration/test_phase4_metrics_panel_integration.cpp` - 4 tests
+- `test/integration/test_phase4_layout_config_integration.cpp` - 3 tests
+- `test/integration/test_phase4_command_execution.cpp` - 4 tests
+- `test/integration/test_phase4_logging_integration.cpp` - 3 tests
+- `test/integration/test_phase4_event_handling.cpp` - 3 tests
+
+**Total New Tests**: 15-20 integration tests
+
+### Success Metrics
+
+| Metric | Target | Status |
+|--------|--------|--------|
+| Tests Passing | 180+ | Target |
+| Code Coverage | 85%+ | Target |
+| Build Time | < 30s | Target |
+| Compilation Warnings | 0 | Target |
+| Memory Leaks | 0 | Target |
+| Frame Rate | 30 FPS | Target |
+
+### Post-Integration Checklist
+
+- [ ] All 15-20 integration tests passing
+- [ ] All previous tests (168) still passing
+- [ ] Manual testing: Tab mode activates correctly
+- [ ] Manual testing: Commands execute
+- [ ] Manual testing: Layout saves/loads
+- [ ] Manual testing: Filters work
+- [ ] Manual testing: Arrow key navigation works
+- [ ] Code review checklist passed
+- [ ] Documentation updated
+- [ ] Git history clean with atomic commits
+
+---
+
 ## Next Steps
 
 1. **Immediate** (Today):

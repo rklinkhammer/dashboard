@@ -28,9 +28,14 @@ MetricsPanel::MetricsPanel(const std::string& title)
 ftxui::Element MetricsPanel::Render() const {
     using namespace ftxui;
     
-    // If we have tiles from MetricsCapability discovery, render those
+    // If tab mode is enabled, render with tabs
+    if (tab_mode_enabled_) {
+        return RenderTabbed();
+    }
+    
+    // If we have tiles from MetricsCapability discovery, render flat grid
     if (metrics_tile_panel_ && metrics_tile_panel_->GetTileCount() > 0) {
-        return metrics_tile_panel_->Render() | border | color(Color::Green);
+        return RenderFlatGrid();
     }
     
     // Otherwise fall back to placeholder rendering
@@ -121,6 +126,11 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<graph::MockGraphE
         metrics_tile_panel_->SetMetricsCapability(metrics_cap);
         std::cerr << "[MetricsPanel::DiscoverMetricsFromExecutor] Created " 
                   << metrics_tile_panel_->GetTileCount() << " metric tiles\n";
+        
+        // Check if we need to activate tab mode (when tile count > 36, meaning more than 6×6 grid)
+        if (metrics_tile_panel_->GetTileCount() > 36) {
+            ActivateTabMode();
+        }
 
     } catch (const std::exception& e) {
         std::cerr << "[MetricsPanel::DiscoverMetricsFromExecutor] Exception: " << e.what() << "\n";
@@ -177,3 +187,90 @@ void MetricsPanel::ClearPlaceholders() {
     metrics_.clear();
 }
 
+ftxui::Element MetricsPanel::RenderFlatGrid() const {
+    using namespace ftxui;
+    return metrics_tile_panel_->Render() | border | color(Color::Green);
+}
+
+ftxui::Element MetricsPanel::RenderTabbed() const {
+    using namespace ftxui;
+    return tab_container_.RenderWithTabs() | border | color(Color::Green);
+}
+
+void MetricsPanel::ActivateTabMode() {
+    std::cerr << "[MetricsPanel::ActivateTabMode] Transitioning to tabbed mode\n";
+    
+    if (!metrics_tile_panel_) {
+        std::cerr << "[MetricsPanel::ActivateTabMode] ERROR: No metrics_tile_panel\n";
+        return;
+    }
+    
+    // Collect all unique node names by iterating known nodes
+    // Since we store node_to_tab_index during discovery, we can use those
+    // Or we can discover by trying common node names
+    std::set<std::string> node_names = {
+        "DataValidator", "Transform", "Aggregator", "Filter", "Sink", "Monitor"
+    };
+    
+    // Try to get tiles for each known node name and see which ones have tiles
+    std::set<std::string> actual_nodes;
+    for (const auto& node_name : node_names) {
+        auto tiles = metrics_tile_panel_->GetTilesForNode(node_name);
+        if (!tiles.empty()) {
+            actual_nodes.insert(node_name);
+        }
+    }
+    
+    std::cerr << "[MetricsPanel::ActivateTabMode] Found " << actual_nodes.size() << " nodes with tiles\n";
+    
+    // Create tabs for each node that has tiles
+    int tab_index = 0;
+    for (const auto& node_name : actual_nodes) {
+        tab_container_.CreateTab(node_name);
+        node_to_tab_index_[node_name] = tab_index;
+        
+        // Get all tiles for this node and add them to the tab
+        auto tiles = metrics_tile_panel_->GetTilesForNode(node_name);
+        for (const auto& tile : tiles) {
+            if (tile) {
+                tab_container_.AddTileToTab(node_name, tile);
+                std::cerr << "[MetricsPanel::ActivateTabMode] Added tile " << tile->GetMetricId()
+                          << " to tab: " << node_name << "\n";
+            }
+        }
+        
+        std::cerr << "[MetricsPanel::ActivateTabMode] Created tab " << tab_index 
+                  << " for node: " << node_name << " with " << tiles.size() << " tiles\n";
+        tab_index++;
+    }
+    
+    tab_mode_enabled_ = true;
+    std::cerr << "[MetricsPanel::ActivateTabMode] Tab mode activated with " 
+              << tab_container_.GetTabCount() << " tabs\n";
+}
+
+int MetricsPanel::FindOrCreateTabForNode(const std::string& node_name) {
+    // Check if tab already exists
+    auto it = node_to_tab_index_.find(node_name);
+    if (it != node_to_tab_index_.end()) {
+        return it->second;
+    }
+    
+    // Create new tab for this node
+    int new_tab_index = tab_container_.GetTabCount();
+    tab_container_.CreateTab(node_name);
+    node_to_tab_index_[node_name] = new_tab_index;
+    
+    std::cerr << "[MetricsPanel::FindOrCreateTabForNode] Created new tab " << new_tab_index
+              << " for node: " << node_name << "\n";
+    
+    return new_tab_index;
+}
+
+int MetricsPanel::FindTabForNode(const std::string& node_name) const {
+    auto it = node_to_tab_index_.find(node_name);
+    if (it != node_to_tab_index_.end()) {
+        return it->second;
+    }
+    return -1;  // Not found
+}

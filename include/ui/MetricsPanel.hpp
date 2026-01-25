@@ -2,9 +2,11 @@
 
 #include "Window.hpp"
 #include "MetricsTilePanel.hpp"
+#include "TabContainer.hpp"
 #include <ftxui/dom/elements.hpp>
 #include <vector>
 #include <memory>
+#include <set>
 
 // Forward declarations
 namespace graph {
@@ -37,6 +39,9 @@ public:
 
     // Accessors
     std::shared_ptr<MetricsTilePanel> GetMetricsTilePanel() const { return metrics_tile_panel_; }
+    TabContainer& GetTabContainer() { return tab_container_; }
+    const TabContainer& GetTabContainer() const { return tab_container_; }
+    bool IsInTabMode() const { return tab_mode_enabled_; }
 
 private:
     struct PlaceholderMetric {
@@ -47,6 +52,20 @@ private:
     std::vector<PlaceholderMetric> metrics_;
     size_t scroll_offset_ = 0;
     
-    // New Phase 2 metrics tile infrastructure
+    // Phase 2 metrics tile infrastructure
     std::shared_ptr<MetricsTilePanel> metrics_tile_panel_;
+    
+    // Phase 4 tabbed layout infrastructure
+    TabContainer tab_container_;
+    bool tab_mode_enabled_ = false;
+    std::map<std::string, int> node_to_tab_index_;  // Maps node_name to tab index
+    
+    // Helper methods for tab mode
+    void ActivateTabMode();
+    int FindOrCreateTabForNode(const std::string& node_name);
+    int FindTabForNode(const std::string& node_name) const;
+    
+    // Rendering helpers
+    ftxui::Element RenderFlatGrid() const;
+    ftxui::Element RenderTabbed() const;
 };
