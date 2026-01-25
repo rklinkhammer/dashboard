@@ -1,9 +1,9 @@
 # Detailed Implementation Plan for gdashboard
 
 **Date**: January 25, 2026  
-**Status**: Phase 3.1 Complete - CommandRegistry Extensible System Implemented  
-**Current Test Count**: 99 tests passing (20+12+22+12+17+16)  
-**Next Phase**: Phase 3.2 LoggingWindow with log4cxx Integration
+**Status**: Phase 3.2 Complete - LoggingWindow with Filtering and Search Implemented  
+**Current Test Count**: 119 tests passing (20+12+22+12+17+16+20)  
+**Next Phase**: Phase 3.3 Layout Persistence
 
 ---
 
@@ -99,7 +99,7 @@ target_link_libraries(gdashboard
 | **Phase 0** | 3-4 weeks | MockGraphExecutor + MetricsCapability | ✅ **COMPLETE** (32/32 tests passing) |
 | **Phase 1** | 1-2 weeks | Window structure + FTXUI rendering | ✅ **COMPLETE** (22/22 tests passing) |
 | **Phase 2** | 2-3 weeks | Metrics integration + live updates | ✅ **COMPLETE** (29/29 tests: D2.1-D2.9) |
-| **Phase 3** | 2-3 weeks | Enhanced features + polish | 🚀 **IN PROGRESS** - D3.1 Complete (16 tests) |
+| **Phase 3** | 2-3 weeks | Enhanced features + polish | 🚀 **IN PROGRESS** - D3.1-D3.2 Complete (36 tests) |
 | **Testing** | Continuous | Unit, integration, system tests | 📋 Planned |
 
 ### Dependency Graph
@@ -123,7 +123,14 @@ Phase 3 (Enhanced Features) 🚀 IN PROGRESS
     │   ├─ Built-in commands: help, status, run, pause, stop, reset_layout
     │   ├─ CommandWindow: Enhanced with input/output, command history
     │   └─ 16 unit tests for registry and window
-    ├─ D3.2: LoggingWindow with log4cxx Integration (pending)
+    ├─ D3.2: LoggingWindow with Filtering and Search ✅ COMPLETE (20 tests)
+    │   ├─ LoggingAppender: Custom appender for logging callbacks
+    │   ├─ Level Filtering: TRACE, DEBUG, INFO, WARN, ERROR, FATAL
+    │   ├─ Text Search: Case-insensitive pattern matching
+    │   ├─ Circular Buffer: 1000 line max with auto-trim
+    │   ├─ Color-Coded Output: Different colors per level
+    │   ├─ Thread-Safe: Mutex-protected log access
+    │   └─ 20 unit tests for logging and filtering
     ├─ D3.3: Layout Persistence (pending)
     └─ D3.4: Advanced Layout Strategies (pending)
     ↓
