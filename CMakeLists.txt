@@ -1,0 +1,76 @@
+cmake_minimum_required(VERSION 3.16)
+project(gdashboard 
+    VERSION 0.1.0
+    DESCRIPTION "Real-time metrics visualization dashboard for graph execution engines"
+    LANGUAGES CXX
+)
+
+# ============================================================================
+# Build Configuration
+# ============================================================================
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Set default build type to Release
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# ============================================================================
+# Dependencies
+# ============================================================================
+
+# Find required packages
+find_package(nlohmann_json REQUIRED)
+find_package(FTXUI REQUIRED)
+find_package(GTest)
+
+# Include directories (for all targets)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# ============================================================================
+# Source Organization
+# ============================================================================
+
+# Add subdirectories in order of dependencies
+add_subdirectory(src)
+
+# Add tests (optional, controlled by ENABLE_TESTS)
+if(GTest_FOUND)
+    add_subdirectory(test)
+else()
+    message(WARNING "Google Test not found. Tests will not be built. Install gtest to enable tests.")
+endif()
+
+# ============================================================================
+# Build Information
+# ============================================================================
+
+message(STATUS "gdashboard Build Configuration")
+message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Source: ${CMAKE_CURRENT_SOURCE_DIR}/src")
+message(STATUS "  Include: ${CMAKE_CURRENT_SOURCE_DIR}/include")
+if(GTest_FOUND)
+    message(STATUS "  Tests: ENABLED")
+else()
+    message(STATUS "  Tests: DISABLED")
+endif()
+
+# ============================================================================
+# Build Options
+# ============================================================================
+
+option(ENABLE_VERBOSE_LOGGING "Enable verbose logging output" OFF)
+option(ENABLE_SANITIZERS "Enable address and undefined behavior sanitizers" OFF)
+
+if(ENABLE_VERBOSE_LOGGING)
+    add_compile_definitions(GDASHBOARD_VERBOSE_LOGGING)
+endif()
+
+if(ENABLE_SANITIZERS)
+    add_compile_options(-fsanitize=address -fsanitize=undefined)
+    add_link_options(-fsanitize=address -fsanitize=undefined)
+endif()

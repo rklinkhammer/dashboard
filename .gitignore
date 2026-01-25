@@ -1,0 +1,46 @@
+# Build and CMake
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Compiled objects
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+
+# Executables
+*.exe
+gdashboard
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.cbp
+*.layout
+
+# Dependencies and packages
+vcpkg_installed/
+conan/
+node_modules/
+
+# Test artifacts
+*.gcda
+*.gcno
+coverage.html
+test_results.xml
+
+# Temporary files
+*.tmp
+*.temp
+.#*
