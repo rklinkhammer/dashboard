@@ -81,3 +81,50 @@ add_custom_target(test_phase0_verbose
     COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase0.*" -VV --output-on-failure
     DEPENDS test_phase0_unit test_phase0_integration
 )
+# ============================================================================
+# Phase 1 Unit Tests
+# ============================================================================
+
+add_executable(test_phase1_components
+    ui/test_phase1_components.cpp
+)
+
+target_include_directories(test_phase1_components
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_phase1_components
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+)
+
+add_test(
+    NAME Phase1ComponentTests
+    COMMAND test_phase1_components
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# Create custom targets for Phase 1
+add_custom_target(test_phase1
+    COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase1.*" -V
+    DEPENDS test_phase1_components
+)
+
+add_custom_target(test_phase1_verbose
+    COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase1.*" -VV --output-on-failure
+    DEPENDS test_phase1_components
+)
+
+# Create combined target for all tests
+add_custom_target(test_all
+    COMMAND ${CMAKE_CTEST_COMMAND} -V
+    DEPENDS test_phase0_unit test_phase0_integration test_phase1_components
+)

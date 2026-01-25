@@ -1,0 +1,9 @@
+{
+  "graph_name": "MockGraphForDashboard",
+  "description": "Mock graph executor for dashboard testing",
+  "nodes": [],
+  "edges": [],
+  "config": {
+    "metrics_publish_rate_hz": 30
+  }
+}
