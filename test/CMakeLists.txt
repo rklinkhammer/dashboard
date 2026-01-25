@@ -433,3 +433,34 @@ add_test(
     COMMAND test_logging_filter_integration
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+# ============================================================================
+# Phase 4 End-to-End Integration Tests
+# ============================================================================
+
+add_executable(test_phase4_integration
+    integration/test_phase4_integration.cpp
+)
+
+target_include_directories(test_phase4_integration
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_phase4_integration
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+)
+
+add_test(
+    NAME Phase4EndToEndIntegrationTests
+    COMMAND test_phase4_integration
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
