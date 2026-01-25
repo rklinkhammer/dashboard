@@ -140,18 +140,25 @@ void MetricsPanel::RegisterMetricsCapabilityCallback(std::shared_ptr<graph::Mock
             return;
         }
 
-        // Register callback lambda to update tiles as metrics arrive
+        // Per ARCHITECTURE.md: 
+        // - GraphExecutor has internal metrics event queue
+        // - MetricsPublisher reads queue and invokes callback with MetricsEvent
+        // - Dashboard callback buffers events (metric_name and value from data map)
+        // - UpdateAllMetrics() polls buffer and updates tiles each frame
+        
         executor->RegisterMetricsCallback([this](const app::metrics::MetricsEvent& event) {
-            // Extract metric ID: node_name + "::" + metric_name
-            std::string metric_id = event.source + "::" + event.data.at("metric_name");
-            
+            // Extract metric details from event
+            // event.data contains: {"metric_name": "...", "value": "..."}
             try {
-                double value = std::stod(event.data.at("value"));
-                // Store the latest value (thread-safe)
-                // UpdateAllMetrics() will propagate to tiles each frame
-                metrics_tile_panel_->SetLatestValue(metric_id, value);
-            } catch (...) {
-                // Ignore parse errors
+                if (event.data.count("metric_name") && event.data.count("value")) {
+                    std::string metric_id = event.source + "::" + event.data.at("metric_name");
+                    double value = std::stod(event.data.at("value"));
+                    
+                    // Buffer the value for UpdateAllMetrics() to propagate
+                    metrics_tile_panel_->SetLatestValue(metric_id, value);
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "[MetricsPanel] Error processing event: " << e.what() << "\n";
             }
         });
 

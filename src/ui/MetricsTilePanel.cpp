@@ -28,6 +28,11 @@ void MetricsTilePanel::AddTile(std::shared_ptr<MetricsTileWindow> tile) {
 }
 
 void MetricsTilePanel::UpdateAllMetrics() {
+    // Per ARCHITECTURE.md:
+    // - MetricsPublisher invokes callback with MetricsEvent (metric_name, value in data map)
+    // - Callback buffers value via SetLatestValue()
+    // - UpdateAllMetrics() (called each frame from Run()) propagates buffered values to tiles
+    
     // Copy latest values to tiles (lock-free during update iteration)
     std::map<std::string, double> values_snapshot;
     {
