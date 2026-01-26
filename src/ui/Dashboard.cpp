@@ -231,8 +231,12 @@ ftxui::Element Dashboard::BuildLayout() const {
     using namespace ftxui;
     std::vector<Element> layout_elements;
 
+    // PHASE 0 FIX: Use GREATER_THAN instead of EQUAL for metrics panel
+    // EQUAL forces content into fixed height, causing clipping/squeezing
+    // GREATER_THAN allows content to expand, enabling proper overflow handling
+    // With GREATER_THAN, the metrics panel can expand beyond allocated space
     if (metrics_panel_)
-        layout_elements.push_back(metrics_panel_->Render() | size(HEIGHT, EQUAL, metrics_panel_->GetHeight()));
+        layout_elements.push_back(metrics_panel_->Render() | size(HEIGHT, GREATER_THAN, metrics_panel_->GetHeight()));
 
     if (logging_window_)
         layout_elements.push_back(logging_window_->Render() | size(HEIGHT, EQUAL, logging_window_->GetHeight()));

@@ -181,6 +181,9 @@ ftxui::Element MetricsTilePanel::Render() const {
         }
     }
     
+    // PHASE 0 FIX: Return vbox that allows content to expand
+    // Without height constraint, tiles will render at natural height
+    // The parent Dashboard::BuildLayout() uses AT_LEAST to allow expansion
     return vbox(std::move(node_sections)) | border | color(Color::Green);
 }
 
