@@ -564,8 +564,6 @@ Each field within a consolidated tile rendered as a row:
 │ estimation_quality:      92.5%      │ ← Green text (OK status)
 │ fusion_cycles:           1,234      │ ← Green text (OK status)
 │ estimation_latency_ms:   45.2 ms    │ ← Yellow text (WARNING status)
-│                                     │
-│ Status: OK (🟢) / WARN (🟡) / CRIT (🔴) │
 └─────────────────────────────────────┘
 ```
 
@@ -605,11 +603,10 @@ int NodeMetricsTile::GetMinHeightLines() const {
     // Header (1 line)
     // + one line per field (single-line compact rows)
     // + separator (1)
-    // + status line (1)
-    // Total = 3 + field_count
+    // Total = 2 + field_count
     
-    // Example: 3 fields = 3 + 3 = 6 lines (vs. previous 7)
-    return 3 + static_cast<int>(field_descriptors_.size());
+    // Example: 3 fields = 2 + 3 = 5 lines
+    return 2 + static_cast<int>(field_descriptors_.size());
 }
 ```
 
