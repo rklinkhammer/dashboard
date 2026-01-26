@@ -209,6 +209,38 @@ add_test(
 )
 
 # ============================================================================
+# Phase 1 Unit Tests: NodeMetricsTile
+# ============================================================================
+
+add_executable(test_node_metrics_tile
+    ui/test_node_metrics_tile.cpp
+)
+
+target_include_directories(test_node_metrics_tile
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_node_metrics_tile
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+    log4cxx
+)
+
+add_test(
+    NAME Phase1NodeMetricsTileTests
+    COMMAND test_node_metrics_tile
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# ============================================================================
 # Phase 3 Unit Tests: CommandRegistry and CommandWindow
 # ============================================================================
 

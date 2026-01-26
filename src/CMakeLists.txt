@@ -33,6 +33,7 @@ set(GDASHBOARD_SOURCES
     ui/StatusBar.cpp
     ui/MetricsTileWindow.cpp
     ui/MetricsTilePanel.cpp
+    ui/NodeMetricsTile.cpp
     ui/Dashboard.cpp
     app/FactoryManager.cpp
     app/GraphBuilder.cpp
