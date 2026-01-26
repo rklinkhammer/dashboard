@@ -21,32 +21,8 @@ ftxui::Element CommandWindow::Render() const {
         text(title_) | bold | color(Color::Yellow)
     );
     
-    // Add separator
-    command_elements.push_back(separator());
-    
-    // Add output lines with scrolling
-    size_t start_idx = 0;
-    if (output_lines_.size() > 10) {
-        start_idx = output_lines_.size() - 10;
-    }
-    
-    for (size_t i = start_idx; i < output_lines_.size(); ++i) {
-        const auto& line = output_lines_[i];
-        
-        // Color code output based on content
-        if (line.find("[ERROR]") == 0 || line.find("Error") != std::string::npos) {
-            command_elements.push_back(text(line) | color(Color::Red));
-        } else if (line.find("[SUCCESS]") == 0 || line.find("Success") != std::string::npos) {
-            command_elements.push_back(text(line) | color(Color::Green));
-        } else if (line.find("[WARNING]") == 0 || line.find("Warning") != std::string::npos) {
-            command_elements.push_back(text(line) | color(Color::Yellow));
-        } else {
-            command_elements.push_back(text(line));
-        }
-    }
-    
-    // Add input prompt
-    command_elements.push_back(separator());
+    // Add input prompt - simplified, just the input line
+    // Command output will go to logging window instead
     command_elements.push_back(
         text("> " + input_buffer_ + "_") | color(Color::Green) | bold
     );

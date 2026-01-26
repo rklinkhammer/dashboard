@@ -10,12 +10,20 @@ StatusBar::StatusBar() : Window("Status") {
 ftxui::Element StatusBar::Render() const {
     using namespace ftxui;
     
-    std::string status_text = "Status: " + status_ + 
-                              " | Nodes: " + std::to_string(active_nodes_) + "/" + std::to_string(total_nodes_) +
-                              " | Errors: " + std::to_string(error_count_);
+    // Left side: status info
+    std::string left_text = "Status: " + status_ + 
+                            " | Nodes: " + std::to_string(active_nodes_) + "/" + std::to_string(total_nodes_) +
+                            " | Errors: " + std::to_string(error_count_);
     
-    return text(status_text) 
+    // Right side: keyboard shortcuts
+    std::string right_text = "q=quit | help=commands";
+    
+    // Combine with hbox to spread across width
+    return hbox({
+        text(left_text),
+        filler(),
+        text(right_text)
+    })
         | bgcolor(Color::Black) 
-        | color(Color::White)
-        | hcenter;
+        | color(Color::White);
 }
