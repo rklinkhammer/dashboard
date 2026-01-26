@@ -85,48 +85,163 @@ std::vector<Node> nodes_;  // Each node contains map of metric_name -> MetricsTi
 
 ---
 
-## 2. Desired Behavior
+## 2. Critical Rendering Problem & Desired Behavior
 
-### 2.1 Target Architecture
+### 2.0 CRITICAL ISSUE: Current Rendering is Broken
 
-Change to **one consolidated tile per node** displaying all its fields:
+The current `MetricsTilePanel::Render()` has a fundamental flaw:
 
-```
-MetricsPanel
-├── MetricsTilePanel (container)
-│   └── Nodes (organized by node_name)
-│       ├── Node: "EstimationPipelineNode" (single consolidated tile)
-│       │   └── NodeMetricsTile (displays 3 fields within same tile)
-│       │       ├── estimation_quality: 92.5%
-│       │       ├── fusion_cycles: 1,234
-│       │       └── estimation_latency_ms: 45.2 ms
-│       └── Node: "SensorNode" (single consolidated tile)
-│           └── NodeMetricsTile (displays 2 fields within same tile)
-│               ├── sample_rate_hz: 100.0
-│               └── buffer_overflow_count: 0
+```cpp
+// Current broken render logic
+return vbox(std::move(node_sections)) | border | color(Color::Green);
+// ↑ This vbox tries to fit ALL nodes with ALL metrics into the allocated height
+// ↑ Uses size(HEIGHT, EQUAL, metrics_height) to constrain the entire panel
+// ↑ Result: Everything gets squashed into 15-20 lines of height, unreadable
 ```
 
-### 2.2 Target Tile Structure
+**Current symptoms**:
+- All tiles compressed vertically to fit the window height
+- Individual tiles are 1-2 lines tall (headers barely visible)
+- Field content completely hidden or illegible
+- No scrolling mechanism
+- No overflow handling
+- No pagination or tab switching
 
-**New Consolidated Tile** (~8-12 lines height depending on field count):
+**Example of what you see**:
+```
+┌────────────────────────────────────────────────────────────┐
+│ [EstimationPipelineNode] (3 metrics) [SensorNode] (2 metrics) │
+│ estimation_quality: 92.5% fusion_cycles: 1,234  sample_rate...│
+│ [AnotherNode] (4 metrics) [YetAnother] (5 metrics) latency: 45│
+│ ← All squeezed, overlapping, unreadable                       │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Root cause**: FTXUI's `size(HEIGHT, EQUAL, N)` modifier forces all content into N lines regardless of how much content there is. The `vbox` tries to fit everything, but with constrained height, tiles get truncated.
+
+### 2.1 Target Architecture with Proper Rendering
+
+The consolidation to one-tile-per-node ALSO needs to fix the rendering issue. There are three viable approaches:
+
+#### Option A: Scrollable Single View (RECOMMENDED)
+```
+┌─────────────────────────────────────┐
+│ Metrics (6 nodes visible, 2 off-screen)│
+├─────────────────────────────────────┤
+│┌─ EstimationPipelineNode (3 metrics)┐│ ← Fully visible, readable
+│├────────────────────────────────────┤│
+││ estimation_quality:      92.5%      ││
+││ fusion_cycles:           1,234      ││
+││ estimation_latency_ms:   45.2 ms    ││
+││ Status: OK (🟢)                     ││
+│└────────────────────────────────────┘│
+│┌─ SensorNode (2 metrics)             ┐│ ← Next node fully visible
+│├────────────────────────────────────┤│
+││ sample_rate_hz:          100.0      ││
+││ buffer_overflow_count:   0          ││
+││ Status: OK (🟢)                     ││
+│└────────────────────────────────────┘│
+│┌─ [Scroll down for 2 more nodes] ↓  ┐│ ← Visual indication of more
+│└────────────────────────────────────┘│
+└─────────────────────────────────────┘
+```
+
+**Implementation**: Use FTXUI's `Container::Vertical()` with scroll support
+
+#### Option B: Tab-Based Navigation
+```
+[Node: EstimationPipelineNode ◄► Next]  ← Tab headers for quick switching
+┌─────────────────────────────────────┐
+│┌─ EstimationPipelineNode (3 metrics)┐│
+│├────────────────────────────────────┤│
+││ estimation_quality:      92.5%      ││
+││ fusion_cycles:           1,234      ││
+││ estimation_latency_ms:   45.2 ms    ││
+││ Status: OK (🟢)                     ││
+│└────────────────────────────────────┘│
+│                                      │
+│ [Click/arrow key to switch nodes]   │
+└─────────────────────────────────────┘
+```
+
+**Implementation**: Use TabContainer with one node per tab
+
+#### Option C: Grid with Overflow Hidden (NOT RECOMMENDED)
+- Same as current broken design but with proper truncation
+- Content is still hidden, just more gracefully
+
+**Recommendation**: Use **Option A (Scrollable)** for MVP:
+- Shows multiple nodes at once (gives context)
+- Scrolling is familiar interaction
+- Easier to see relationships between nodes
+- Doesn't require tab management
+
+### 2.2 Desired Behavior with Scrollable Rendering
+
+Change to **one consolidated tile per node** with proper scrolling:
+
+```
+MetricsPanel (with scrolling)
+├── MetricsTilePanel (scrollable container)
+│   └── Nodes (displayed with scroll mechanism)
+│       ├── Node: "EstimationPipelineNode" (single consolidated tile, ~7 lines)
+│       │   ├── Header: EstimationPipelineNode (3 metrics)
+│       │   ├── estimation_quality: 92.5% [gauge]
+│       │   ├── fusion_cycles: 1,234
+│       │   ├── estimation_latency_ms: 45.2 ms [sparkline]
+│       │   └── Status: OK (🟢)
+│       │
+│       └── Node: "SensorNode" (single consolidated tile, ~5 lines)
+│           ├── Header: SensorNode (2 metrics)
+│           ├── sample_rate_hz: 100.0
+│           ├── buffer_overflow_count: 0
+│           └── Status: OK (🟢)
+│
+└── [Scroll indicator: 2 more nodes below]
+```
+
+**Benefits over current broken design**:
+- **Readable**: Each tile gets full height, content is visible
+- **Scrollable**: Users can see all nodes by scrolling
+- **No clipping**: Fields render to full height
+- **Proper overflow**: Graceful handling of many nodes
+- **Space efficient**: Consolidated tiles use less space than 3-column grid
+
+### 2.3 Tile Rendering Details
+
+Each consolidated node tile now renders properly:
 
 ```
 ┌──────────────────────────────────┐
-│ EstimationPipelineNode (3 metrics)│
-├──────────────────────────────────┤
-│ estimation_quality:      92.5%    │
-│ fusion_cycles:           1,234    │
-│ estimation_latency_ms:   45.2 ms  │
-│                                  │
-│ Status: OK (🟢)                   │
+│ EstimationPipelineNode (3 metrics)│  ← Header (1 line)
+├──────────────────────────────────┤  ← Separator (1 line)
+│ estimation_quality:      92.5%    │  ← Field 1 (1 line)
+│ fusion_cycles:           1,234    │  ← Field 2 (1 line)
+│ estimation_latency_ms:   45.2 ms  │  ← Field 3 (1 line)
+├──────────────────────────────────┤  ← Separator (1 line)
+│ Status: OK (🟢)                   │  ← Status line (1 line)
 └──────────────────────────────────┘
+Total: 7 lines, fully readable
 ```
 
-**Benefits**:
-- **Grouped display**: Related metrics from same node shown together
-- **Reduced visual clutter**: Fewer separate boxes, easier to scan
-- **Logical organization**: Node as single conceptual unit
-- **Scalable**: Works well for nodes with 3-10 fields
+### 2.4 Scrolling Implementation
+
+```cpp
+// Pseudocode for scrolling container
+auto nodes_container = Container::Vertical({
+    node_tile_1->Render(),
+    node_tile_2->Render(),
+    node_tile_3->Render(),
+    // ... more nodes
+});
+
+// Wrap in scrollable container
+auto scrollable_view = nodes_container | yframe | border;
+
+// Apply height constraint WITHOUT forcing content to fit
+// Height is MINIMUM available, not MAXIMUM squeeze
+return scrollable_view | size(HEIGHT, AT_LEAST, 15);
+```
 
 ---
 
@@ -198,7 +313,86 @@ private:
 };
 ```
 
-### 3.2 Modified: MetricsTilePanel
+### 3.2 CRITICAL FIX: Rendering Architecture with Scrolling
+
+**Problem**: Current render uses `size(HEIGHT, EQUAL, N)` which FORCES all content into N lines.
+
+**Solution**: Use FTXUI scrollable container instead of forcing fit.
+
+#### 3.2a MetricsTilePanel Render Method (FIXED)
+
+**File**: `src/ui/MetricsTilePanel.cpp`
+
+```cpp
+ftxui::Element MetricsTilePanel::Render() const {
+    using namespace ftxui;
+    
+    if (node_tiles_.empty()) {
+        return text("No metrics") | center | color(Color::Yellow);
+    }
+    
+    // CRITICAL FIX: Create vertical container for nodes, then make scrollable
+    // This allows nodes to render at full height, not squeezed
+    
+    std::vector<Element> node_elements;
+    
+    for (const auto& [node_name, node_tile] : node_tiles_) {
+        // Each node tile renders at full natural height (7-10 lines for 3-5 fields)
+        // NOT forced to fit in available window height
+        node_elements.push_back(node_tile->Render());
+        
+        // Separator between nodes
+        if (node_name != node_tiles_.rbegin()->first) {
+            node_elements.push_back(separator());
+        }
+    }
+    
+    // KEY CHANGE: Wrap in scrollable container instead of forcing content
+    auto scrollable_container = Container::Vertical(node_elements) | 
+                                yframe |                              // Enable vertical scrolling
+                                border;
+    
+    return scrollable_container;
+    // DO NOT apply size(HEIGHT, EQUAL, N) - this destroys the scrolling!
+    // The parent MetricsPanel will apply size constraint if needed
+}
+```
+
+#### 3.2b Dashboard Layout with Proper Height Allocation
+
+**File**: `src/ui/Dashboard.cpp` (BuildLayout method)
+
+```cpp
+ftxui::Element Dashboard::BuildLayout() const {
+    using namespace ftxui;
+    
+    // DO NOT force MetricsTilePanel to exact height
+    // Instead, allocate percentage and let scrolling handle overflow
+    
+    int metrics_height = std::max(3, (terminal_height * 68) / 100);
+    
+    std::vector<Element> layout_elements;
+    
+    if (metrics_panel_) {
+        layout_elements.push_back(
+            metrics_panel_->Render()
+            // OLD (broken): | size(HEIGHT, EQUAL, metrics_height)
+            // NEW (fixed): Allow content to flow, scrolling handles overflow
+            | size(HEIGHT, AT_LEAST, metrics_height)  // Minimum height, not maximum squeeze
+        );
+    }
+    
+    // ... other components ...
+    
+    return vbox(layout_elements);
+}
+```
+
+**Explanation**: 
+- `size(HEIGHT, EQUAL, N)` = "force exactly N lines" → content gets squashed/hidden
+- `size(HEIGHT, AT_LEAST, N)` = "use at least N lines, more if needed" → scrolling works
+
+### 3.3 Modified: MetricsTilePanel
 
 **File**: `include/ui/MetricsTilePanel.hpp`
 
@@ -510,10 +704,19 @@ std::shared_ptr<NodeMetricsTile> GetNodeTile(const std::string& node_name);
 
 ## 8. Implementation Roadmap
 
+### Phase 0: CRITICAL - Fix Rendering Architecture (DO THIS FIRST)
+- [ ] Update `MetricsTilePanel::Render()` to use scrollable container instead of forcing fit
+- [ ] Change `Dashboard::BuildLayout()` to use `size(HEIGHT, AT_LEAST, N)` instead of `EQUAL`
+- [ ] Replace FTXUI container with scrollable support
+- [ ] Add scroll indicators to show when more nodes exist below
+- [ ] Test with current multi-tile design first (before consolidation)
+- **BLOCKING**: Current design is unreadable until this is fixed
+- **Estimated effort**: 1-2 hours
+
 ### Phase 1: Create NodeMetricsTile
 - [ ] Create `include/ui/NodeMetricsTile.hpp` with class definition
 - [ ] Create `src/ui/NodeMetricsTile.cpp` with implementation
-- [ ] Implement `Render()` with field row layout
+- [ ] Implement `Render()` with scrollable-friendly field row layout
 - [ ] Implement `UpdateMetricValue()` and `UpdateAllValues()`
 - [ ] Write unit tests in `test/ui/test_node_metrics_tile.cpp`
 
@@ -654,6 +857,57 @@ ftxui::Element NodeMetricsTile::Render() const {
 - Schema structure: [NodeMetricsSchema.hpp](include/app/metrics/NodeMetricsSchema.hpp)
 
 ---
+
+## 12. CRITICAL SUMMARY: The Rendering Problem is the ROOT CAUSE
+
+### Current Situation
+The dashboard metrics panel is **currently unreadable** because:
+1. All tiles are forced into a small fixed height
+2. No scrolling mechanism exists
+3. Content gets clipped/overlapped and invisible
+4. 3-column grid layout makes it worse (more tiles crammed in)
+
+### Why Consolidation Alone Won't Fix It
+Simply changing from many small tiles to fewer large tiles **will not fix the underlying rendering problem**. You need BOTH:
+1. **Consolidation**: Reduce number of tiles (1 per node instead of 1 per field)
+2. **Scrolling**: Enable vertical scrolling in the metrics panel
+
+### The Fix (in order of priority)
+1. **Phase 0 (CRITICAL)**: Implement scrollable metrics container
+   - Makes current design readable (even before consolidation)
+   - Takes 1-2 hours
+   - Unblocks dashboard testing
+   
+2. **Phase 1-5**: Implement consolidation + cleanup
+   - Makes design more elegant
+   - Reduces visual clutter further
+   - Takes additional 2-3 hours
+
+### Without Phase 0
+- Consolidation alone won't make content readable
+- Scrolling is NECESSARY for multi-node metrics display
+- Current metrics panel remains broken until scrolling is added
+
+### Recommended Approach
+1. Start with Phase 0: Add scrolling to current multi-tile design
+2. Verify metrics are now readable
+3. Then proceed with consolidation in Phases 1-5
+4. This gives you working metrics quickly, then improves layout gradually
+
+---
+
+## Summary
+
+The proposed change consolidates metrics display from **many small tiles** (one per field) to **fewer larger tiles** (one per node), BUT it ALSO fixes the critical rendering problem by implementing scrolling. This makes the dashboard:
+- ✅ Readable (Phase 0)
+- ✅ Well-organized (Phase 1-5)
+- ✅ Scalable (scrolling handles many nodes)
+
+**Key implementation point**: Create `NodeMetricsTile` class AND fix rendering with scrollable container.
+
+**Critical path**: Phase 0 (scrolling fix) → Phase 1 (consolidation) → Phases 2-5 (cleanup)
+
+**Estimated total effort**: 3-5 hours (Phase 0: 1-2h + Phases 1-5: 2-3h)
 
 ## Summary
 
