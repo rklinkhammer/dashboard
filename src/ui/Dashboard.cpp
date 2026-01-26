@@ -99,6 +99,16 @@ void Dashboard::Initialize() {
         // Register LoggingWindow with log4cxx root logger (Phase 3)
         auto logging_appender = logging_window_->GetAppender();
         if (logging_appender) {
+            // Set a callback on the appender so log messages trigger a screen redraw
+            // This ensures messages appear immediately instead of waiting for the next event
+            logging_appender->SetCallback(
+                [this](const std::string&, const std::string&) {
+                    // Mark screen dirty so the event loop re-renders the UI
+                    // This makes log messages appear immediately without waiting for keyboard input
+                    this->MarkScreenDirty();
+                }
+            );
+            
             // Create proper log4cxx appender that wraps LoggingAppender
             auto window_appender = std::make_shared<LoggingWindowAppender>(logging_appender);
             

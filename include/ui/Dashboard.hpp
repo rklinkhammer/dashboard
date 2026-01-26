@@ -59,6 +59,9 @@ public:
     const WindowHeightConfig& GetWindowHeights() const;
     bool AreHeightsValid() const;
 
+    // Signal that screen needs redraw (called when log messages arrive)
+    void MarkScreenDirty() { screen_dirty_ = true; }
+
 private:
     // Executor reference
     std::shared_ptr<app::capabilities::MetricsCapability> capability_;
