@@ -11,6 +11,7 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/terminal.hpp>
+#include <ftxui/component/event.hpp>
 
 static log4cxx::LoggerPtr dashboard_logger = log4cxx::Logger::getLogger("dashboard.Dashboard");
 
@@ -201,60 +202,138 @@ void Dashboard::Run() {
         throw std::runtime_error("Dashboard not initialized");
     }
 
-    LOG4CXX_TRACE(dashboard_logger, "Dashboard::Run() called"); 
-    LOG4CXX_TRACE(dashboard_logger, "Starting event loop with FTXUI rendering (30 FPS)");
-    LOG4CXX_TRACE(dashboard_logger, "Dashboard initialized with 4 panels");
-    LOG4CXX_TRACE(dashboard_logger, "Metrics: " << (metrics_panel_ ? metrics_panel_->GetMetricCount() : 0) << " metrics");
-    LOG4CXX_TRACE(dashboard_logger, "Logging: " << (logging_window_ ? logging_window_->GetLogCount() : 0) << " log lines");
+    LOG4CXX_INFO(dashboard_logger, "Starting event loop (30 FPS, terminal input enabled)");
 
     using namespace ftxui;
-    
+
     // Create screen
     auto screen = Screen::Create(Dimension::Full(), Dimension::Full());
     
-    const auto frame_time = std::chrono::milliseconds(33);  // ~30 FPS
-    auto last_frame = std::chrono::high_resolution_clock::now();
+    // Store initial dimensions
+    last_screen_width_ = screen.dimx();
+    last_screen_height_ = screen.dimy();
+    
+    LOG4CXX_INFO(dashboard_logger, "Terminal size: " << last_screen_width_ << "x" << last_screen_height_);
+
+    // Main event loop
+    last_frame_ = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
 
     while (!should_exit_) {
         try {
             frame_count++;
+            
+            // 1. Check for terminal resize
+            if (CheckForTerminalResize()) {
+                LOG4CXX_DEBUG(dashboard_logger, "Terminal resized to " 
+                    << last_screen_width_ << "x" << last_screen_height_);
+                RecalculateLayout();
+                screen = Screen::Create(Dimension::Full(), Dimension::Full());
+            }
 
-            // Update all metrics from latest executor values (Phase 2)
+            // 2. Read and process events (check for keyboard input)
+            // Note: FTXUI event handling will be added here
+            // For now, we use a placeholder that checks for terminal input
+            
+            // 3. Update metrics from capability
             if (metrics_panel_ && metrics_panel_->GetMetricsTilePanel()) {
                 metrics_panel_->GetMetricsTilePanel()->UpdateAllMetrics();
             }
 
-            // Build and render the layout
+            // 4. Build and render layout
             auto document = BuildLayout();
             Render(screen, document);
-            
-            // Display rendered output
             std::cout << screen.ToString() << std::flush;
-            
-            // Sleep to maintain 30 FPS
+
+            // 5. Maintain 30 FPS
             auto now = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                now - last_frame);
+                now - last_frame_);
 
-            if (elapsed < frame_time) {
-                std::this_thread::sleep_for(frame_time - elapsed);
+            if (elapsed < frame_time_) {
+                std::this_thread::sleep_for(frame_time_ - elapsed);
             }
+            last_frame_ = std::chrono::high_resolution_clock::now();
 
-            last_frame = std::chrono::high_resolution_clock::now();
-
-            // Exit for Phase 1 testing - in Phase 2 integrate real event loop
-            if (frame_count >= 30) {  // Run for ~1 second then exit
-                should_exit_ = true;
+            // Debug: Log every 30 frames (1 second at 30 FPS)
+            if (frame_count % 30 == 0) {
+                LOG4CXX_TRACE(dashboard_logger, "Event loop tick: " << frame_count << " frames");
             }
 
         } catch (const std::exception& e) {
-            LOG4CXX_ERROR(dashboard_logger, "[Run] Error in event loop: " << e.what());
+            LOG4CXX_ERROR(dashboard_logger, "Error in event loop: " << e.what());
             should_exit_ = true;
         }
     }
 
-    LOG4CXX_TRACE(dashboard_logger, "[Run] Event loop exited after " << frame_count << " frames");
+    LOG4CXX_INFO(dashboard_logger, "Event loop exited after " << frame_count << " frames");
+}
+
+void Dashboard::HandleKeyEvent(const ftxui::Event& event) {
+    using namespace ftxui;
+    
+    // Global quit command
+    if (event == Event::Character('q')) {
+        LOG4CXX_INFO(dashboard_logger, "User quit via 'q' key");
+        should_exit_ = true;
+        return;
+    }
+    
+    // Tab navigation (left/right arrows) - if MetricsPanel supports it
+    if (metrics_panel_) {
+        if (event == Event::ArrowLeft) {
+            LOG4CXX_DEBUG(dashboard_logger, "Left arrow pressed");
+            // TODO: Call metrics_panel_->PreviousTab() if tab mode enabled
+            return;
+        }
+        if (event == Event::ArrowRight) {
+            LOG4CXX_DEBUG(dashboard_logger, "Right arrow pressed");
+            // TODO: Call metrics_panel_->NextTab() if tab mode enabled
+            return;
+        }
+    }
+    
+    // Route to CommandWindow for input
+    if (command_window_) {
+        // Characters go to command input
+        if (event.is_character()) {
+            LOG4CXX_TRACE(dashboard_logger, "Character input: " << event.character()[0]);
+            // TODO: command_window_->AddInputCharacter(event.character()[0]);
+            return;
+        }
+        
+        // Enter executes command
+        if (event == Event::Return) {
+            LOG4CXX_DEBUG(dashboard_logger, "Enter pressed - executing command");
+            // TODO: command_window_->ExecuteInputCommand();
+            return;
+        }
+        
+        // Backspace for editing
+        if (event == Event::Backspace) {
+            LOG4CXX_TRACE(dashboard_logger, "Backspace pressed");
+            // TODO: command_window_->RemoveLastInputCharacter();
+            return;
+        }
+    }
+    
+    LOG4CXX_TRACE(dashboard_logger, "Unhandled event (ignoring)");
+}
+
+bool Dashboard::CheckForTerminalResize() {
+    auto term_size = ftxui::Terminal::Size();
+    if (term_size.dimx != last_screen_width_ || 
+        term_size.dimy != last_screen_height_) {
+        last_screen_width_ = term_size.dimx;
+        last_screen_height_ = term_size.dimy;
+        return true;
+    }
+    return false;
+}
+
+void Dashboard::RecalculateLayout() {
+    // Update all component heights based on new screen size
+    ApplyHeights();
 }
 
 // Getters

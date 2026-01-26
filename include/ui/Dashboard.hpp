@@ -2,7 +2,9 @@
 
 #include <memory>
 #include <string>
+#include <chrono>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/component/component.hpp>
 #include "graph/GraphExecutor.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
 
@@ -72,10 +74,27 @@ private:
     bool should_exit_ = false;
     bool initialized_ = false;
 
+    // Event loop state
+    std::chrono::high_resolution_clock::time_point last_frame_;
+    std::chrono::milliseconds frame_time_{33};  // ~30 FPS (33ms per frame)
+    
+    // Screen dimensions for resize detection
+    int last_screen_width_ = -1;
+    int last_screen_height_ = -1;
+
     // Private methods
     void ValidateHeights();
     void ApplyHeights();
     
     // Build the complete FTXUI layout from all window components
     ftxui::Element BuildLayout() const;
+    
+    // Event loop methods
+    void HandleKeyEvent(const ftxui::Event& event);
+    bool CheckForTerminalResize();
+    void RecalculateLayout();
+    
+    // Getters for testing
+    int GetScreenHeight() const { return last_screen_height_; }
+    int GetScreenWidth() const { return last_screen_width_; }
 };
