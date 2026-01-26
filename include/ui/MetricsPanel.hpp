@@ -54,6 +54,14 @@ public:
      */
     void OnMetricsEvent(const app::metrics::MetricsEvent& event) override;
 
+    void PreviousTab() {
+        tab_container_.PreviousTab();
+    }
+
+    void NextTab() {
+        tab_container_.NextTab();
+    }
+
 private:
     struct PlaceholderMetric {
         std::string name;

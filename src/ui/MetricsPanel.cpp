@@ -83,7 +83,7 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<app::capabilities
         }
 
         // Get all node metrics schemas
-        auto schemas = capability->GetNodeMetricsSchemas();
+        const auto& schemas = capability->GetNodeMetricsSchemas();
         LOG4CXX_TRACE(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: Discovered " << schemas.size() 
                   << " nodes with metrics\n");
 
@@ -123,7 +123,6 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<app::capabilities
                 }
             }
         }
-
         metrics_tile_panel_->SetMetricsCapability(capability);
         LOG4CXX_TRACE(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: Created " 
                   << metrics_tile_panel_->GetTileCount() << " metric tiles")    ;

@@ -291,7 +291,7 @@ int main(int argc, char* argv[]) {
         if (!log_config.empty()) {
             try {
                 log4cxx::PropertyConfigurator::configure(log_config);
-                LOG4CXX_TRACE(dashboard_logger, "Loaded log configuration from: " << log_config);
+                LOG4CXX_WARN(dashboard_logger, "Loaded log configuration from: " << log_config);
             } catch (const std::exception& e) {
                 LOG4CXX_WARN(dashboard_logger, "Failed to load log configuration from " << log_config << ": " << e.what());
             }

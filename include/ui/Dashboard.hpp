@@ -3,8 +3,11 @@
 #include <memory>
 #include <string>
 #include <chrono>
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
+#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/terminal.hpp>
 #include "graph/GraphExecutor.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
 
@@ -75,10 +78,13 @@ private:
     std::shared_ptr<StatusBar> status_bar_;            // 2%
     std::shared_ptr<CommandRegistry> command_registry_; // Command execution system
 
+    ftxui::ScreenInteractive screen_;
+
     // Layout state
     WindowHeightConfig window_heights_;
     bool should_exit_ = false;
     bool initialized_ = false;
+    bool show_debug_overlay_ = false;
 
     // Event loop state
     std::chrono::high_resolution_clock::time_point last_frame_;
