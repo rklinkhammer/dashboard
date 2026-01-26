@@ -847,6 +847,107 @@ ftxui::Element NodeMetricsTile::Render() const {
 
 **Future consideration**: Support collapsing a node tile to show only status line
 
+### Q4: Hybrid Approach for Special Display Types
+
+**Problem**: Most metrics are simple text + value, but some need special rendering:
+- Gauge display (requires width)
+- Sparkline graph (requires height + 60-point history)
+- State machine visualization (requires layout)
+- Complex alerts (multi-row layout)
+
+**Decision**: **Hybrid Consolidation with Special-case Tiles**
+
+For each node:
+1. **Create NodeMetricsTile** with all "basic" metrics (text + value format)
+   - Simple numbers with labels
+   - Colors for status
+   - 1 line per metric
+   
+2. **If metric needs special display AND can't fit in NodeMetricsTile**, create additional standalone tile
+   - Gauge tile (10 lines height)
+   - Sparkline tile (5 lines height)
+   - State visualization tile (varies)
+   - Complex alert tile (varies)
+
+**Example layout**:
+```
+┌──────────────────────────────┐
+│ EstimationPipelineNode       │ ← NodeMetricsTile (consolidated)
+├──────────────────────────────┤
+│ estimation_quality: 92.5%    │ ← Basic metric in consolidated tile
+│ fusion_cycles: 1,234         │ ← Basic metric in consolidated tile
+│ estimation_latency_ms: 45.2  │ ← Basic metric in consolidated tile
+│ Status: OK (🟢)              │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│ EstimationPipelineNode      │ ← Additional tile for special display
+│ [Quality Gauge]              │
+│ ████████████░░░░░░░░░░░░░░░ │ ← Gauge needs more space
+│ 92.5% of optimal             │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│ EstimationPipelineNode      │ ← Another additional tile if needed
+│ [Latency Sparkline]          │
+│ ╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲ (chart) │
+│ Trend: Stable                │
+└──────────────────────────────┘
+```
+
+**Implementation logic**:
+```cpp
+// In MetricsPanel::DiscoverMetricsFromExecutor()
+
+std::vector<MetricDescriptor> basic_metrics;
+std::vector<std::pair<MetricDescriptor, std::string>> special_metrics;
+// special_metrics = (descriptor, display_type)
+
+for (const auto& field : schema.metrics_schema["fields"]) {
+    std::string display_type = field.contains("display_type") 
+        ? field["display_type"].get<std::string>() 
+        : "value";  // Default
+    
+    MetricDescriptor desc = ...;
+    
+    if (display_type == "value" || display_type == "text") {
+        // Basic metric - goes in consolidated NodeMetricsTile
+        basic_metrics.push_back(desc);
+    } else {
+        // Special display - create separate MetricsTileWindow
+        special_metrics.push_back({desc, display_type});
+    }
+}
+
+// Create consolidated tile for basic metrics
+auto node_tile = std::make_shared<NodeMetricsTile>(
+    schema.node_name, basic_metrics, ...);
+metrics_tile_panel_->AddNodeTile(node_tile);
+
+// Create additional tiles for special metrics
+for (const auto& [desc, display_type] : special_metrics) {
+    auto special_tile = std::make_shared<MetricsTileWindow>(desc, ...);
+    special_tile->SetDisplayType(display_type);
+    metrics_tile_panel_->AddSpecialTile(special_tile);
+    // These render AFTER consolidated tiles in the scrollable view
+}
+```
+
+**Benefits**:
+- ✅ Consolidated view for 80% of metrics (clean, compact)
+- ✅ Special tiles for 20% of metrics (gauge, sparkline, etc.)
+- ✅ Flexible: Add special display types without restructuring
+- ✅ Scannable: Basic metrics easy to read, special metrics get focus
+
+**Trade-offs**:
+- ⚠️ Slightly more complex code (two tile types)
+- ⚠️ Ordering matters: special tiles come after consolidated tile
+- ⚠️ Metadata needed: JSON must specify display_type for fields
+
+**Recommendation**: Implement in Phase 1B (after consolidation complete):
+- Phase 1A: Basic consolidation (all fields as text+value)
+- Phase 1B: Add special tile support for gauges, sparklines, etc.
+
 ---
 
 ## 11. References
