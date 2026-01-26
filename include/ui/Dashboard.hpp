@@ -81,6 +81,10 @@ private:
     // Screen dimensions for resize detection
     int last_screen_width_ = -1;
     int last_screen_height_ = -1;
+    
+    // Dirty flag for screen rendering optimization
+    // Only redraw when screen needs updating to reduce flicker in quiescent state
+    bool screen_dirty_ = true;  // Initial render always needed
 
     // Private methods
     void ValidateHeights();

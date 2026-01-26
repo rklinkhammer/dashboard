@@ -229,6 +229,7 @@ void Dashboard::Run() {
                     << last_screen_width_ << "x" << last_screen_height_);
                 RecalculateLayout();
                 screen = Screen::Create(Dimension::Full(), Dimension::Full());
+                screen_dirty_ = true;  // Mark for redraw on resize
             }
 
             // 2. Read and process events (check for keyboard input)
@@ -238,12 +239,16 @@ void Dashboard::Run() {
             // 3. Update metrics from capability
             if (metrics_panel_ && metrics_panel_->GetMetricsTilePanel()) {
                 metrics_panel_->GetMetricsTilePanel()->UpdateAllMetrics();
+                screen_dirty_ = true;  // Mark for redraw when metrics update
             }
 
-            // 4. Build and render layout
-            auto document = BuildLayout();
-            Render(screen, document);
-            std::cout << screen.ToString() << std::flush;
+            // 4. Only render when screen is dirty (changed) - reduces flicker in quiescent state
+            if (screen_dirty_) {
+                auto document = BuildLayout();
+                Render(screen, document);
+                std::cout << screen.ToString() << std::flush;
+                screen_dirty_ = false;  // Mark as clean until next change
+            }
 
             // 5. Maintain 30 FPS
             auto now = std::chrono::high_resolution_clock::now();
