@@ -147,8 +147,16 @@ void Dashboard::Run() {
     last_screen_width_ = Terminal::Size().dimx;
     last_screen_height_ = Terminal::Size().dimy;
 
+    // Create a container component that holds all window components
+    auto window_container = Container::Vertical({
+        metrics_panel_,
+        logging_window_,
+        command_window_,
+        status_bar_
+    });
+
     // Component that renders our dashboard layout
-    auto dashboard_renderer = Renderer([this] {
+    auto dashboard_renderer = Renderer(window_container, [this] {
         auto layout = BuildLayout();
         if (show_debug_overlay_) {
             layout |= border;
@@ -156,7 +164,7 @@ void Dashboard::Run() {
         return layout;
     });
 
-    // Event handling
+    // Event handling for global commands
     auto root_component = CatchEvent(dashboard_renderer, [this](Event event) {
         // Quit
         if (event == Event::Character('q')) {
@@ -171,39 +179,7 @@ void Dashboard::Run() {
             return true;
         }
 
-        // // MetricsPanel tab switching
-        if (metrics_panel_) {
-            if (event == Event::ArrowLeft) {
-                metrics_panel_->PreviousTab();
-                return true;
-            }
-            if (event == Event::ArrowRight) {
-                metrics_panel_->NextTab();
-                return true;
-            }
-        }
-
-        // CommandWindow input
-        if (command_window_) {
-            if (event.is_character()) {
-                command_window_->HandleKeyInput(static_cast<int>(event.character()[0]));
-                return true;
-            }
-            if (event == Event::Return) {
-                command_window_->HandleKeyInput(10);
-                return true;
-            }
-            if (event == Event::Backspace) {
-                command_window_->HandleKeyInput(127);
-                return true;
-            }
-            if (event == Event::Escape) {
-                command_window_->HandleKeyInput(27);
-                return true;
-            }
-        }
-
-        return false;
+        return false;  // Let components handle other events
     });
 
     // Run main loop

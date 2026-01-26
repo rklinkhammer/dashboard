@@ -202,3 +202,31 @@ TEST_F(NodeMetricsTileTest, EmptyFields) {
     EXPECT_EQ(tile.GetNodeName(), "EmptyNode");
     EXPECT_EQ(tile.GetFieldCount(), 0);
 }
+
+// ============================================================================
+// Phase 3c: Collapsed Rendering Tests
+// ============================================================================
+
+TEST_F(NodeMetricsTileTest, RenderCollapsed_DisplaysCompactSummary) {
+    auto descriptors = CreateTestDescriptors();
+    auto schema = CreateTestSchema();
+    
+    NodeMetricsTile tile("TestNode", descriptors, schema);
+    
+    tile.UpdateMetricValue("throughput_hz", 500.0);
+    tile.UpdateMetricValue("latency_ms", 25.0);
+    tile.UpdateMetricValue("error_count", 0.0);
+    
+    auto element = tile.RenderCollapsed();
+    EXPECT_NE(element, nullptr);
+}
+
+TEST_F(NodeMetricsTileTest, RenderCollapsed_WithEmptyFields) {
+    std::vector<MetricDescriptor> empty_descriptors;
+    json empty_schema;
+    
+    NodeMetricsTile tile("EmptyNode", empty_descriptors, empty_schema);
+    
+    auto element = tile.RenderCollapsed();
+    EXPECT_NE(element, nullptr);
+}

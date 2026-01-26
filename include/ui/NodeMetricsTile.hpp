@@ -6,6 +6,7 @@
 #include <deque>
 #include <map>
 #include <mutex>
+#include <functional>
 #include <nlohmann/json.hpp>
 #include <ftxui/dom/elements.hpp>
 #include "ui/MetricsTileWindow.hpp"
@@ -30,11 +31,20 @@ public:
 
     // Render consolidated tile as FTXUI element
     ftxui::Element Render() const;
+    
+    // Render with filter (only shows metrics matching the filter)
+    ftxui::Element RenderFiltered(const std::function<bool(const std::string&)>& filter) const;
+    
+    // Render collapsed (header only with summary)
+    ftxui::Element RenderCollapsed() const;
 
     // Get tile sizing info
     int GetMinHeightLines() const;
     std::string GetNodeName() const { return node_name_; }
     size_t GetFieldCount() const { return field_descriptors_.size(); }
+    
+    // Get filtered field count
+    size_t GetFilteredFieldCount(const std::function<bool(const std::string&)>& filter) const;
 
     // Get overall status (worst status of all fields)
     AlertStatus GetStatus() const;

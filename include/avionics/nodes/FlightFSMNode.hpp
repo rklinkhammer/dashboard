@@ -386,6 +386,7 @@ namespace avionics {
                         {"unit", "percent"},
                         {"precision", 1},
                         {"description", "Altitude data confidence (0-100%)"},
+                        {"diaplay_type", "gauge"},
                         {"alert_rule", {
                             {"ok", {75.0, 100.0}},
                             {"warning", {50.0, 100.0}},

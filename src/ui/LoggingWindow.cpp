@@ -1,6 +1,7 @@
 #include "ui/LoggingWindow.hpp"
 #include <iostream>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/component/event.hpp>
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
@@ -47,11 +48,20 @@ ftxui::Element LoggingWindow::Render() const {
     // Get filtered logs
     auto filtered = GetFilteredLogs();
 
-    // Display recent logs (scrollable)
-    size_t display_count = 0;
-    const size_t max_display = 15;
+    // Calculate display range for scrolling
+    const size_t max_display = 10;  // Show ~10 lines of logs
+    size_t start_idx = 0;
     
-    for (size_t i = 0; i < filtered.size() && display_count < max_display; ++i) {
+    if (filtered.size() > max_display) {
+        // With scrolling: show from (size - max_display - scroll_offset) onwards
+        size_t available = filtered.size() - max_display;
+        size_t scroll_clamped = std::min(scroll_offset_, available);
+        start_idx = filtered.size() - max_display - scroll_clamped;
+    }
+    
+    // Display logs (visible portion with scrolling)
+    size_t display_count = 0;
+    for (size_t i = start_idx; i < filtered.size() && display_count < max_display; ++i) {
         const auto& entry = filtered[i];
         ftxui::Color log_color = GetLevelColor(entry.level);
         
@@ -219,4 +229,20 @@ std::vector<LoggingWindow::LogEntry> LoggingWindow::GetFilteredLogs() const {
     // Reverse to show newest first
     std::reverse(result.begin(), result.end());
     return result;
+}
+bool LoggingWindow::OnEvent(ftxui::Event event) {
+    using namespace ftxui;
+    
+    // Handle scrolling
+    if (event == Event::ArrowUp) {
+        ScrollUp();
+        return true;
+    }
+    
+    if (event == Event::ArrowDown) {
+        ScrollDown();
+        return true;
+    }
+    
+    return false;  // Event not handled
 }

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cmath>
 #include <algorithm>
+#include <functional>
 #include <log4cxx/logger.h>
 
 static log4cxx::LoggerPtr logger_ = log4cxx::Logger::getLogger("ui.NodeMetricsTile");
@@ -223,4 +224,66 @@ int NodeMetricsTile::GetMinHeightLines() const {
     // Header (1) + separator (1) + field rows (N) + separator (1) + status (1)
     // = 2 + field_count + 2 = 4 + field_count
     return 4 + static_cast<int>(field_descriptors_.size());
+}
+size_t NodeMetricsTile::GetFilteredFieldCount(const std::function<bool(const std::string&)>& filter) const {
+    size_t count = 0;
+    for (const auto& field : field_renders_) {
+        if (filter(field.metric_name)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+ftxui::Element NodeMetricsTile::RenderFiltered(const std::function<bool(const std::string&)>& filter) const {
+    using namespace ftxui;
+    
+    // Count filtered fields
+    size_t filtered_count = GetFilteredFieldCount(filter);
+    
+    std::string header = node_name_ + " (" + 
+                        std::to_string(filtered_count) + "/" + 
+                        std::to_string(field_descriptors_.size()) + " metrics)";
+    
+    std::vector<Element> rows;
+    rows.push_back(text(header) | bold | color(Color::Cyan));
+    rows.push_back(separator());
+    
+    // Add each field row that matches the filter
+    for (const auto& field : field_renders_) {
+        if (filter(field.metric_name)) {
+            rows.push_back(RenderFieldRow(field));
+        }
+    }
+    
+    // If no fields match, show filtered message
+    if (filtered_count == 0) {
+        rows.push_back(text("(no metrics match filter)") | color(Color::Yellow) | italic);
+    }
+    
+    // Add status line
+    rows.push_back(separator());
+    auto overall_status = ComputeOverallStatus();
+    rows.push_back(text("Status: " + StatusString(overall_status)) 
+                  | color(GetStatusColor(overall_status)) | align_right);
+    
+    return vbox(std::move(rows)) | border | color(Color::Green);
+}
+
+ftxui::Element NodeMetricsTile::RenderCollapsed() const {
+    using namespace ftxui;
+    
+    // Get overall status for summary
+    auto overall_status = ComputeOverallStatus();
+    
+    // Create compact summary line: [NodeName] 5/5 metrics - Status
+    std::string summary = "[" + node_name_ + "] " + 
+                         std::to_string(field_descriptors_.size()) + " metrics";
+    
+    std::vector<Element> rows;
+    rows.push_back(text(summary) | bold | color(Color::Cyan));
+    rows.push_back(text("Status: " + StatusString(overall_status)) 
+                  | color(GetStatusColor(overall_status)) | align_right);
+    
+    return vbox(std::move(rows)) | border | color(Color::Yellow);
 }

@@ -1,6 +1,7 @@
 #include "ui/CommandWindow.hpp"
 #include <iostream>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/component/event.hpp>
 #include <sstream>
 
 CommandWindow::CommandWindow(const std::string& title)
@@ -21,8 +22,39 @@ ftxui::Element CommandWindow::Render() const {
         text(title_) | bold | color(Color::Yellow)
     );
     
-    // Add input prompt - simplified, just the input line
-    // Command output will go to logging window instead
+    // Calculate display range for scrolling (show last N lines)
+    const size_t max_display = 8;  // Show ~8 lines of history before input
+    size_t start_idx = 0;
+    
+    if (output_lines_.size() > max_display) {
+        // With scrolling: show from (size - max_display - scroll_offset) onwards
+        size_t available = output_lines_.size() - max_display;
+        size_t scroll_clamped = std::min(scroll_offset_, available);
+        start_idx = output_lines_.size() - max_display - scroll_clamped;
+    }
+    
+    // Add output history (visible portion with scrolling)
+    size_t display_count = 0;
+    for (size_t i = start_idx; i < output_lines_.size() && display_count < max_display; ++i) {
+        const auto& line = output_lines_[i];
+        
+        // Color-code output based on content
+        ftxui::Color line_color = Color::White;
+        if (line.find("[SUCCESS]") != std::string::npos) {
+            line_color = Color::Green;
+        } else if (line.find("[ERROR]") != std::string::npos) {
+            line_color = Color::Red;
+        } else if (line.find("[INFO]") != std::string::npos) {
+            line_color = Color::Blue;
+        }
+        
+        command_elements.push_back(
+            text(line) | color(line_color)
+        );
+        display_count++;
+    }
+    
+    // Add input prompt with cursor
     command_elements.push_back(
         text("> " + input_buffer_ + "_") | color(Color::Green) | bold
     );
@@ -61,8 +93,9 @@ void CommandWindow::ExecuteInputCommand() {
     // Parse and execute
     ParseAndExecuteCommand();
     
-    // Clear input buffer
+    // Clear input buffer and reset scroll to show latest output
     input_buffer_.clear();
+    scroll_offset_ = 0;  // Auto-scroll to bottom when new output is added
 }
 
 void CommandWindow::ParseAndExecuteCommand() {
@@ -136,5 +169,60 @@ void CommandWindow::ClearHistory() {
 
 std::vector<std::string> CommandWindow::GetHistory() const {
     return std::vector<std::string>(command_history_.begin(), command_history_.end());
+}
+
+void CommandWindow::ScrollUp() {
+    // Increase scroll offset to show older lines
+    if (output_lines_.size() > 8) {
+        scroll_offset_ = std::min(scroll_offset_ + 1, output_lines_.size() - 8);
+    }
+}
+
+void CommandWindow::ScrollDown() {
+    // Decrease scroll offset to show newer lines
+    if (scroll_offset_ > 0) {
+        scroll_offset_--;
+    }
+}
+
+bool CommandWindow::OnEvent(ftxui::Event event) {
+    using namespace ftxui;
+    
+    // Handle character input
+    if (event.is_character()) {
+        HandleKeyInput(static_cast<int>(event.character()[0]));
+        return true;
+    }
+    
+    // Handle Return (Enter)
+    if (event == Event::Return) {
+        HandleKeyInput(10);
+        return true;
+    }
+    
+    // Handle Backspace
+    if (event == Event::Backspace) {
+        HandleKeyInput(127);
+        return true;
+    }
+    
+    // Handle Escape
+    if (event == Event::Escape) {
+        HandleKeyInput(27);
+        return true;
+    }
+    
+    // Handle scrolling
+    if (event == Event::ArrowUp) {
+        ScrollUp();
+        return true;
+    }
+    
+    if (event == Event::ArrowDown) {
+        ScrollDown();
+        return true;
+    }
+    
+    return false;  // Event not handled
 }
 

@@ -241,6 +241,38 @@ add_test(
 )
 
 # ============================================================================
+# Phase 2 Unit Tests: MetricsTilePanel
+# ============================================================================
+
+add_executable(test_metrics_tile_panel
+    ui/test_metrics_tile_panel.cpp
+)
+
+target_include_directories(test_metrics_tile_panel
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_metrics_tile_panel
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+    log4cxx
+)
+
+add_test(
+    NAME Phase2MetricsTilePanelTests
+    COMMAND test_metrics_tile_panel
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# ============================================================================
 # Phase 3 Unit Tests: CommandRegistry and CommandWindow
 # ============================================================================
 
@@ -268,6 +300,38 @@ target_link_libraries(test_command_registry
 add_test(
     NAME Phase3CommandRegistryTests
     COMMAND test_command_registry
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# ============================================================================
+# Phase 3d Unit Tests: Command Handlers for Phase 3b/3c/3d Features
+# ============================================================================
+
+add_executable(test_phase3d_commands
+    ui/test_phase3d_commands.cpp
+)
+
+target_include_directories(test_phase3d_commands
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_link_libraries(test_phase3d_commands
+    PRIVATE
+    gdashboard_lib
+    GTest::GTest
+    GTest::Main
+    nlohmann_json::nlohmann_json
+    ftxui::component
+    ftxui::dom
+    ftxui::screen
+    log4cxx
+)
+
+add_test(
+    NAME Phase3dCommandsTests
+    COMMAND test_phase3d_commands
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
@@ -367,12 +431,12 @@ add_test(
 # Update Phase 3 targets to include tab container
 add_custom_target(test_phase3
     COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -V
-    DEPENDS test_command_registry test_logging_window test_layout_config test_tab_container
+    DEPENDS test_command_registry test_phase3d_commands test_logging_window test_layout_config test_tab_container
 )
 
 add_custom_target(test_phase3_verbose
     COMMAND ${CMAKE_CTEST_COMMAND} -R "Phase3.*" -VV --output-on-failure
-    DEPENDS test_command_registry test_logging_window test_layout_config test_tab_container
+    DEPENDS test_command_registry test_phase3d_commands test_logging_window test_layout_config test_tab_container
 )
 
 # ============================================================================

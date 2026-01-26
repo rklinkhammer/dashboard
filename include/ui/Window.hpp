@@ -2,12 +2,16 @@
 
 #include <string>
 #include <memory>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
 
-// Base class for all window components
-class Window {
+// Base class for all window components - now inherits from ComponentBase
+class Window : public ftxui::ComponentBase {
 public:
-    explicit Window(const std::string& title = "");
+    explicit Window(const std::string& title = "")
+        : title_(title), height_percent_(100) {
+    }
     virtual ~Window() = default;
 
     // Height management

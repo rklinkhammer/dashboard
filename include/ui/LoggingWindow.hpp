@@ -51,6 +51,9 @@ public:
     // Log4cxx integration
     std::shared_ptr<LoggingAppender> GetAppender() const { return appender_; }
 
+    // Component event handling (override from ComponentBase)
+    bool OnEvent(ftxui::Event event) override;
+
 private:
     // Internal structure for log entries
     struct LogEntry {

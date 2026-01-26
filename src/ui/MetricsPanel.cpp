@@ -31,13 +31,18 @@ MetricsPanel::MetricsPanel(const std::string& title)
 ftxui::Element MetricsPanel::Render() const {
     using namespace ftxui;
     
+    // PHASE 2: Update all metrics before rendering
+    if (metrics_tile_panel_) {
+        metrics_tile_panel_->UpdateAllMetrics();
+    }
+    
     // If tab mode is enabled, render with tabs
     if (tab_mode_enabled_) {
         return RenderTabbed();
     }
     
-    // If we have tiles from MetricsCapability discovery, render flat grid
-    if (metrics_tile_panel_ && metrics_tile_panel_->GetTileCount() > 0) {
+    // PHASE 2: If we have consolidated node tiles, render them
+    if (metrics_tile_panel_ && metrics_tile_panel_->GetNodeCount() > 0) {
         return RenderFlatGrid();
     }
     
@@ -87,7 +92,8 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<app::capabilities
         LOG4CXX_TRACE(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: Discovered " << schemas.size() 
                   << " nodes with metrics\n");
 
-        // Create tiles for each metric in each node
+        // PHASE 2: Use consolidated AddNodeMetrics() instead of individual AddTile()
+        // This creates one NodeMetricsTile per node containing all its metrics
         for (const auto& schema : schemas) {
             LOG4CXX_TRACE(logger_, "Processing node: " << schema.node_name);
             
@@ -95,7 +101,10 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<app::capabilities
             if (schema.metrics_schema.contains("fields") && 
                 schema.metrics_schema["fields"].is_array()) {
                 
+                // Build descriptors for all metrics in this node
+                std::vector<MetricDescriptor> descriptors;
                 const auto& fields = schema.metrics_schema["fields"];
+                
                 for (const auto& field : fields) {
                     if (!field.contains("name")) {
                         continue;
@@ -115,22 +124,29 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<app::capabilities
                     descriptor.min_value = 0.0;
                     descriptor.max_value = 100.0;
                     
-                    // Create tile with descriptor and field spec
-                    auto tile = std::make_shared<MetricsTileWindow>(descriptor, field);
-                    metrics_tile_panel_->AddTile(tile);
-                    
-                    LOG4CXX_TRACE(logger_, "MetricsPanel: Created tile for: " << metric_id);
+                    descriptors.push_back(descriptor);
+                    LOG4CXX_TRACE(logger_, "MetricsPanel: Added descriptor for: " << metric_id);
+                }
+                
+                // PHASE 2: Create consolidated NodeMetricsTile for all metrics in this node
+                if (!descriptors.empty()) {
+                    metrics_tile_panel_->AddNodeMetrics(schema.node_name, descriptors, schema.metrics_schema);
+                    LOG4CXX_TRACE(logger_, "MetricsPanel: Added NodeMetricsTile for node: " << schema.node_name 
+                                  << " with " << descriptors.size() << " metrics");
                 }
             }
         }
+        
         metrics_tile_panel_->SetMetricsCapability(capability);
         LOG4CXX_TRACE(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: Created " 
-                  << metrics_tile_panel_->GetTileCount() << " metric tiles")    ;
+                  << metrics_tile_panel_->GetNodeCount() << " consolidated node tiles with "
+                  << metrics_tile_panel_->GetTotalFieldCount() << " total fields");
         
-        // Check if we need to activate tab mode (when tile count > 36, meaning more than 6×6 grid)
-        if (metrics_tile_panel_->GetTileCount() > 36) {
-            ActivateTabMode();
-        }
+        // Tab mode not needed for Phase 2 (nodes organized hierarchically)
+        // Keep for future enhancement if needed
+        // if (metrics_tile_panel_->GetTotalFieldCount() > 36) {
+        //     ActivateTabMode();
+        // }
 
     } catch (const std::exception& e) {
         LOG4CXX_ERROR(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: Exception: " << e.what());
@@ -177,42 +193,21 @@ void MetricsPanel::ActivateTabMode() {
         return;
     }
     
-    // Collect all unique node names by iterating known nodes
-    // Since we store node_to_tab_index during discovery, we can use those
-    // Or we can discover by trying common node names
-    std::set<std::string> node_names = {
-        "DataValidator", "Transform", "Aggregator", "Filter", "Sink", "Monitor"
-    };
+    // Get all nodes that have been registered (Phase 2)
+    std::vector<std::string> node_names = metrics_tile_panel_->GetNodeNames();
     
-    // Try to get tiles for each known node name and see which ones have tiles
-    std::set<std::string> actual_nodes;
-    for (const auto& node_name : node_names) {
-        auto tiles = metrics_tile_panel_->GetTilesForNode(node_name);
-        if (!tiles.empty()) {
-            actual_nodes.insert(node_name);
-        }
-    }
+    LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Found " << node_names.size() << " nodes");
     
-    LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Found " << actual_nodes.size() << " nodes with tiles");
-    
-    // Create tabs for each node that has tiles
+    // Create tabs for each node
     int tab_index = 0;
-    for (const auto& node_name : actual_nodes) {
+    for (const auto& node_name : node_names) {
         tab_container_.CreateTab(node_name);
         node_to_tab_index_[node_name] = tab_index;
         
-        // Get all tiles for this node and add them to the tab
-        auto tiles = metrics_tile_panel_->GetTilesForNode(node_name);
-        for (const auto& tile : tiles) {
-            if (tile) {
-                tab_container_.AddTileToTab(node_name, tile);
-                LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Added tile " << tile->GetMetricId()
-                          << " to tab: " << node_name);
-            }
-        }
-        
+        // Note: With Phase 2 consolidation, each node is now a single NodeMetricsTile
+        // No need to add individual tiles to tabs
         LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Created tab " << tab_index 
-                  << " for node: " << node_name << " with " << tiles.size() << " tiles");
+                  << " for node: " << node_name);
         tab_index++;
     }
     
@@ -249,21 +244,23 @@ int MetricsPanel::FindTabForNode(const std::string& node_name) const {
 
 void MetricsPanel::OnMetricsEvent(const app::metrics::MetricsEvent &event)
 {
-    (void)event;   // // Extract metric details from event
-    // // event.data contains: {"metric_name": "...", "value": "..."}
-    // try
-    // {
-    //     if (event.data.count("metric_name") && event.data.count("value"))
-    //     {
-    //         std::string metric_id = event.source + "::" + event.data.at("metric_name");
-    //         double value = std::stod(event.data.at("value"));
+    // PHASE 2: Route metric values to MetricsTilePanel
+    // event.data contains: {"metric_name": "...", "value": "..."}
+    try
+    {
+        if (event.data.count("metric_name") && event.data.count("value") && metrics_tile_panel_)
+        {
+            std::string metric_id = event.source + "::" + event.data.at("metric_name");
+            double value = std::stod(event.data.at("value"));
 
-    //         // Buffer the value for UpdateAllMetrics() to propagate
-    //         metrics_tile_panel_->SetLatestValue(metric_id, value);
-    //     }
-    // }
-    // catch (const std::exception &e)
-    // {
-    //     std::cerr << "[MetricsPanel] Error processing event: " << e.what() << "\n";
-    // }
+            // PHASE 2: Store value in thread-safe SetLatestValue()
+            // UpdateAllMetrics() will route this to the appropriate NodeMetricsTile
+            metrics_tile_panel_->SetLatestValue(metric_id, value);
+            LOG4CXX_TRACE(logger_, "MetricsPanel::OnMetricsEvent: Set " << metric_id << " = " << value);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        LOG4CXX_WARN(logger_, "MetricsPanel::OnMetricsEvent: Error processing event: " << e.what());
+    }
 }
