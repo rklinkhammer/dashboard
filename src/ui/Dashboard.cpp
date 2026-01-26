@@ -1,7 +1,7 @@
 #include "ui/Dashboard.hpp"
 #include "ui/MetricsPanel.hpp"
 #include "ui/LoggingWindow.hpp"
-#include "ui/Log4cxxAppender.hpp"
+#include "ui/LoggingWindowAppender.hpp"
 #include "ui/CommandWindow.hpp"
 #include "ui/StatusBar.hpp"
 #include "ui/LayoutConfig.hpp"
@@ -13,6 +13,8 @@
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/terminal.hpp>
 #include <ftxui/component/event.hpp>
+#include <log4cxx/level.h>
+#include <log4cxx/patternlayout.h>
 
 static log4cxx::LoggerPtr dashboard_logger = log4cxx::Logger::getLogger("dashboard.Dashboard");
 
@@ -94,17 +96,24 @@ void Dashboard::Initialize() {
         logging_window_->SetHeight(window_heights_.logging_height_percent);
         logging_window_->AddLogLine("[2025-01-24 12:00:00] Dashboard initialized");
 
-        // Create log4cxx appender bridge (Phase 3)
+        // Register LoggingWindow with log4cxx root logger (Phase 3)
         auto logging_appender = logging_window_->GetAppender();
         if (logging_appender) {
-            // Create wrapper that can receive log messages
-            auto log4cxx_bridge = std::make_shared<Log4cxxAppender>(logging_appender);
+            // Create proper log4cxx appender that wraps LoggingAppender
+            auto window_appender = std::make_shared<LoggingWindowAppender>(logging_appender);
             
-            // Note: Full log4cxx::Appender registration is done in dashboard_main
-            // This bridge allows LoggingAppender to receive messages from dashboard and other components
-            LOG4CXX_INFO(dashboard_logger, "Log4cxxAppender bridge created - ready for LOG4CXX integration");
+            // Set up layout for formatted output
+            auto layout = std::make_shared<log4cxx::PatternLayout>("%d{ISO8601} [%p] %c - %m");
+            window_appender->setLayout(layout);
+            
+            // Register with root logger - now ALL LOG4CXX calls appear in LoggingWindow
+            auto root_logger = log4cxx::Logger::getRootLogger();
+            root_logger->addAppender(window_appender);
+            root_logger->setLevel(log4cxx::Level::getTrace());  // Show all levels
+            
+            LOG4CXX_INFO(dashboard_logger, "LoggingWindowAppender registered with root logger - LOG4CXX output enabled");
         } else {
-            LOG4CXX_WARN(dashboard_logger, "LoggingWindow appender is null - LOG4CXX integration failed");
+            LOG4CXX_WARN(dashboard_logger, "Failed to get LoggingWindow appender - LOG4CXX integration disabled");
         }
 
         command_window_ = std::make_shared<CommandWindow>("Command");

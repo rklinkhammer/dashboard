@@ -15,9 +15,9 @@ class CommandWindow;
 class StatusBar;
 
 struct WindowHeightConfig {
-    int metrics_height_percent = 40;       // Fixed
-    int logging_height_percent = 35;       // Adjustable
-    int command_height_percent = 23;       // Adjustable (40+35+23+2=100)
+    int metrics_height_percent = 68;       // Fixed
+    int logging_height_percent = 15;       // Adjustable
+    int command_height_percent = 15;       // Adjustable (40+20+38+2=100)
     int status_height_percent = 2;         // Fixed
 
     bool Validate() const {
@@ -65,8 +65,8 @@ private:
 
     // Window components (created in Initialize())
     std::shared_ptr<MetricsPanel> metrics_panel_;      // 40%
-    std::shared_ptr<LoggingWindow> logging_window_;    // 35%
-    std::shared_ptr<CommandWindow> command_window_;    // 23%
+    std::shared_ptr<LoggingWindow> logging_window_;    // 20%
+    std::shared_ptr<CommandWindow> command_window_;    // 38%
     std::shared_ptr<StatusBar> status_bar_;            // 2%
 
     // Layout state

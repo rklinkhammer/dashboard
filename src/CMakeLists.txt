@@ -24,7 +24,7 @@ set(GDASHBOARD_SOURCES
     ui/MetricsPanel.cpp
     ui/LoggingWindow.cpp
     ui/LoggingAppender.cpp
-    ui/Log4cxxAppender.cpp
+    ui/LoggingWindowAppender.cpp
     ui/CommandWindow.cpp
     ui/CommandRegistry.cpp
     ui/BuiltinCommands.cpp

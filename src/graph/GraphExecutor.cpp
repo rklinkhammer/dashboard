@@ -119,6 +119,7 @@ ExecutionResult GraphExecutor::Run() {
     while(!IsStopped() || executor_context_.IsStopped()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+    
     LOG4CXX_TRACE(logger_, "GraphExecutor::Run() completed, success=" << result.success);
     result.success = true;
     result.message = "GraphExecutor run completed successfully";    
