@@ -106,6 +106,10 @@ void Dashboard::Initialize() {
             auto layout = std::make_shared<log4cxx::PatternLayout>("%d{ISO8601} [%p] %c - %m");
             window_appender->setLayout(layout);
             
+            // Set appender threshold to TRACE to pass all messages through appender filtering
+            // This is separate from the logger level - the appender filters messages below its threshold
+            window_appender->setThreshold(log4cxx::Level::getTrace());
+            
             // Register with root logger - now ALL LOG4CXX calls appear in LoggingWindow
             auto root_logger = log4cxx::Logger::getRootLogger();
             root_logger->addAppender(window_appender);
