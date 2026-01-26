@@ -561,18 +561,35 @@ Each field within a consolidated tile rendered as a row:
 ┌─────────────────────────────────────┐
 │ EstimationPipelineNode (3 metrics)  │
 ├─────────────────────────────────────┤
-│ estimation_quality:      92.5%      │
-│   └─ Gauge: [████████░░░░░░░░░]     │
-│                                    │
-│ fusion_cycles:           1,234      │
-│   └─ Value only                     │
-│                                    │
-│ estimation_latency_ms:   45.2 ms    │
-│   └─ Sparkline: ╱╲╱╲╱╲╱╲╱╲╱╲       │
-│                                    │
+│ estimation_quality:      92.5%      │ ← Green text (OK status)
+│ fusion_cycles:           1,234      │ ← Green text (OK status)
+│ estimation_latency_ms:   45.2 ms    │ ← Yellow text (WARNING status)
+│                                     │
 │ Status: OK (🟢) / WARN (🟡) / CRIT (🔴) │
 └─────────────────────────────────────┘
 ```
+
+**Efficiency optimization**: Use text color to indicate status instead of gauges/sparklines:
+- ✅ Single line per metric (not 2-3 lines for gauge/sparkline)
+- ✅ Renders instantly (no calculation overhead)
+- ✅ Compact display (more metrics fit per tile)
+- ✅ Color intuitive: Red=bad, Yellow=warning, Green=good
+
+**Rendering implementation**:
+```cpp
+// Efficient: Just color the value text based on status
+std::string value_str = FormatValue(field.current_value) + " " + unit;
+auto row = hbox({
+    text(label) | width(LESS_THAN, 25),
+    filler(),
+    text(value_str) | color(GetStatusColor(field.status))  // ← Color based on status
+});
+```
+
+**For complex visualizations** (gauges, sparklines, state machines):
+- These get their own separate tiles (see Q4: Hybrid Approach)
+- Create dedicated `MetricsTileWindow` with full rendering capability
+- Only used when metric truly needs visual representation beyond text+color
 
 ### 4.2 Consolidated Status Display
 
@@ -585,13 +602,14 @@ Overall node status is **worst of all fields**:
 
 ```cpp
 int NodeMetricsTile::GetMinHeightLines() const {
-    // Header (2 lines)
-    // + one line per field
+    // Header (1 line)
+    // + one line per field (single-line compact rows)
+    // + separator (1)
     // + status line (1)
-    // + padding (1)
-    return 2 + field_count + 1 + 1;
+    // Total = 3 + field_count
     
-    // Example: 3 fields = 2 + 3 + 1 + 1 = 7 lines minimum
+    // Example: 3 fields = 3 + 3 = 6 lines (vs. previous 7)
+    return 3 + static_cast<int>(field_descriptors_.size());
 }
 ```
 
