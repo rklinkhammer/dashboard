@@ -720,43 +720,648 @@ std::shared_ptr<NodeMetricsTile> GetNodeTile(const std::string& node_name);
 ## 8. Implementation Roadmap
 
 ### Phase 0: CRITICAL - Fix Rendering Architecture (DO THIS FIRST)
-- [ ] Update `MetricsTilePanel::Render()` to use scrollable container instead of forcing fit
-- [ ] Change `Dashboard::BuildLayout()` to use `size(HEIGHT, AT_LEAST, N)` instead of `EQUAL`
-- [ ] Replace FTXUI container with scrollable support
-- [ ] Add scroll indicators to show when more nodes exist below
-- [ ] Test with current multi-tile design first (before consolidation)
-- **BLOCKING**: Current design is unreadable until this is fixed
-- **Estimated effort**: 1-2 hours
 
-### Phase 1: Create NodeMetricsTile
-- [ ] Create `include/ui/NodeMetricsTile.hpp` with class definition
-- [ ] Create `src/ui/NodeMetricsTile.cpp` with implementation
-- [ ] Implement `Render()` with scrollable-friendly field row layout
-- [ ] Implement `UpdateMetricValue()` and `UpdateAllValues()`
-- [ ] Write unit tests in `test/ui/test_node_metrics_tile.cpp`
+**Objective**: Enable scrolling in MetricsTilePanel so current design is readable  
+**Effort**: 1-2 hours  
+**Blocker**: Nothing else works until this is fixed
 
-### Phase 2: Refactor MetricsTilePanel
-- [ ] Change internal storage from `vector<Node>` to `map<node_name, NodeMetricsTile>`
-- [ ] Update `AddTile()` → `AddNodeMetrics()` (signature change)
-- [ ] Update `SetLatestValue()` to route to NodeMetricsTile
-- [ ] Simplify `Render()` (remove 3-column grid, use consolidation)
-- [ ] Update `GetTileCount()` semantics or split into `GetNodeCount()`
-- [ ] Update `UpdateAllMetrics()` to use new storage
+#### Step 0.1: Update Dashboard::BuildLayout()
+**File**: `src/ui/Dashboard.cpp`
+
+- [ ] Locate `BuildLayout()` method
+- [ ] Find line with `size(HEIGHT, EQUAL, metrics_height)` constraint on MetricsPanel
+- [ ] Replace with `size(HEIGHT, AT_LEAST, metrics_height)`
+- [ ] Ensure parent vbox allocates remaining space correctly
+
+**Code change**:
+```cpp
+// OLD:
+layout_elements.push_back(
+    metrics_panel_->Render()
+    | size(HEIGHT, EQUAL, metrics_height)
+);
+
+// NEW:
+layout_elements.push_back(
+    metrics_panel_->Render()
+    | size(HEIGHT, AT_LEAST, metrics_height)
+);
+```
+
+#### Step 0.2: Update MetricsTilePanel::Render() with Scrolling
+**File**: `src/ui/MetricsTilePanel.cpp`
+
+- [ ] Locate current `Render()` method
+- [ ] Find `vbox(std::move(node_sections)) | border` line
+- [ ] Wrap container in scrollable element using FTXUI's yframe
+- [ ] Test that scrolling works with keyboard (arrow keys)
+
+**Code change**:
+```cpp
+// OLD:
+return vbox(std::move(node_sections)) | border | color(Color::Green);
+
+// NEW:
+return Container::Vertical(std::move(node_sections)) 
+    | yframe 
+    | border 
+    | color(Color::Green);
+```
+
+#### Step 0.3: Add Scroll Indicator
+**File**: `src/ui/MetricsTilePanel.cpp`
+
+- [ ] Add scroll position tracking (if FTXUI doesn't provide built-in indicator)
+- [ ] Display indicator showing "N nodes, M visible, scroll for more"
+- [ ] Consider visual indicator (arrow, percentage, page indicator)
+
+#### Step 0.4: Verify Phase 0
+**Testing**:
+- [ ] Build dashboard
+- [ ] Run with metrics data from mock executor
+- [ ] Verify all node tiles are now readable (not squeezed)
+- [ ] Test scrolling with keyboard arrows (↑↓)
+- [ ] Verify scroll wraps at boundaries
+- [ ] Check no data is clipped or hidden
+
+**Success criteria**:
+- ✅ Can read all metric values in any node tile
+- ✅ Can scroll through all nodes with many fields
+- ✅ No visual clipping or overlapping
+- ✅ Current multi-tile design is readable with consolidation coming later
+
+---
+
+### Phase 1: Create NodeMetricsTile Class
+
+**Objective**: Implement new consolidated tile class  
+**Effort**: 2 hours  
+**Dependencies**: Phase 0 complete
+
+#### Step 1.1: Create Header File
+**File**: `include/ui/NodeMetricsTile.hpp` (NEW)
+
+- [ ] Create file with class definition (see Section 3.1 for full spec)
+- [ ] Include necessary headers:
+  - `#include <memory>`
+  - `#include <vector>`
+  - `#include <string>`
+  - `#include <deque>`
+  - `#include <mutex>`
+  - `#include <nlohmann/json.hpp>`
+  - `#include <ftxui/dom/elements.hpp>`
+  - `#include "ui/MetricsTileWindow.hpp"`
+
+- [ ] Define class members:
+  - `node_name_`, `field_descriptors_`, `latest_values_`
+  - `FieldRender` struct with metric_name, current_value, status, display_type, history
+  - `values_lock_` mutex for thread-safe updates
+
+- [ ] Declare public methods:
+  - Constructor: `NodeMetricsTile(node_name, descriptors, schema)`
+  - `UpdateMetricValue(metric_name, value)`
+  - `UpdateAllValues(values_map)`
+  - `Render() const`
+  - `GetMinHeightLines() const`
+  - `GetNodeName() const`
+  - `GetFieldCount() const`
+  - `GetStatus() const`
+
+- [ ] Declare private helper methods:
+  - `RenderFieldRow(field)`
+  - `ComputeFieldStatus(descriptor, value)`
+  - `ComputeOverallStatus()`
+  - `GetStatusColor(status)`
+
+#### Step 1.2: Create Implementation File
+**File**: `src/ui/NodeMetricsTile.cpp` (NEW)
+
+- [ ] Implement constructor:
+  - Store node_name and field_descriptors
+  - Initialize field_renders_ vector with empty values
+  - Parse display_type from schema for each field
+
+- [ ] Implement `UpdateMetricValue()`:
+  - Lock values_lock_
+  - Update latest_values_ map
+  - Update field_renders_ entry
+  - Recalculate status
+  - Unlock
+
+- [ ] Implement `RenderFieldRow()`:
+  - Format as: "metric_name:    value    unit"
+  - Left-align name (25 chars max)
+  - Right-align value (with unit)
+  - Color value based on status (Green/Yellow/Red)
+  - Use hbox with filler for spacing
+
+- [ ] Implement `Render()`:
+  - Create header row: "NodeName (N metrics)" in bold cyan
+  - Add separator
+  - Add field rows (one per field)
+  - Add separator
+  - Add status line (overall node status) right-aligned
+  - Wrap in vbox | border | green
+
+- [ ] Implement status computation:
+  - Worst-case: CRITICAL > WARNING > OK
+  - Each field status based on thresholds in MetricDescriptor
+
+**Code skeleton**:
+```cpp
+NodeMetricsTile::NodeMetricsTile(const std::string& node_name, 
+                                const std::vector<MetricDescriptor>& desc,
+                                const nlohmann::json& schema)
+    : node_name_(node_name), 
+      field_descriptors_(desc),
+      metrics_schema_(schema) {
+    // Initialize field_renders_ from descriptors
+    for (const auto& d : field_descriptors_) {
+        FieldRender fr;
+        fr.metric_name = d.metric_name;
+        fr.current_value = 0.0;
+        fr.status = AlertStatus::OK;
+        fr.display_type = "value";
+        fr.history.clear();
+        field_renders_.push_back(fr);
+    }
+}
+
+ftxui::Element NodeMetricsTile::Render() const {
+    using namespace ftxui;
+    
+    std::vector<Element> rows;
+    rows.push_back(text(node_name_ + " (" + 
+                  std::to_string(field_descriptors_.size()) + " metrics)") 
+                  | bold | color(Color::Cyan));
+    rows.push_back(separator());
+    
+    for (const auto& field : field_renders_) {
+        rows.push_back(RenderFieldRow(field));
+    }
+    
+    rows.push_back(separator());
+    auto status = ComputeOverallStatus();
+    rows.push_back(text("Status: " + StatusString(status)) 
+                  | color(GetStatusColor(status)) | right);
+    
+    return vbox(std::move(rows)) | border | color(Color::Green);
+}
+```
+
+#### Step 1.3: Write Unit Tests
+**File**: `test/ui/test_node_metrics_tile.cpp` (NEW)
+
+- [ ] Create test fixture with sample MetricDescriptor and schema
+- [ ] Test constructor initialization
+- [ ] Test `UpdateMetricValue()` updates internal state
+- [ ] Test `GetStatus()` computes correct overall status
+- [ ] Test `Render()` produces valid FTXUI element
+- [ ] Test height calculation matches expected formula
+- [ ] Test thread-safety of concurrent updates
+
+**Test cases**:
+```cpp
+TEST(NodeMetricsTileTest, ConstructorInitializes) { ... }
+TEST(NodeMetricsTileTest, UpdateMetricValue) { ... }
+TEST(NodeMetricsTileTest, StatusComputation) { ... }
+TEST(NodeMetricsTileTest, RenderProducesElement) { ... }
+TEST(NodeMetricsTileTest, HeightCalculation) { ... }
+TEST(NodeMetricsTileTest, ConcurrentUpdates) { ... }
+```
+
+#### Step 1.4: Verify Phase 1
+**Testing**:
+- [ ] Compile with `make` or CMake build
+- [ ] Run unit tests: `./test_node_metrics_tile`
+- [ ] Verify all tests pass
+- [ ] Check for any compiler warnings
+
+**Success criteria**:
+- ✅ Class compiles without errors
+- ✅ All unit tests pass
+- ✅ No memory leaks (if using sanitizers)
+- ✅ Ready for integration into MetricsTilePanel
+
+---
+
+### Phase 2: Refactor MetricsTilePanel Storage & Methods
+
+**Objective**: Update MetricsTilePanel to use NodeMetricsTile internally  
+**Effort**: 2 hours  
+**Dependencies**: Phase 0, Phase 1 complete
+
+#### Step 2.1: Update Header File
+**File**: `include/ui/MetricsTilePanel.hpp`
+
+- [ ] Find existing Node struct definition
+- [ ] Replace or modify internal storage:
+  ```cpp
+  // OLD:
+  // struct Node {
+  //     std::string name;
+  //     std::map<std::string, std::shared_ptr<MetricsTileWindow>> metrics;
+  // };
+  // std::vector<Node> nodes_;
+
+  // NEW:
+  std::map<std::string, std::shared_ptr<NodeMetricsTile>> node_tiles_;
+  ```
+
+- [ ] Add include for NodeMetricsTile: `#include "ui/NodeMetricsTile.hpp"`
+
+- [ ] Update method signatures:
+  - Add: `void AddNodeMetrics(const std::string& node_name, const std::vector<MetricDescriptor>&, const nlohmann::json& schema);`
+  - Keep but modify: `void SetLatestValue(const std::string& metric_id, double value);`
+  - Deprecate: `void AddTile(std::shared_ptr<MetricsTileWindow> tile);`
+  - Update: `size_t GetTileCount() const;` → add comment that it now returns node count OR rename to `GetNodeCount()`
+
+#### Step 2.2: Update MetricsTilePanel::Render()
+**File**: `src/ui/MetricsTilePanel.cpp`
+
+- [ ] Find current `Render()` method
+- [ ] Replace entire implementation with new version using node_tiles_:
+
+```cpp
+ftxui::Element MetricsTilePanel::Render() const {
+    using namespace ftxui;
+    
+    if (node_tiles_.empty()) {
+        return text("No metrics") | center | color(Color::Yellow);
+    }
+    
+    std::vector<Element> node_sections;
+    
+    for (const auto& [node_name, node_tile] : node_tiles_) {
+        node_sections.push_back(node_tile->Render());
+        
+        // Add separator between nodes (but not after last)
+        if (node_name != node_tiles_.rbegin()->first) {
+            node_sections.push_back(separator());
+        }
+    }
+    
+    // Use scrollable container (from Phase 0 work)
+    return Container::Vertical(std::move(node_sections)) 
+        | yframe 
+        | border 
+        | color(Color::Green);
+}
+```
+
+#### Step 2.3: Implement AddNodeMetrics()
+**File**: `src/ui/MetricsTilePanel.cpp`
+
+- [ ] Add new method implementation:
+```cpp
+void MetricsTilePanel::AddNodeMetrics(
+    const std::string& node_name,
+    const std::vector<MetricDescriptor>& descriptors,
+    const nlohmann::json& metrics_schema) {
+    
+    auto node_tile = std::make_shared<NodeMetricsTile>(
+        node_name, descriptors, metrics_schema);
+    
+    node_tiles_[node_name] = node_tile;
+    total_field_count_ += descriptors.size();
+}
+```
+
+#### Step 2.4: Update SetLatestValue()
+**File**: `src/ui/MetricsTilePanel.cpp`
+
+- [ ] Modify to parse metric_id and route to correct NodeMetricsTile:
+```cpp
+void MetricsTilePanel::SetLatestValue(const std::string& metric_id, double value) {
+    // metric_id format: "NodeName::metric_name"
+    auto pos = metric_id.find("::");
+    if (pos == std::string::npos) return;
+    
+    std::string node_name = metric_id.substr(0, pos);
+    std::string metric_name = metric_id.substr(pos + 2);
+    
+    auto it = node_tiles_.find(node_name);
+    if (it != node_tiles_.end()) {
+        it->second->UpdateMetricValue(metric_name, value);
+    }
+}
+```
+
+#### Step 2.5: Update GetTileCount() or Add GetNodeCount()
+**File**: `include/ui/MetricsTilePanel.hpp` & `src/ui/MetricsTilePanel.cpp`
+
+- [ ] Option A: Rename and update semantics
+  ```cpp
+  // OLD: returns number of individual field tiles
+  // NEW: returns number of node tiles
+  size_t GetNodeCount() const { return node_tiles_.size(); }
+  ```
+
+- [ ] Option B: Keep both methods
+  ```cpp
+  size_t GetNodeCount() const { return node_tiles_.size(); }
+  size_t GetTotalFieldCount() const { return total_field_count_; }
+  size_t GetTileCount() const { return GetNodeCount(); } // Deprecated
+  ```
+
+#### Step 2.6: Update UpdateAllMetrics()
+**File**: `src/ui/MetricsTilePanel.cpp`
+
+- [ ] Find existing implementation
+- [ ] Replace to use new storage:
+```cpp
+void MetricsTilePanel::UpdateAllMetrics() {
+    // Get snapshot of latest values
+    std::map<std::string, double> values_snapshot;
+    {
+        std::lock_guard<std::mutex> lock(values_lock_);
+        values_snapshot = latest_values_;
+    }
+    
+    // Route each value to its node tile
+    for (const auto& [metric_id, value] : values_snapshot) {
+        SetLatestValue(metric_id, value);
+    }
+}
+```
+
+#### Step 2.7: Verify Phase 2
+**Testing**:
+- [ ] Compile without errors
+- [ ] Update existing MetricsTilePanel tests to use new AddNodeMetrics() API
+- [ ] Verify old AddTile() is deprecated (if still present)
+- [ ] Test SetLatestValue() routing to correct node tile
+- [ ] Test Render() produces correct output
+
+**Success criteria**:
+- ✅ No compilation errors
+- ✅ Unit tests still pass with new storage
+- ✅ Render output matches expected format
+- ✅ Values are correctly routed to node tiles
+
+---
 
 ### Phase 3: Update MetricsPanel Discovery
-- [ ] Modify `DiscoverMetricsFromExecutor()` to batch fields per node
-- [ ] Change tab mode threshold from 36 → 6
-- [ ] Test with mock executor
 
-### Phase 4: Update Tests
-- [ ] Fix `test_phase2_metrics.cpp` assertions
-- [ ] Fix any mock executor tile count assumptions
-- [ ] Add new tests for NodeMetricsTile behavior
+**Objective**: Modify MetricsPanel to batch fields per node when creating tiles  
+**Effort**: 1 hour  
+**Dependencies**: Phase 0, 1, 2 complete
+
+#### Step 3.1: Update DiscoverMetricsFromExecutor()
+**File**: `src/ui/MetricsPanel.cpp` (lines 80-130)
+
+- [ ] Find current discovery loop that creates individual tiles
+- [ ] Replace with logic that:
+  1. Groups fields by node_name
+  2. Creates one NodeMetricsTile per node
+  3. Calls AddNodeMetrics() instead of AddTile()
+
+```cpp
+void MetricsPanel::DiscoverMetricsFromExecutor(
+    std::shared_ptr<app::capabilities::MetricsCapability> capability) {
+    
+    if (!capability) return;
+    
+    const auto& schemas = capability->GetNodeMetricsSchemas();
+    
+    for (const auto& schema : schemas) {
+        // Collect all field descriptors for this node
+        std::vector<MetricDescriptor> descriptors;
+        
+        if (schema.metrics_schema.contains("fields")) {
+            for (const auto& field : schema.metrics_schema["fields"]) {
+                MetricDescriptor desc;
+                desc.node_name = schema.node_name;
+                desc.metric_name = field["name"];
+                desc.metric_id = schema.node_name + "::" + desc.metric_name;
+                desc.unit = field.contains("unit") 
+                    ? field["unit"].get<std::string>() 
+                    : "";
+                // ... other descriptor fields from field JSON
+                
+                descriptors.push_back(desc);
+            }
+        }
+        
+        // Create ONE consolidated tile for all fields in this node
+        metrics_tile_panel_->AddNodeMetrics(
+            schema.node_name,
+            descriptors,
+            schema.metrics_schema
+        );
+    }
+    
+    // Update tab mode threshold (changed from individual tiles to nodes)
+    // OLD: if (metrics_tile_panel_->GetTileCount() > 36) ActivateTabMode();
+    // NEW: Approximately 6 consolidated nodes fit on typical terminal
+    if (metrics_tile_panel_->GetNodeCount() > 6) {
+        ActivateTabMode();
+    }
+}
+```
+
+#### Step 3.2: Update Tab Mode Logic
+**File**: `src/ui/MetricsPanel.cpp`
+
+- [ ] Locate any tab mode threshold checks
+- [ ] Update from 36 tiles → 6 nodes:
+  ```cpp
+  // OLD threshold: 36 individual field tiles
+  // NEW threshold: 6 consolidated node tiles
+  // Rationale: A 120-char wide terminal with 3-column grid would show ~15 tiles
+  //           With consolidation, each node takes more height but fewer total tiles
+  //           ~6 nodes visible per screen, rest scrollable
+  if (metrics_tile_panel_->GetNodeCount() > 6) {
+      ActivateTabMode();
+  }
+  ```
+
+#### Step 3.3: Verify Phase 3
+**Testing**:
+- [ ] Compile without errors
+- [ ] Run with mock executor that provides NodeMetricsSchemas
+- [ ] Verify discovery creates one tile per node
+- [ ] Verify all fields appear in consolidated tiles
+- [ ] Test tab mode threshold activation
+
+**Success criteria**:
+- ✅ Discovery correctly batches fields by node
+- ✅ Consolidated tiles created instead of individual tiles
+- ✅ Tab mode threshold adjusted appropriately
+- ✅ No fields missing from discovery
+
+---
+
+### Phase 4: Update Tests & Compatibility
+
+**Objective**: Fix tests broken by structural changes  
+**Effort**: 1.5 hours  
+**Dependencies**: Phases 0-3 complete
+
+#### Step 4.1: Update Existing Tests
+**Files to update**:
+- `test/ui/test_phase2_metrics.cpp`
+- `test/graph/test_mock_graph_executor.cpp`
+- Any other tests that use MetricsTilePanel or make tile count assertions
+
+- [ ] Find assertions like `ASSERT_EQ(metrics_panel->GetTileCount(), expected_count);`
+- [ ] Update to use node count instead:
+  ```cpp
+  // OLD:
+  ASSERT_EQ(metrics_tile_panel->GetTileCount(), 9);  // 3 nodes × 3 fields
+  
+  // NEW:
+  ASSERT_EQ(metrics_tile_panel->GetNodeCount(), 3);  // 3 nodes
+  ASSERT_EQ(metrics_tile_panel->GetTotalFieldCount(), 9);  // All fields
+  ```
+
+- [ ] Find any mock executor setup that creates individual tiles
+- [ ] Update to use NodeMetricsSchemas with batched fields
+
+#### Step 4.2: Create Integration Tests
+**File**: `test/ui/test_metrics_panel_consolidation.cpp` (NEW)
+
+- [ ] Test full discovery → MetricsTilePanel → render flow
+- [ ] Verify consolidated tiles render correctly with real schema
+- [ ] Test updating values reaches correct fields in consolidated tiles
+- [ ] Test scrolling (if FTXUI supports testing)
+
+#### Step 4.3: Update Mock Executor
+**File**: `test/graph/MockGraphExecutor.cpp` (if applicable)
+
+- [ ] Update any tile count assertions
+- [ ] Update discovery to match new batching logic
+- [ ] Provide proper NodeMetricsSchemas with field arrays
+
+#### Step 4.4: Verify Phase 4
+**Testing**:
+- [ ] Run full test suite: `make test` or `ctest`
+- [ ] Verify all tests pass
+- [ ] Check test coverage
+- [ ] No test regressions
+
+**Success criteria**:
+- ✅ All existing tests pass with no modifications to test expectations
+- ✅ New tests cover consolidation behavior
+- ✅ No test failures or warnings
+
+---
 
 ### Phase 5: Verify & Integrate
-- [ ] Build and run full test suite
-- [ ] Manual testing with dashboard GUI
-- [ ] Verify keyboard tab navigation works with consolidated display
+
+**Objective**: Full integration testing and deployment  
+**Effort**: 1 hour  
+**Dependencies**: Phases 0-4 complete
+
+#### Step 5.1: Full Build & Test
+**Testing**:
+- [ ] Clean build: `rm -rf build && mkdir build && cd build && cmake .. && make`
+- [ ] Run unit test suite: `ctest --output-on-failure`
+- [ ] Run integration tests
+- [ ] Check for compiler warnings: `make VERBOSE=1 2>&1 | grep -i warning`
+
+#### Step 5.2: Manual GUI Testing
+**Testing prerequisites**: 
+- Set up mock executor or live system
+- Build dashboard binary
+- Run with metrics data
+
+**Test scenarios**:
+- [ ] Dashboard starts without errors
+- [ ] Metrics panel displays all nodes as consolidated tiles
+- [ ] Scrolling works (arrow keys move through nodes)
+- [ ] All field values are visible (not clipped)
+- [ ] Status colors correct (Green/Yellow/Red based on thresholds)
+- [ ] Tab navigation works if tab mode active (>6 nodes)
+- [ ] No visual artifacts or overlapping text
+- [ ] Rendering performance acceptable (no lag with 10+ nodes)
+
+#### Step 5.3: Performance Verification
+**Testing**:
+- [ ] Dashboard with 5 nodes: smooth rendering
+- [ ] Dashboard with 20 nodes: scrolling responsive
+- [ ] Dashboard with 100 fields: no memory leaks
+- [ ] Update throughput: can handle N metrics/second without visual lag
+
+#### Step 5.4: Backward Compatibility Check
+**Testing**:
+- [ ] Any public APIs changed? (Document in migration guide)
+- [ ] GetTileCount() deprecation handled? (Keep as alias or remove?)
+- [ ] Any dependent code needs updates? (Search codebase)
+
+#### Step 5.5: Documentation & Commit
+**Final steps**:
+- [ ] Update code comments explaining NodeMetricsTile consolidation
+- [ ] Update README or design docs with new architecture
+- [ ] Create git commit: `git commit -m "Implement metrics consolidation & scrolling (Phases 0-5)"`
+- [ ] Optional: Create merge request for code review
+
+**Success criteria**:
+- ✅ Full test suite passes (unit + integration + manual)
+- ✅ Dashboard displays metrics correctly with scrolling
+- ✅ No performance regressions
+- ✅ Code is production-ready
+- ✅ All changes documented
+
+---
+
+## Implementation Notes
+
+### Dependencies & Build Order
+```
+Phase 0: Rendering fix (prerequisite for all others)
+    ├── Phase 1: NodeMetricsTile class
+    │   ├── Phase 2: Refactor MetricsTilePanel
+    │   │   ├── Phase 3: Update discovery
+    │   │   │   ├── Phase 4: Update tests
+    │   │   │   │   └── Phase 5: Final verification
+```
+
+### Critical Files to Modify
+1. **src/ui/Dashboard.cpp** - Line with `size(HEIGHT, EQUAL, ...)` (Phase 0)
+2. **src/ui/MetricsTilePanel.cpp** - Render() method (Phase 0, 2)
+3. **include/ui/MetricsTilePanel.hpp** - Storage structure (Phase 2)
+4. **src/ui/MetricsPanel.cpp** - Discovery logic (Phase 3)
+5. **test/ui/test_phase2_metrics.cpp** - Test updates (Phase 4)
+
+### Files to Create
+1. **include/ui/NodeMetricsTile.hpp** (Phase 1)
+2. **src/ui/NodeMetricsTile.cpp** (Phase 1)
+3. **test/ui/test_node_metrics_tile.cpp** (Phase 1)
+4. **test/ui/test_metrics_panel_consolidation.cpp** (Phase 4)
+
+### Rollback Strategy
+If issues occur:
+- **Phase 0 issues**: Revert Dashboard.cpp to use `EQUAL` height (single commit)
+- **Phase 1 issues**: Remove NodeMetricsTile files (new files only)
+- **Phase 2 issues**: Revert MetricsTilePanel to old storage, revert discovery (harder)
+- **Phase 3+ issues**: Git revert individual commits as needed
+
+### Time Estimates (Revised)
+- Phase 0: 1-2 hours (critical path blocker)
+- Phase 1: 2 hours (new class implementation)
+- Phase 2: 2 hours (refactoring storage)
+- Phase 3: 1 hour (update discovery)
+- Phase 4: 1.5 hours (test updates)
+- Phase 5: 1 hour (verification)
+
+**Total: 8-8.5 hours** (originally estimated 3-5 hours, but detailed breakdown is more realistic)
+
+### Testing Strategy
+- **Unit tests**: Each phase independently testable
+- **Integration tests**: End-to-end discovery → render flow
+- **Manual testing**: Visual verification in dashboard GUI
+- **Regression tests**: Ensure existing functionality preserved
+
+### Commit Strategy
+- Phase 0: One commit (rendering fix)
+- Phase 1: One commit (NodeMetricsTile implementation)
+- Phase 2: One commit (MetricsTilePanel refactoring)
+- Phase 3: One commit (discovery update)
+- Phase 4: One commit (test updates)
+- Phase 5: Final verification (document in commit)
+
+**Total: ~6 commits** for full implementation with clear separation of concerns
 
 ---
 
