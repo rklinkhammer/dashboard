@@ -13,6 +13,7 @@ class MetricsPanel;
 class LoggingWindow;
 class CommandWindow;
 class StatusBar;
+class CommandRegistry;
 
 struct WindowHeightConfig {
     int metrics_height_percent = 68;       // Fixed
@@ -53,6 +54,7 @@ public:
     const std::shared_ptr<MetricsPanel>& GetMetricsPanel() const;
     const std::shared_ptr<LoggingWindow>& GetLoggingWindow() const;
     const std::shared_ptr<CommandWindow>& GetCommandWindow() const;
+    const std::shared_ptr<CommandRegistry>& GetCommandRegistry() const;
     const std::shared_ptr<StatusBar>& GetStatusBar() const;
 
     // For unit testing
@@ -71,6 +73,7 @@ private:
     std::shared_ptr<LoggingWindow> logging_window_;    // 20%
     std::shared_ptr<CommandWindow> command_window_;    // 38%
     std::shared_ptr<StatusBar> status_bar_;            // 2%
+    std::shared_ptr<CommandRegistry> command_registry_; // Command execution system
 
     // Layout state
     WindowHeightConfig window_heights_;

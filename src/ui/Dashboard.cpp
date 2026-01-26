@@ -3,6 +3,8 @@
 #include "ui/LoggingWindow.hpp"
 #include "ui/LoggingWindowAppender.hpp"
 #include "ui/CommandWindow.hpp"
+#include "ui/CommandRegistry.hpp"
+#include "ui/BuiltinCommands.hpp"
 #include "ui/StatusBar.hpp"
 #include "ui/LayoutConfig.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
@@ -132,6 +134,12 @@ void Dashboard::Initialize() {
 
         command_window_ = std::make_shared<CommandWindow>("Command");
         command_window_->SetHeight(window_heights_.command_height_percent);
+
+        // Phase 4: Create and initialize command registry with built-in commands
+        command_registry_ = std::make_shared<CommandRegistry>();
+        commands::RegisterBuiltinCommands(command_registry_, this);
+        command_window_->SetCommandRegistry(command_registry_);
+        LOG4CXX_TRACE(dashboard_logger, "CommandRegistry initialized with built-in commands");
 
         status_bar_ = std::make_shared<StatusBar>();
 
@@ -378,21 +386,32 @@ void Dashboard::HandleKeyEvent(const ftxui::Event& event) {
         // Characters go to command input
         if (event.is_character()) {
             LOG4CXX_TRACE(dashboard_logger, "Character input: " << event.character()[0]);
-            // TODO: command_window_->AddInputCharacter(event.character()[0]);
+            command_window_->HandleKeyInput(static_cast<int>(event.character()[0]));
+            MarkScreenDirty();  // Trigger re-render to show new character
             return;
         }
         
         // Enter executes command
         if (event == Event::Return) {
             LOG4CXX_DEBUG(dashboard_logger, "Enter pressed - executing command");
-            // TODO: command_window_->ExecuteInputCommand();
+            command_window_->HandleKeyInput(10);  // Enter = ASCII 10
+            MarkScreenDirty();  // Trigger re-render to show output
             return;
         }
         
         // Backspace for editing
         if (event == Event::Backspace) {
             LOG4CXX_TRACE(dashboard_logger, "Backspace pressed");
-            // TODO: command_window_->RemoveLastInputCharacter();
+            command_window_->HandleKeyInput(127);  // Backspace = ASCII 127
+            MarkScreenDirty();  // Trigger re-render to show change
+            return;
+        }
+        
+        // Escape to clear input
+        if (event == Event::Escape) {
+            LOG4CXX_TRACE(dashboard_logger, "Escape pressed - clearing input");
+            command_window_->HandleKeyInput(27);  // Escape = ASCII 27
+            MarkScreenDirty();  // Trigger re-render
             return;
         }
     }
@@ -427,6 +446,10 @@ const std::shared_ptr<LoggingWindow>& Dashboard::GetLoggingWindow() const {
 
 const std::shared_ptr<CommandWindow>& Dashboard::GetCommandWindow() const {
     return command_window_;
+}
+
+const std::shared_ptr<CommandRegistry>& Dashboard::GetCommandRegistry() const {
+    return command_registry_;
 }
 
 const std::shared_ptr<StatusBar>& Dashboard::GetStatusBar() const {
