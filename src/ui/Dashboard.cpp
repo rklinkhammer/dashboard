@@ -171,29 +171,64 @@ void Dashboard::ApplyHeights() {
 
 ftxui::Element Dashboard::BuildLayout() const {
     using namespace ftxui;
+
+    // Get terminal dimensions
+    auto terminal_size = Terminal::Size();
+    int terminal_height = terminal_size.dimy;
+    int terminal_width = terminal_size.dimx;
     
+    // Ensure minimum terminal dimensions
+    if (terminal_height < 10 || terminal_width < 40) {
+        // Terminal too small - return placeholder
+        return text("Terminal too small. Minimum: 40x10");
+    }
+
+    // Calculate pixel heights from percentages
+    int metrics_height = std::max(1, (terminal_height * window_heights_.metrics_height_percent) / 100);
+    int logging_height = std::max(1, (terminal_height * window_heights_.logging_height_percent) / 100);
+    int command_height = std::max(1, (terminal_height * window_heights_.command_height_percent) / 100);
+    int status_height = std::max(1, (terminal_height * window_heights_.status_height_percent) / 100);
+    
+    // Adjust for rounding: if total < terminal_height, add difference to logging
+    int total_height = metrics_height + logging_height + command_height + status_height;
+    if (total_height < terminal_height) {
+        logging_height += (terminal_height - total_height);
+    }
+
     std::vector<Element> layout_elements;
-    
-    // Add metrics panel (40%)
+
+    // Add metrics panel with height constraint
     if (metrics_panel_) {
-        layout_elements.push_back(metrics_panel_->Render());
+        layout_elements.push_back(
+            metrics_panel_->Render()
+            | size(HEIGHT, EQUAL, metrics_height)
+        );
     }
-    
-    // Add logging window (35%)
+
+    // Add logging window with height constraint
     if (logging_window_) {
-        layout_elements.push_back(logging_window_->Render());
+        layout_elements.push_back(
+            logging_window_->Render()
+            | size(HEIGHT, EQUAL, logging_height)
+        );
     }
-    
-    // Add command window (23%)
+
+    // Add command window with height constraint
     if (command_window_) {
-        layout_elements.push_back(command_window_->Render());
+        layout_elements.push_back(
+            command_window_->Render()
+            | size(HEIGHT, EQUAL, command_height)
+        );
     }
-    
-    // Add status bar (2%)
+
+    // Add status bar with height constraint
     if (status_bar_) {
-        layout_elements.push_back(status_bar_->Render());
+        layout_elements.push_back(
+            status_bar_->Render()
+            | size(HEIGHT, EQUAL, status_height)
+        );
     }
-    
+
     return vbox(layout_elements);
 }
 
