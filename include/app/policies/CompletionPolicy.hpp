@@ -24,6 +24,7 @@ namespace app::policies
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnInit called");
             // Initialize metrics system here if needed
             InitCompletionCallbacks(context);
+            LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnInit completed");            
             return true;
         }
 

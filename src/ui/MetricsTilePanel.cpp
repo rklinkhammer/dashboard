@@ -2,11 +2,14 @@
 #include "app/capabilities/MetricsCapability.hpp"
 #include <iostream>
 #include <algorithm>
+#include <log4cxx/logger.h>
+
+static log4cxx::LoggerPtr logger_ = log4cxx::Logger::getLogger("ui.MetricsTilePanel");
 
 MetricsTilePanel::MetricsTilePanel(
     std::shared_ptr<app::capabilities::MetricsCapability> metrics_cap)
     : metrics_cap_(metrics_cap), total_tile_count_(0) {
-    std::cerr << "[MetricsTilePanel] Created (Option 2: Separate Nodes Container)\n";
+    LOG4CXX_TRACE(logger_, "MetricsTilePanel: Created (Option 2: Separate Nodes Container)");
 }
 
 std::pair<std::string, std::string> MetricsTilePanel::ParseMetricId(const std::string& metric_id) {
@@ -33,7 +36,7 @@ MetricsTilePanel::Node* MetricsTilePanel::FindOrCreateNode(const std::string& no
     node_index_[node_name] = nodes_.size();
     nodes_.push_back(new_node);
     
-    std::cerr << "[MetricsTilePanel] Created new node: " << node_name << "\n";
+    LOG4CXX_TRACE(logger_, "MetricsTilePanel: Created new node: " << node_name);
     
     return &nodes_.back();
 }
@@ -49,8 +52,8 @@ void MetricsTilePanel::AddTile(std::shared_ptr<MetricsTileWindow> tile) {
     
     // Check for duplicates within node
     if (node->metrics.find(metric_name) != node->metrics.end()) {
-        std::cerr << "[MetricsTilePanel] Warning: Metric " << metric_id 
-                  << " already added in node " << node_name << "\n";
+        LOG4CXX_WARN(logger_, "MetricsTilePanel: Warning: Metric " << metric_id 
+                      << " already added in node " << node_name);
         return;
     }
     
@@ -58,8 +61,8 @@ void MetricsTilePanel::AddTile(std::shared_ptr<MetricsTileWindow> tile) {
     node->metrics[metric_name] = tile;
     total_tile_count_++;
     
-    std::cerr << "[MetricsTilePanel] Added tile: " << metric_id 
-              << " to node " << node_name << " (total: " << total_tile_count_ << ")\n";
+    LOG4CXX_TRACE(logger_, "MetricsTilePanel: Added tile: " << metric_id 
+                  << " to node " << node_name << " (total: " << total_tile_count_ << ")");
 }
 
 void MetricsTilePanel::UpdateAllMetrics() {

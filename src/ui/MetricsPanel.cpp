@@ -7,6 +7,9 @@
 #include <iostream>
 #include <ftxui/dom/elements.hpp>
 #include <sstream>
+#include <log4cxx/logger.h>
+
+static log4cxx::LoggerPtr logger_ = log4cxx::Logger::getLogger("ui.MetricsPanel");
 
 MetricsPanel::MetricsPanel(const std::string& title)
     : Window(title), metrics_tile_panel_(std::make_shared<MetricsTilePanel>()) {
@@ -22,7 +25,7 @@ MetricsPanel::MetricsPanel(const std::string& title)
         {"Memory Usage", 0.42},
         {"CPU Usage", 0.38},
     };
-    std::cerr << "[MetricsPanel] Created with " << metrics_.size() << " placeholder metrics\n";
+    LOG4CXX_TRACE(logger_, "MetricsPanel: Created with " << metrics_.size() << " placeholder metrics");
 }
 
 ftxui::Element MetricsPanel::Render() const {
@@ -66,29 +69,27 @@ ftxui::Element MetricsPanel::Render() const {
         | color(Color::Green);
 }
 
-void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<graph::GraphExecutor> executor) {
-    if (!executor) {
-        std::cerr << "[MetricsPanel::DiscoverMetricsFromExecutor] ERROR: executor is null\n";
+void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<app::capabilities::MetricsCapability> capability) {
+    if (!capability) {
+        LOG4CXX_ERROR(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: capability is null");    
         return;
     }
 
     try {
-        // Get MetricsCapability from executor
-        auto metrics_cap = executor->GetCapability<app::capabilities::MetricsCapability>();
-        
-        if (!metrics_cap) {
-            std::cerr << "[MetricsPanel::DiscoverMetricsFromExecutor] ERROR: No MetricsCapability in executor\n";
+         
+        if (!capability) {
+            LOG4CXX_ERROR(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: No MetricsCapability in executor");
             return;
         }
 
         // Get all node metrics schemas
-        auto schemas = metrics_cap->GetNodeMetricsSchemas();
-        std::cerr << "[MetricsPanel::DiscoverMetricsFromExecutor] Discovered " << schemas.size() 
-                  << " nodes with metrics\n";
+        auto schemas = capability->GetNodeMetricsSchemas();
+        LOG4CXX_TRACE(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: Discovered " << schemas.size() 
+                  << " nodes with metrics\n");
 
         // Create tiles for each metric in each node
         for (const auto& schema : schemas) {
-            std::cerr << "[MetricsPanel] Processing node: " << schema.node_name << "\n";
+            LOG4CXX_TRACE(logger_, "Processing node: " << schema.node_name);
             
             // Check if metrics_schema has "fields" array
             if (schema.metrics_schema.contains("fields") && 
@@ -118,14 +119,14 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<graph::GraphExecu
                     auto tile = std::make_shared<MetricsTileWindow>(descriptor, field);
                     metrics_tile_panel_->AddTile(tile);
                     
-                    std::cerr << "[MetricsPanel] Created tile for: " << metric_id << "\n";
+                    LOG4CXX_TRACE(logger_, "MetricsPanel: Created tile for: " << metric_id);
                 }
             }
         }
 
-        metrics_tile_panel_->SetMetricsCapability(metrics_cap);
-        std::cerr << "[MetricsPanel::DiscoverMetricsFromExecutor] Created " 
-                  << metrics_tile_panel_->GetTileCount() << " metric tiles\n";
+        metrics_tile_panel_->SetMetricsCapability(capability);
+        LOG4CXX_TRACE(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: Created " 
+                  << metrics_tile_panel_->GetTileCount() << " metric tiles")    ;
         
         // Check if we need to activate tab mode (when tile count > 36, meaning more than 6×6 grid)
         if (metrics_tile_panel_->GetTileCount() > 36) {
@@ -133,27 +134,21 @@ void MetricsPanel::DiscoverMetricsFromExecutor(std::shared_ptr<graph::GraphExecu
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "[MetricsPanel::DiscoverMetricsFromExecutor] Exception: " << e.what() << "\n";
+        LOG4CXX_ERROR(logger_, "MetricsPanel::DiscoverMetricsFromExecutor: Exception: " << e.what());
     }
 }
 
-void MetricsPanel::RegisterMetricsCapabilityCallback(std::shared_ptr<graph::GraphExecutor> executor) {
-    if (!executor) {
-        std::cerr << "[MetricsPanel::RegisterMetricsCapabilityCallback] ERROR: executor is null\n";
+void MetricsPanel::RegisterMetricsCapabilityCallback(std::shared_ptr<app::capabilities::MetricsCapability> capability) {
+    if (!capability) {
+        LOG4CXX_ERROR(logger_, "MetricsPanel::RegisterMetricsCapabilityCallback: capability is null");    
         return;
     }
 
     try {
-        auto metrics_cap = executor->GetCapability<app::capabilities::MetricsCapability>();
-        if (!metrics_cap) {
-            std::cerr << "[MetricsPanel::RegisterMetricsCapabilityCallback] ERROR: No MetricsCapability\n";
-            return;
-        }
-
-        metrics_cap->RegisterMetricsCallback(this);
+        capability->RegisterMetricsCallback(this);
 
     } catch (const std::exception& e) {
-        std::cerr << "[MetricsPanel::RegisterMetricsCapabilityCallback] Exception: " << e.what() << "\n";
+        LOG4CXX_ERROR(logger_, "MetricsPanel::RegisterMetricsCapabilityCallback: Exception: " << e.what());
     }
 }
 
@@ -176,10 +171,10 @@ ftxui::Element MetricsPanel::RenderTabbed() const {
 }
 
 void MetricsPanel::ActivateTabMode() {
-    std::cerr << "[MetricsPanel::ActivateTabMode] Transitioning to tabbed mode\n";
+    LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Transitioning to tabbed mode");
     
     if (!metrics_tile_panel_) {
-        std::cerr << "[MetricsPanel::ActivateTabMode] ERROR: No metrics_tile_panel\n";
+        LOG4CXX_ERROR(logger_, "MetricsPanel::ActivateTabMode: ERROR: No metrics_tile_panel");
         return;
     }
     
@@ -199,7 +194,7 @@ void MetricsPanel::ActivateTabMode() {
         }
     }
     
-    std::cerr << "[MetricsPanel::ActivateTabMode] Found " << actual_nodes.size() << " nodes with tiles\n";
+    LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Found " << actual_nodes.size() << " nodes with tiles");
     
     // Create tabs for each node that has tiles
     int tab_index = 0;
@@ -212,19 +207,19 @@ void MetricsPanel::ActivateTabMode() {
         for (const auto& tile : tiles) {
             if (tile) {
                 tab_container_.AddTileToTab(node_name, tile);
-                std::cerr << "[MetricsPanel::ActivateTabMode] Added tile " << tile->GetMetricId()
-                          << " to tab: " << node_name << "\n";
+                LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Added tile " << tile->GetMetricId()
+                          << " to tab: " << node_name);
             }
         }
         
-        std::cerr << "[MetricsPanel::ActivateTabMode] Created tab " << tab_index 
-                  << " for node: " << node_name << " with " << tiles.size() << " tiles\n";
+        LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Created tab " << tab_index 
+                  << " for node: " << node_name << " with " << tiles.size() << " tiles");
         tab_index++;
     }
     
     tab_mode_enabled_ = true;
-    std::cerr << "[MetricsPanel::ActivateTabMode] Tab mode activated with " 
-              << tab_container_.GetTabCount() << " tabs\n";
+    LOG4CXX_TRACE(logger_, "MetricsPanel::ActivateTabMode: Tab mode activated with " 
+              << tab_container_.GetTabCount() << " tabs");
 }
 
 int MetricsPanel::FindOrCreateTabForNode(const std::string& node_name) {
@@ -239,8 +234,8 @@ int MetricsPanel::FindOrCreateTabForNode(const std::string& node_name) {
     tab_container_.CreateTab(node_name);
     node_to_tab_index_[node_name] = new_tab_index;
     
-    std::cerr << "[MetricsPanel::FindOrCreateTabForNode] Created new tab " << new_tab_index
-              << " for node: " << node_name << "\n";
+    LOG4CXX_TRACE(logger_, "MetricsPanel::FindOrCreateTabForNode: Created new tab " << new_tab_index
+              << " for node: " << node_name);
     
     return new_tab_index;
 }

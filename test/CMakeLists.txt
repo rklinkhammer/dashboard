@@ -199,6 +199,7 @@ target_link_libraries(test_phase2_metrics
     ftxui::component
     ftxui::dom
     ftxui::screen
+    log4cxx
 )
 
 add_test(
@@ -322,6 +323,7 @@ target_link_libraries(test_tab_container
     ftxui::component
     ftxui::dom
     ftxui::screen
+    log4cxx
 )
 
 add_test(

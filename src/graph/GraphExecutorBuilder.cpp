@@ -264,7 +264,9 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
                 throw std::runtime_error(
                     "GraphExecutorBuilder: Graph building failed: " + build_result.error_message);
             }
-
+            LOG4CXX_TRACE(g_logger, "GraphManager built successfully with "
+                         << build_result.node_count << " nodes and "
+                         << build_result.edge_count << " edges");
             graph_cap->SetNodeNames(build_result.node_names);
             graph_cap->SetEdgeDescriptions(build_result.edge_descriptions);
             graph_cap->SetGraphManager(build_result.graph);
@@ -307,7 +309,7 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
         auto executor = std::make_shared<GraphExecutor>(std::move(chain));
 
         executor->Register<app::capabilities::GraphCapability>(graph_cap);
-
+        executor->SetGraphManager(graph_cap->GetGraphManager());
         return executor;
 
     } catch (const std::exception& e) {

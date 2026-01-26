@@ -4,6 +4,7 @@
 #include <string>
 #include <ftxui/dom/elements.hpp>
 #include "graph/GraphExecutor.hpp"
+#include "app/capabilities/MetricsCapability.hpp"
 
 // Forward declarations
 class MetricsPanel;
@@ -34,7 +35,7 @@ class Dashboard {
 public:
     // Constructor receives executor and window heights
     explicit Dashboard(
-        std::shared_ptr<graph::GraphExecutor> executor,
+        std::shared_ptr<app::capabilities::MetricsCapability> capability,
         const WindowHeightConfig& heights);
 
     // Destructor - cleanup resources
@@ -58,7 +59,7 @@ public:
 
 private:
     // Executor reference
-    std::shared_ptr<graph::GraphExecutor> executor_;
+    std::shared_ptr<app::capabilities::MetricsCapability> capability_;
 
     // Window components (created in Initialize())
     std::shared_ptr<MetricsPanel> metrics_panel_;      // 40%

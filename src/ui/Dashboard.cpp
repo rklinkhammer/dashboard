@@ -4,6 +4,7 @@
 #include "ui/CommandWindow.hpp"
 #include "ui/StatusBar.hpp"
 #include "ui/LayoutConfig.hpp"
+#include "app/capabilities/MetricsCapability.hpp"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -11,12 +12,14 @@
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/terminal.hpp>
 
-Dashboard::Dashboard(
-    std::shared_ptr<graph::GraphExecutor> executor,
-    const WindowHeightConfig& heights)
-    : executor_(executor), window_heights_(heights), initialized_(false) {
+static log4cxx::LoggerPtr dashboard_logger = log4cxx::Logger::getLogger("dashboard.Dashboard");
 
-    if (!executor_) {
+Dashboard::Dashboard(
+    std::shared_ptr<app::capabilities::MetricsCapability> capability,
+    const WindowHeightConfig& heights)
+    : capability_(capability), window_heights_(heights), initialized_(false) {
+
+    if (!capability_) {
         throw std::invalid_argument("Executor cannot be null");
     }
 
@@ -61,26 +64,26 @@ Dashboard::~Dashboard() {
 }
 
 void Dashboard::Initialize() {
-    std::cerr << "[Initialize] Starting dashboard setup\n";
+    LOG4CXX_TRACE(dashboard_logger, "Dashboard::Initialize() called");  
 
     try {
         // 0. Load configuration first (D4.2)
-        std::cerr << "[Initialize] Loading layout configuration...\n";
+        LOG4CXX_TRACE(dashboard_logger, "Loading layout configuration...");
         LayoutConfig config("");
         bool config_loaded = config.Load();
         if (config_loaded && config.IsValid()) {
-            std::cerr << "[Initialize] Loaded configuration from disk\n";
+            LOG4CXX_TRACE(dashboard_logger, "Loaded configuration from disk");
             // Update window heights from config
             window_heights_.metrics_height_percent = config.GetMetricsHeightPercent();
             window_heights_.logging_height_percent = config.GetLoggingHeightPercent();
             window_heights_.command_height_percent = config.GetCommandHeightPercent();
-            std::cerr << "[Initialize] Applied saved heights: " << window_heights_.DebugString() << "\n";
+            LOG4CXX_TRACE(dashboard_logger, "Applied saved heights: " << window_heights_.DebugString());
         } else {
-            std::cerr << "[Initialize] Using default heights\n";
+            LOG4CXX_TRACE(dashboard_logger, "Using default heights");
         }
 
         // 1. Create window components
-        std::cerr << "[Initialize] Creating window components...\n";
+        LOG4CXX_TRACE(dashboard_logger, "Creating window components...");
 
         metrics_panel_ = std::make_shared<MetricsPanel>("Metrics");
         metrics_panel_->SetHeight(window_heights_.metrics_height_percent);
@@ -94,40 +97,40 @@ void Dashboard::Initialize() {
 
         status_bar_ = std::make_shared<StatusBar>();
 
-        std::cerr << "[Initialize] Created 4 window components\n";
+        LOG4CXX_TRACE(dashboard_logger, "Created 4 window components");
 
         // 2. Apply saved configuration to components (D4.2)
         if (config_loaded && config.IsValid()) {
-            std::cerr << "[Initialize] Applying saved configuration to components...\n";
+            LOG4CXX_TRACE(dashboard_logger, "Applying saved configuration to components...");
             
             // Apply logging level filter
             std::string level = config.GetLoggingLevelFilter();
             logging_window_->SetLevelFilter(level);
-            std::cerr << "[Initialize] Applied logging level filter: " << level << "\n";
+            LOG4CXX_TRACE(dashboard_logger, "Applied logging level filter: " << level);
 
             // Apply search filter
             std::string search = config.GetLoggingSearchFilter();
             if (!search.empty()) {
                 logging_window_->SetSearchText(search);
-                std::cerr << "[Initialize] Applied logging search filter: " << search << "\n";
+                LOG4CXX_TRACE(dashboard_logger, "Applied logging search filter: " << search);
             }
 
             // Apply command history (historical restoration)
             auto history = config.GetCommandHistory();
             if (!history.empty()) {
-                std::cerr << "[Initialize] Loaded " << history.size() << " commands from history\n";
+                LOG4CXX_TRACE(dashboard_logger, "Loaded " << history.size() << " commands from history");
             }
         }
 
         // 3. Discover metrics from executor (Phase 2)
-        std::cerr << "[Initialize] Discovering metrics from executor...\n";
-        metrics_panel_->DiscoverMetricsFromExecutor(executor_);
-        std::cerr << "[Initialize] Metrics discovery complete\n";
+        LOG4CXX_TRACE(dashboard_logger, "Initializing metrics discovery from executor");
+        metrics_panel_->DiscoverMetricsFromExecutor(capability_);
+        LOG4CXX_TRACE(dashboard_logger, "Metrics discovery complete");
 
         // 4. Register metrics capability callbacks (Phase 2)
-        std::cerr << "[Initialize] Registering metrics callbacks...\n";
-        metrics_panel_->RegisterMetricsCapabilityCallback(executor_);
-        std::cerr << "[Initialize] Metrics callbacks registered\n";
+        LOG4CXX_TRACE(dashboard_logger, "Registering metrics callbacks");
+        metrics_panel_->RegisterMetricsCapabilityCallback(capability_);
+        LOG4CXX_TRACE(dashboard_logger, "Metrics callbacks registered");
 
         // 5. Validate heights
         ValidateHeights();
@@ -136,8 +139,7 @@ void Dashboard::Initialize() {
         ApplyHeights();
 
         initialized_ = true;
-        std::cerr << "[Initialize] Dashboard initialization complete\n";
-
+        LOG4CXX_TRACE(dashboard_logger, "Dashboard initialization complete");
     } catch (const std::exception& e) {
         std::cerr << "[Initialize] Error: " << e.what() << "\n";
         throw;
@@ -199,10 +201,11 @@ void Dashboard::Run() {
         throw std::runtime_error("Dashboard not initialized");
     }
 
-    std::cerr << "[Run] Starting event loop with FTXUI rendering (30 FPS)\n";
-    std::cerr << "[Run] Dashboard initialized with 4 panels\n";
-    std::cerr << "[Run] Metrics: " << (metrics_panel_ ? metrics_panel_->GetMetricCount() : 0) << " metrics\n";
-    std::cerr << "[Run] Logging: " << (logging_window_ ? logging_window_->GetLogCount() : 0) << " log lines\n";
+    LOG4CXX_TRACE(dashboard_logger, "Dashboard::Run() called"); 
+    LOG4CXX_TRACE(dashboard_logger, "Starting event loop with FTXUI rendering (30 FPS)");
+    LOG4CXX_TRACE(dashboard_logger, "Dashboard initialized with 4 panels");
+    LOG4CXX_TRACE(dashboard_logger, "Metrics: " << (metrics_panel_ ? metrics_panel_->GetMetricCount() : 0) << " metrics");
+    LOG4CXX_TRACE(dashboard_logger, "Logging: " << (logging_window_ ? logging_window_->GetLogCount() : 0) << " log lines");
 
     using namespace ftxui;
     
@@ -246,12 +249,12 @@ void Dashboard::Run() {
             }
 
         } catch (const std::exception& e) {
-            std::cerr << "[Run] Error in event loop: " << e.what() << "\n";
+            LOG4CXX_ERROR(dashboard_logger, "[Run] Error in event loop: " << e.what());
             should_exit_ = true;
         }
     }
 
-    std::cerr << "[Run] Event loop exited after " << frame_count << " frames\n";
+    LOG4CXX_TRACE(dashboard_logger, "[Run] Event loop exited after " << frame_count << " frames");
 }
 
 // Getters

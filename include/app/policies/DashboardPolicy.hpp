@@ -3,43 +3,58 @@
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
 #include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/MetricsCapability.hpp"
+#include "ui/Dashboard.hpp"
 
+namespace app::policies
+{
 
+    static auto dashboard_logger = log4cxx::Logger::getLogger("app.policies.DashboardPolicy");
 
-namespace app::policies {
+    class DashboardPolicy : public graph::IExecutionPolicy
+    {
+    public:
+   
+        virtual ~DashboardPolicy() = default;
 
-static auto dashboard_logger = log4cxx::Logger::getLogger("app.policies.DashboardPolicy");
+        bool OnInit(graph::GraphExecutorContext &context) override
+        {
+            LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnInit called");
+            auto capability = context.capability_bus.Get<app::capabilities::MetricsCapability>();
+            dashboard_ = std::make_shared<Dashboard>(capability, WindowHeightConfig{});
+            dashboard_->Initialize();
+            // Initialize metrics system here if needed
+            return true;
+        }
 
-class DashboardPolicy : public graph::IExecutionPolicy {
-public:
-    DashboardPolicy() {
-        LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy initialized");
-    }   
+        bool OnStart(graph::GraphExecutorContext &) override
+        {
+            LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnStart called");
+            auto ui = [this]() {
+                dashboard_->Run();
+            };
+            dashboard_thread_ = std::thread(ui);
+            return true;
+        }
 
-    virtual ~DashboardPolicy() = default;
+        void OnStop(graph::GraphExecutorContext &) override
+        {
+            LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnStop called");
+            // Stop metrics collection and cleanup here if needed
+        }
 
-    bool OnInit(graph::GraphExecutorContext &) override {
-        LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnInit called");
-        // Initialize metrics system here if needed
-        return true;
-    }
+        void OnJoin(graph::GraphExecutorContext &) override
+        {
+            LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnJoin called");
+            if (dashboard_thread_.joinable()) {
+                dashboard_thread_.join();
+            }
+        }
 
-    bool OnStart(graph::GraphExecutorContext &) override {
-        LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnStart called");
-        // Start metrics collection here if needed
-        return true;
-    }
+    private:
+        std::thread dashboard_thread_;
+        std::shared_ptr<Dashboard> dashboard_;
 
-    void OnStop(graph::GraphExecutorContext &) override {
-        LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnStop called");
-        // Stop metrics collection and cleanup here if needed
-    }
+    }; // class DashboardPolicy
 
-    void OnJoin(graph::GraphExecutorContext &) override {
-        LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnJoin called");
-        // Finalize metrics reporting here if needed
-    }   
-
-}; // class DashboardPolicy
-    
-}// namespace app::policies
+} // namespace app::policies

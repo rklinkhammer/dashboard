@@ -3,6 +3,10 @@
 #include <iomanip>
 #include <sstream>
 #include <cmath>
+#include <algorithm>
+#include <log4cxx/logger.h>
+
+static log4cxx::LoggerPtr logger_ = log4cxx::Logger::getLogger("ui.MetricsTileWindow");
 
 MetricsTileWindow::MetricsTileWindow(
     const MetricDescriptor& descriptor,
@@ -41,8 +45,8 @@ MetricsTileWindow::MetricsTileWindow(
         }
     }
 
-    std::cerr << "[MetricsTileWindow] Created: " << descriptor_.metric_id 
-              << " (" << display_type_ << ")\n";
+    LOG4CXX_TRACE(logger_, "MetricsTileWindow: Created: " << descriptor_.metric_id 
+                  << " (" << display_type_ << ")");
 }
 
 void MetricsTileWindow::UpdateValue(double new_value) {

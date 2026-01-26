@@ -22,8 +22,8 @@ public:
     ftxui::Element Render() const override;
 
     // Metrics discovery and management
-    void DiscoverMetricsFromExecutor(std::shared_ptr<graph::GraphExecutor> executor);
-    void RegisterMetricsCapabilityCallback(std::shared_ptr<graph::GraphExecutor> executor);
+    void DiscoverMetricsFromExecutor(std::shared_ptr<app::capabilities::MetricsCapability> capability);
+    void RegisterMetricsCapabilityCallback(std::shared_ptr<app::capabilities::MetricsCapability> capability);
 
     // Metrics placeholder management (legacy)
     void AddPlaceholderMetric(const std::string& metric_name, double value);
