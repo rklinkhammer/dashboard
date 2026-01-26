@@ -237,9 +237,12 @@ void Dashboard::Run() {
             // For now, we use a placeholder that checks for terminal input
             
             // 3. Update metrics from capability
+            // In quiescent state, no new metric data arrives, so metrics won't change
+            // Therefore we don't call UpdateAllMetrics() every frame to avoid unnecessary renders
+            // Metrics updates will happen when data actually arrives (via callbacks)
             if (metrics_panel_ && metrics_panel_->GetMetricsTilePanel()) {
-                metrics_panel_->GetMetricsTilePanel()->UpdateAllMetrics();
-                screen_dirty_ = true;  // Mark for redraw when metrics update
+                // Only update if explicitly triggered by metric callbacks
+                // (UpdateAllMetrics() will be called by MetricsCapability callbacks, not here)
             }
 
             // 4. Only render when screen is dirty (changed) - reduces flicker in quiescent state
