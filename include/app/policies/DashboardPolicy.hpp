@@ -4,6 +4,7 @@
 #include "graph/IExecutionPolicy.hpp"
 #include "graph/GraphExecutorContext.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include "ui/Dashboard.hpp"
 
 namespace app::policies
@@ -20,8 +21,9 @@ namespace app::policies
         bool OnInit(graph::GraphExecutorContext &context) override
         {
             LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnInit called");
-            auto capability = context.capability_bus.Get<app::capabilities::MetricsCapability>();
-            dashboard_ = std::make_shared<Dashboard>(capability, WindowHeightConfig{});
+            auto metrics_capability = context.capability_bus.Get<app::capabilities::MetricsCapability>();
+            auto graph_capability = context.capability_bus.Get<app::capabilities::GraphCapability>();
+            dashboard_ = std::make_shared<Dashboard>(metrics_capability, graph_capability->GetWindowHeights());
             dashboard_->Initialize();
             // Initialize metrics system here if needed
             return true;
