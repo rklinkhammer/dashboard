@@ -99,7 +99,7 @@ History for EstimationPipelineNode::altitude_estimate_m
   Min: 1500.123 m
   Max: 1550.456 m
   Avg: 1525.234 m
-  Trend: ↑ Rising
+  Trend: /\ Rising
 ```
 
 **Features**:
@@ -107,9 +107,9 @@ History for EstimationPipelineNode::altitude_estimate_m
 - History entry count ratio (45/60 filled)
 - Min/max/avg statistics (3 decimal precision, with units)
 - Trend indicator:
-  - ↑ Rising: Last > First × 1.01
-  - ↓ Falling: Last < First × 0.99
-  - → Stable: Within 1% range
+  - /\ Rising: Last > First × 1.01
+  - \/ Falling: Last < First × 0.99
+  - -- Stable: Within 1% range
 
 **Error Handling**:
 - "Metric not found" if node or metric doesn't exist
