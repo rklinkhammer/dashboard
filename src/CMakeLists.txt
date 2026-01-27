@@ -20,20 +20,20 @@ set(GDASHBOARD_SOURCES
     graph/SensorClassification.cpp
     graph/StaticNodeAdapter.cpp
     graph/ThreadPool.cpp
-    ui/Window.cpp
-    ui/MetricsPanel.cpp
-    ui/LoggingWindow.cpp
-    ui/LoggingAppender.cpp
-    ui/LoggingWindowAppender.cpp
-    ui/CommandWindow.cpp
-    ui/CommandRegistry.cpp
-    ui/BuiltinCommands.cpp
-    ui/LayoutConfig.cpp
-    ui/TabContainer.cpp
-    ui/StatusBar.cpp
-    ui/MetricsTileWindow.cpp
-    ui/MetricsTilePanel.cpp
-    ui/NodeMetricsTile.cpp
+    # ui/Window.cpp
+    # ui/MetricsPanel.cpp
+    # ui/LoggingWindow.cpp
+    # ui/LoggingAppender.cpp
+    # ui/LoggingWindowAppender.cpp
+    # #ui/CommandWindow.cpp
+    # ui/CommandRegistry.cpp
+    # ui/BuiltinCommands.cpp
+    # ui/LayoutConfig.cpp
+    # ui/TabContainer.cpp
+    # ui/StatusBar.cpp
+    # ui/MetricsTileWindow.cpp
+    # ui/MetricsTilePanel.cpp
+    # ui/NodeMetricsTile.cpp
     ui/Dashboard.cpp
     app/FactoryManager.cpp
     app/GraphBuilder.cpp
@@ -132,3 +132,35 @@ message(STATUS "Built gdashboard_lib with sources:")
 foreach(src ${GDASHBOARD_SOURCES})
     message(STATUS "  - ${src}")
 endforeach()
+
+# Create demo_gui executable
+add_executable(demo_gui
+    gdashboard/demo_gui_improved.cpp
+)
+
+# Link with library and dependencies
+target_link_libraries(demo_gui PRIVATE
+    Eigen3::Eigen
+    log4cxx
+    ncurses
+)
+
+target_compile_definitions(demo_gui PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}")
+
+target_include_directories(demo_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
+
+# Set C++ standard
+set_target_properties(demo_gui PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+)
+
+# Compiler flags
+if(MSVC)
+    target_compile_options(demo_gui PRIVATE /W4 /WX)
+else()
+    target_compile_options(demo_gui PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

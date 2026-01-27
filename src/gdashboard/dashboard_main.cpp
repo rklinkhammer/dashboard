@@ -307,7 +307,6 @@ int main(int argc, char* argv[]) {
         auto executor = app.BuildExecutor();
         //auto heights = app.GetHeights();
         auto graph_capability = executor->GetCapability<app::capabilities::GraphCapability>();
-        graph_capability->SetWindowHeights(app.GetHeights());
 
         graph::InitializationResult init_result = executor->Init();
         if (!init_result.success) {

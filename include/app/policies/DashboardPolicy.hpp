@@ -23,7 +23,7 @@ namespace app::policies
             LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnInit called");
             auto metrics_capability = context.capability_bus.Get<app::capabilities::MetricsCapability>();
             auto graph_capability = context.capability_bus.Get<app::capabilities::GraphCapability>();
-            dashboard_ = std::make_shared<Dashboard>(metrics_capability, graph_capability->GetWindowHeights());
+            dashboard_ = std::make_shared<Dashboard>(metrics_capability);
             dashboard_->Initialize();
             // Initialize metrics system here if needed
             return true;

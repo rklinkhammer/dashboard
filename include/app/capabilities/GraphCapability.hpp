@@ -9,7 +9,6 @@
 #include "graph/NodeFactory.hpp"
 #include "plugins/PluginLoader.hpp"
 #include "plugins/PluginRegistry.hpp"
-#include "ui/Dashboard.hpp"
 
 /**
  * @file MetricsCapability.hpp
@@ -93,14 +92,6 @@ public:
         json_config_path = path;
     }
 
-    void SetWindowHeights(const WindowHeightConfig& h) {
-        heights = h;
-    }
-
-    WindowHeightConfig GetWindowHeights() const {
-        return heights;
-    }
-
 private:
 
     std::string json_config_path;
@@ -115,7 +106,6 @@ private:
     std::shared_ptr<graph::GraphManager> graph_manager {nullptr};
     std::vector<std::string> node_names;
     std::vector<std::string> edge_descriptions;
-    WindowHeightConfig heights;
 
 
 
