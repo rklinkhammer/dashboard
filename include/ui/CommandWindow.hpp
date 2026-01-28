@@ -117,9 +117,10 @@ public:
 
         // Truncate buffer if too long
         std::string display = buffer;
-        if ((int)display.length() > width - 6)
-        {
-            display = "..." + display.substr(display.length() - (width - 9));
+        int inner = width - 6;
+        int tail  = width - 9;
+        if (inner > 0 && (int)display.size() > inner && tail > 0) {
+            display = "..." + display.substr(display.size() - (size_t)tail);
         }
 
         mvwprintw(win, 1, 2, "> %s", display.c_str());
@@ -135,8 +136,6 @@ public:
             cursor_col = 1;
 
         wmove(win, 1, cursor_col);
-        // ---------------------------------------------------
-
         wrefresh(win);
     }
 

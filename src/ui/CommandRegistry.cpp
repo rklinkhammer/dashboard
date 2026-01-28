@@ -49,7 +49,6 @@ bool CommandRegistry::RegisterCommand(
     CommandInfo cmd{name, description, usage, handler};
     commands_[name] = cmd;
     
-    std::cerr << "[CommandRegistry] Registered command: " << name << "\n";
     return true;
 }
 

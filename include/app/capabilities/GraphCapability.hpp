@@ -26,6 +26,8 @@
 #include <memory>
 #include <functional>
 #include <mutex>
+#include <atomic>
+#include "graph/CapabilityBus.hpp"
 #include "graph/GraphConfig.hpp"
 #include "graph/GraphManager.hpp"
 #include "graph/NodeFactory.hpp"
@@ -114,6 +116,24 @@ public:
         json_config_path = path;
     }
 
+    /// @brief Check if stop has been requested
+    /// @return true if stop requested, false otherwise
+    bool IsStopped() const
+    {
+        return is_stopped.load();
+    }
+
+    /// @brief Request application stop
+    void SetStopped() const
+    {
+        is_stopped.store(true);
+    }
+
+    graph::CapabilityBus& GetCapabilityBus()
+    {
+        return capability_bus;
+    }
+
 private:
 
     std::string json_config_path;
@@ -128,9 +148,8 @@ private:
     std::shared_ptr<graph::GraphManager> graph_manager {nullptr};
     std::vector<std::string> node_names;
     std::vector<std::string> edge_descriptions;
-
-
-
+    mutable std::atomic<bool> is_stopped{false};
+    graph::CapabilityBus capability_bus;
 };
 
 }  // namespace app::capabilities

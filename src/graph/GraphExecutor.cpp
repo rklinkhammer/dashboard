@@ -42,9 +42,19 @@ static log4cxx::LoggerPtr logger_ =
 // GraphExecutor Implementation
 // ============================================================================
 
-GraphExecutor::GraphExecutor( std::unique_ptr<ExecutionPolicyChain> policy_chain) :
-            policy_chain_(std::move(policy_chain)) {
+GraphExecutor::GraphExecutor( std::unique_ptr<ExecutionPolicyChain> policy_chain,
+                              std::shared_ptr<app::capabilities::GraphCapability> graph_capability) :
+            policy_chain_(std::move(policy_chain)),
+            graph_capability_(std::move(graph_capability)) {
     LOG4CXX_TRACE(logger_, "GraphExecutor constructed");
+    if(!graph_capability_) {
+        throw std::invalid_argument("GraphExecutor requires a valid GraphCapability");
+    }
+    if(!graph_capability_->GetGraphManager()) {
+        throw std::invalid_argument("GraphCapability must have a valid GraphManager");
+    }
+    graph_manager_ = graph_capability_->GetGraphManager();
+    graph_capability_->GetCapabilityBus().Register<app::capabilities::GraphCapability>(graph_capability_);
 }
 
 InitializationResult GraphExecutor::Init() {
@@ -52,7 +62,7 @@ InitializationResult GraphExecutor::Init() {
 
     LOG4CXX_TRACE(logger_, "GraphExecutor::Init() called");
     InitializationResult init_result;
-    bool policy_result = policy_chain_ ? policy_chain_->OnInit(executor_context_) : true;
+    bool policy_result = policy_chain_ ? policy_chain_->OnInit(*graph_capability_) : true;
     if(!policy_result) {
         init_result.success = false;
         init_result.message = "ExecutionPolicyChain::OnInit() failed";
@@ -82,7 +92,7 @@ ExecutionResult GraphExecutor::Start() {
 
     LOG4CXX_TRACE(logger_, "GraphExecutor::Start() called");
     ExecutionResult result;
-    bool policy_result = policy_chain_ ? policy_chain_->OnStart(executor_context_) : true;
+    bool policy_result = policy_chain_ ? policy_chain_->OnStart(*graph_capability_) : true;
     if(!policy_result) {
         result.success = false;
         result.message = "ExecutionPolicyChain::OnStart() failed";
@@ -109,14 +119,14 @@ ExecutionResult GraphExecutor::Run() {
 
     LOG4CXX_TRACE(logger_, "GraphExecutor::Run() called");
     ExecutionResult result;   
-    bool policy_result =  policy_chain_ ? policy_chain_->OnRun(executor_context_) : false;
+    bool policy_result =  policy_chain_ ? policy_chain_->OnRun(*graph_capability_) : false;
     if(!policy_result) {
         result.success = false;
         result.message = "ExecutionPolicyChain::OnRun() failed";
         return result;
     }
 
-    while(!IsStopped() || executor_context_.IsStopped()) {
+    while(!graph_capability_->IsStopped()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     
@@ -136,7 +146,7 @@ ExecutionResult GraphExecutor::Stop() {
     // Stop the graph
     graph_manager_->Stop();
     if (policy_chain_) {
-        policy_chain_->OnStop(executor_context_);
+        policy_chain_->OnStop(*graph_capability_);
     }
     LOG4CXX_TRACE(logger_, "GraphExecutor::Stop() completed");
 
@@ -156,7 +166,7 @@ ExecutionResult GraphExecutor::Join() {
     // Join all threads
     graph_manager_->Join();
     if (policy_chain_) {
-        policy_chain_->OnJoin(executor_context_);
+        policy_chain_->OnJoin(*graph_capability_);
     }
     LOG4CXX_TRACE(logger_, "GraphExecutor::Join() completed");
 

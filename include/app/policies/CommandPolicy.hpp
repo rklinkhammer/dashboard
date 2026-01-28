@@ -24,7 +24,7 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 
 
 
@@ -84,7 +84,7 @@ public:
      *
      * @see OnStart, OnStop
      */
-    bool OnInit(graph::GraphExecutorContext &) override {
+    bool OnInit(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnInit called");
         // Initialize command infrastructure here if needed
         return true;
@@ -101,7 +101,7 @@ public:
      *
      * @see OnStop, OnJoin
      */
-    bool OnStart(graph::GraphExecutorContext &) override {
+    bool OnStart(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnStart called");
         // Start accepting commands here if needed
         return true;
@@ -117,7 +117,7 @@ public:
      *
      * @see OnStart, OnJoin
      */
-    void OnStop(graph::GraphExecutorContext &) override {
+    void OnStop(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnStop called");
         // Stop command processing and cleanup here if needed
     }
@@ -132,7 +132,7 @@ public:
      *
      * @see OnStop, OnStart
      */
-    void OnJoin(graph::GraphExecutorContext &) override {
+    void OnJoin(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnJoin called");
         // Finalize command processing here if needed
     }   

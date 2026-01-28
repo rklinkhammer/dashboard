@@ -22,7 +22,7 @@
 
 
 #include "graph/GraphManager.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include "graph/NodeFacade.hpp"
 #include "graph/NodeFacadeAdapterSpecializations.hpp"
 #include "graph/CapabilityDiscovery.hpp"
@@ -39,7 +39,7 @@
 namespace app::policies {
 
 
-void MetricsPolicy::InitMetricsSources(graph::GraphExecutorContext& context) {
+void MetricsPolicy::InitMetricsSources(app::capabilities::GraphCapability& context) {
      if (!context.GetGraphManager()) {
         LOG4CXX_WARN(metrics_logger, "MetricsPolicy::InitMetricsSources() - no GraphManager");
         return ;

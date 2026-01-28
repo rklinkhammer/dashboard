@@ -24,13 +24,14 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
+#include "app/capabilities/DataInjectionCapability.hpp"
 
 
 
 namespace app::policies {
 
-static auto datainjection_logger = log4cxx::Logger::getLogger("app.policies.DataInjectionPolicy");
+static auto data_injection_logger_ = log4cxx::Logger::getLogger("app.policies.DataInjectionPolicy");
 
 /**
  * @class DataInjectionPolicy
@@ -64,7 +65,7 @@ public:
      * @brief Construct a data injection policy
      */
     DataInjectionPolicy() {
-        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy initialized");
+        LOG4CXX_TRACE(data_injection_logger_, "DataInjectionPolicy initialized");
     }   
 
     /**
@@ -83,10 +84,13 @@ public:
      *
      * @see OnStart, OnJoin
      */
-    bool OnInit(graph::GraphExecutorContext &) override {
-        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnInit called");
-        // Initialize data injection sources here
-        return true;
+    bool OnInit(app::capabilities::GraphCapability &context) override {
+        LOG4CXX_TRACE(data_injection_logger_, "DataInjectionPolicy::OnInit() - creating DataInjectionManager");
+        data_injection_capability_ = std::make_shared<app::capabilities::DataInjectionCapability>();
+        context.GetCapabilityBus().Register<app::capabilities::DataInjectionCapability>(data_injection_capability_);
+        InitDataInjectionSources(context);
+        LOG4CXX_TRACE(data_injection_logger_, "DataInjectionPolicy::OnInit() - discovered " );
+         return true;
     }
 
     /**
@@ -100,8 +104,8 @@ public:
      *
      * @see OnStop
      */
-    bool OnStart(graph::GraphExecutorContext &) override {
-        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnStart called");
+    bool OnStart(app::capabilities::GraphCapability &) override {
+        LOG4CXX_TRACE(data_injection_logger_, "DataInjectionPolicy OnStart called");
         // Start data injection here
         return true;
     }
@@ -116,8 +120,8 @@ public:
      *
      * @see OnStart, OnJoin
      */
-    void OnStop(graph::GraphExecutorContext &) override {
-        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnStop called");
+    void OnStop(app::capabilities::GraphCapability &) override {
+        LOG4CXX_TRACE(data_injection_logger_, "DataInjectionPolicy OnStop called");
         // Stop data injection and cleanup here
     }
 
@@ -131,10 +135,13 @@ public:
      *
      * @see OnStop, OnInit
      */
-    void OnJoin(graph::GraphExecutorContext &) override {
-        LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnJoin called");
+    void OnJoin(app::capabilities::GraphCapability &) override {
+        LOG4CXX_TRACE(data_injection_logger_, "DataInjectionPolicy OnJoin called");
         // Finalize data injection reporting here
     }   
+private:
+    std::shared_ptr<app::capabilities::DataInjectionCapability> data_injection_capability_;
+    void InitDataInjectionSources(app::capabilities::GraphCapability& context);
 
 }; // class DataInjectionPolicy
     

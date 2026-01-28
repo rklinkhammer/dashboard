@@ -36,7 +36,7 @@
 #include "app/capabilities/GraphCapability.hpp"
 #include "app/FactoryManager.hpp"
 #include "app/GraphBuilder.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include <log4cxx/logger.h>
 #include <filesystem>
 #include <stdexcept>

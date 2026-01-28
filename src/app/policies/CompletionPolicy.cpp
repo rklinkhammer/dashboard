@@ -37,7 +37,7 @@
 namespace app::policies {
 
 
-bool CompletionPolicy::InitCompletionCallbacks(graph::GraphExecutorContext& context) {
+bool CompletionPolicy::InitCompletionCallbacks(app::capabilities::GraphCapability& context) {
     LOG4CXX_TRACE(completion_logger, "CompletionPolicy::InitCompletionCallbacks() - scanning " 
                   << context.GetGraphManager()->GetNodes().size() << " nodes");
     

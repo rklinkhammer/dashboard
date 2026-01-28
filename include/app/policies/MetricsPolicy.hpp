@@ -28,7 +28,7 @@
 #include "app/metrics/MetricsEvent.hpp"
 #include "graph/IMetricsCallback.hpp"
 #include "graph/IExecutionPolicy.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
 
 
@@ -136,11 +136,11 @@ public:
      *
      * @see OnStart, MetricsCapability
      */
-    bool OnInit(graph::GraphExecutorContext& context) override {
+    bool OnInit(app::capabilities::GraphCapability& context) override {
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy OnInit called");
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy::OnInit() - creating MetricsCapability");
         metrics_capability_ = std::make_shared<app::capabilities::MetricsCapability>();
-        context.capability_bus.Register<app::capabilities::MetricsCapability>(metrics_capability_);
+        context.GetCapabilityBus().Register<app::capabilities::MetricsCapability>(metrics_capability_);
         InitMetricsSources(context);
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy::OnInit() - MetricsCapability registered in CapabilityBus");
         return true;
@@ -157,7 +157,7 @@ public:
      *
      * @see OnStop, OnDone
      */
-    bool OnStart(graph::GraphExecutorContext& context) override
+    bool OnStart(app::capabilities::GraphCapability& context) override
     {
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy::OnStart()");
         bool ret = true;
@@ -187,14 +187,14 @@ public:
         return ret;
     }
 
-    void OnStop(graph::GraphExecutorContext &) override
+    void OnStop(app::capabilities::GraphCapability &) override
     {
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy OnStop called");
         metrics_event_queue_.Disable();
         // Stop metrics collection and cleanup here if needed
     }
 
-    void OnJoin(graph::GraphExecutorContext &) override {
+    void OnJoin(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy OnJoin called");
         if (metrics_thread_.joinable()) {
             metrics_thread_.join();
@@ -214,7 +214,7 @@ public:
 
 
 private:
-    void InitMetricsSources(graph::GraphExecutorContext& context);
+    void InitMetricsSources(app::capabilities::GraphCapability& context);
 
     std::thread metrics_thread_;
     core::ActiveQueue<app::metrics::MetricsEvent> metrics_event_queue_;

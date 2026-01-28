@@ -28,7 +28,7 @@
 #include "graph/CapabilityBus.hpp"
 #include "graph/ExecutionResult.hpp"
 #include "graph/IExecutionPolicy.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include "graph/ExecutionState.hpp"
 #include <memory>
 #include <chrono>
@@ -110,7 +110,8 @@ public:
      *
      * @throws std::invalid_argument if policy_chain is nullptr
      */
-    explicit GraphExecutor(std::unique_ptr<ExecutionPolicyChain> policy_chain);
+    explicit GraphExecutor(std::unique_ptr<ExecutionPolicyChain> policy_chain,
+                           std::shared_ptr<app::capabilities::GraphCapability> graph_capability);
 
     /**
      * @brief Virtual destructor for proper cleanup of derived classes
@@ -222,17 +223,17 @@ public:
     template<typename CapabilityT>
     std::shared_ptr<CapabilityT> GetCapability() const {
 
-        return executor_context_.capability_bus.Get<CapabilityT>();
+        return graph_capability_->GetCapabilityBus().Get<CapabilityT>();
     }
     
     template<typename CapabilityT>
     bool Has() const {
-        return executor_context_.capability_bus.Has<CapabilityT>();
+        return graph_capability_->GetCapabilityBus().Has<CapabilityT>();
     }
 
     template<typename CapabilityT>
     void Register(std::shared_ptr<CapabilityT> capability) {
-        executor_context_.capability_bus.Register<CapabilityT>(capability);
+        graph_capability_->GetCapabilityBus().Register<CapabilityT>(capability);
     }
     
     std::shared_ptr<graph::GraphManager> GetGraphManager() const {
@@ -241,7 +242,7 @@ public:
 
     void SetGraphManager(std::shared_ptr<graph::GraphManager> graph_manager) {
         graph_manager_ = graph_manager;
-        executor_context_.graph_manager = graph_manager_;
+        graph_capability_->SetGraphManager(graph_manager_);
     }
 
     void SetExecutionState(graph::ExecutionState state) {
@@ -252,25 +253,13 @@ public:
         return current_state_;
     }   
 
-    /// @brief Check if stop has been requested
-    /// @return true if stop requested, false otherwise
-    bool IsStopped() const {
-        return is_stopped.load();
-    }
-
-    /// @brief Request application stop
-    void SetStopped() const {
-        is_stopped.store(true);
-        executor_context_.SetStopped();
-    }
-
 private:
 
     int CountNodesinLifecycleState(graph::LifecycleState state) const;
 
     std::unique_ptr<ExecutionPolicyChain> policy_chain_;
     std::shared_ptr<graph::GraphManager> graph_manager_;
-    GraphExecutorContext executor_context_;
+    std::shared_ptr<app::capabilities::GraphCapability>  graph_capability_;
     ExecutionState current_state_ = graph::ExecutionState::STOPPED;
 
     mutable std::atomic<bool> is_stopped{false};

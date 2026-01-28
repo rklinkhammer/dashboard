@@ -24,7 +24,7 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 
 namespace app::policies
 {
@@ -87,7 +87,7 @@ namespace app::policies
          *
          * @see OnStart
          */
-        bool OnInit(graph::GraphExecutorContext &context) override
+        bool OnInit(app::capabilities::GraphCapability &context) override
         {
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnInit called");
             // Register callbacks with completion nodes
@@ -107,7 +107,7 @@ namespace app::policies
          *
          * @see OnStop
          */
-        bool OnStart(graph::GraphExecutorContext &context) override
+        bool OnStart(app::capabilities::GraphCapability &context) override
         {
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnStart called");
 
@@ -132,13 +132,14 @@ namespace app::policies
             return true;
         }
 
-        void OnStop(graph::GraphExecutorContext &) override
+        void OnStop(app::capabilities::GraphCapability &) override
         {
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnStop called");
+            SetCompletionSignaled();
             // Stop metrics collection and cleanup here if needed
         }
 
-        void OnJoin(graph::GraphExecutorContext &) override
+        void OnJoin(app::capabilities::GraphCapability &) override
         {
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnJoin called");
             if (completion_thread_.joinable()) {
@@ -154,8 +155,18 @@ namespace app::policies
                                                  << max_duration_.count() << " ms");
         }
 
+        void SetCompletionSignaled()
+        {
+            {
+                std::lock_guard lock(completion_mutex_);
+                completion_signaled_ = true;
+            }
+            completion_cv_.notify_all();
+            LOG4CXX_TRACE(completion_logger, "CompletionPolicy signaled completion");
+        }
+        
     private:
-        bool InitCompletionCallbacks(graph::GraphExecutorContext &context);
+        bool InitCompletionCallbacks(app::capabilities::GraphCapability &context);
 
         std::thread completion_thread_;
         std::condition_variable completion_cv_;

@@ -25,18 +25,18 @@
 
 
 #include <memory>
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 
 namespace graph {
 
 struct IExecutionPolicy {
     virtual ~IExecutionPolicy() = default;
 
-    virtual bool OnInit(graph::GraphExecutorContext& context) { (void)context; return true; }
-    virtual bool OnStart(graph::GraphExecutorContext& context) { (void)context; return true; }
-    virtual bool OnRun(graph::GraphExecutorContext& context) { (void)context; return true; }
-    virtual void OnStop(graph::GraphExecutorContext& context) { (void)context; }
-    virtual void OnJoin(graph::GraphExecutorContext& context) { (void)context; }
+    virtual bool OnInit(app::capabilities::GraphCapability& context) { (void)context; return true; }
+    virtual bool OnStart(app::capabilities::GraphCapability& context) { (void)context; return true; }
+    virtual bool OnRun(app::capabilities::GraphCapability& context) { (void)context; return true; }
+    virtual void OnStop(app::capabilities::GraphCapability& context) { (void)context; }
+    virtual void OnJoin(app::capabilities::GraphCapability& context) { (void)context; }
 };
 
 class ExecutionPolicyChain : public IExecutionPolicy {
@@ -45,27 +45,27 @@ public:
                                   std::unique_ptr<ExecutionPolicyChain> next = nullptr)
         : policy_(std::move(policy)), next_(std::move(next)) {}
 
-    bool OnInit(graph::GraphExecutorContext& ctx) override {
+    bool OnInit(app::capabilities::GraphCapability& ctx) override {
         if (!policy_->OnInit(ctx)) return false;
         return next_ ? next_->OnInit(ctx) : true;
     }
 
-    bool OnStart(graph::GraphExecutorContext& ctx) override {
+    bool OnStart(app::capabilities::GraphCapability& ctx) override {
         if (!policy_->OnStart(ctx)) return false;
         return next_ ? next_->OnStart(ctx) : true;
     }
 
-    bool OnRun(graph::GraphExecutorContext& ctx) override {
+    bool OnRun(app::capabilities::GraphCapability& ctx) override {
         if (!policy_->OnRun(ctx)) return false;
         return next_ ? next_->OnRun(ctx) : true;
     }
 
-    void OnStop(graph::GraphExecutorContext& ctx) override {
+    void OnStop(app::capabilities::GraphCapability& ctx) override {
         policy_->OnStop(ctx);
         if (next_) next_->OnStop(ctx);
     }
 
-    void OnJoin(graph::GraphExecutorContext& ctx) override {
+    void OnJoin(app::capabilities::GraphCapability& ctx) override {
         policy_->OnJoin(ctx);
         if (next_) next_->OnJoin(ctx);
     }

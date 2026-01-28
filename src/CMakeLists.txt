@@ -39,6 +39,10 @@ set(GDASHBOARD_SOURCES
     app/GraphBuilder.cpp
     app/policies/MetricsPolicy.cpp
     app/policies/CompletionPolicy.cpp
+    app/policies/DataInjectionPolicy.cpp
+    app/SignalHandler.cpp
+    csv/CSVDataInjectionManager.cpp
+    csv/CSVParser.cpp
     plugins/PluginLoader.cpp
     plugins/PluginRegistry.cpp
     graph/mock/MockGraphExecutor.cpp

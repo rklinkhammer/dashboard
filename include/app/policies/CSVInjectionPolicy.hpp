@@ -24,7 +24,7 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 
 
 
@@ -89,7 +89,7 @@ public:
      *
      * @see OnStart, SetCSVInputPaths
      */
-    bool OnInit(graph::GraphExecutorContext &) override {
+    bool OnInit(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy OnInit called");
         // Initialize CSV injection here
         return true;
@@ -106,7 +106,7 @@ public:
      *
      * @see OnStop, SetCSVInputPaths
      */
-    bool OnStart(graph::GraphExecutorContext &) override {
+    bool OnStart(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy OnStart called");
         // Start CSV injection here
         return true;
@@ -122,7 +122,7 @@ public:
      *
      * @see OnStart, OnJoin
      */
-    void OnStop(graph::GraphExecutorContext &) override {
+    void OnStop(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy OnStop called");
         // Stop CSV injection and cleanup here
     }
@@ -137,7 +137,7 @@ public:
      *
      * @see OnStop, OnInit
      */
-    void OnJoin(graph::GraphExecutorContext &) override {
+    void OnJoin(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy OnJoin called");
         // Finalize CSV injection reporting here
     }   

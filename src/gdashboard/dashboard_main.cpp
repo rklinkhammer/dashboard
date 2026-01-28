@@ -1,10 +1,3 @@
-#include "ui/Dashboard.hpp"
-#include "graph/GraphExecutor.hpp"
-#include "graph/GraphExecutorBuilder.hpp"
-#include "plugins/PluginLoader.hpp"
-#include "plugins/PluginRegistry.hpp"
-#include "app/capabilities/GraphCapability.hpp"
-#include "graph/NodeFactory.hpp"
 // MIT License
 //
 // Copyright (c) 2025 Robert Klinkhammer
@@ -27,6 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "ui/Dashboard.hpp"
+#include "graph/GraphExecutor.hpp"
+#include "graph/GraphExecutorBuilder.hpp"
+#include "plugins/PluginLoader.hpp"
+#include "plugins/PluginRegistry.hpp"
+#include "app/capabilities/GraphCapability.hpp"
+#include "graph/NodeFactory.hpp"
 #include <iostream>
 #include <string>
 #include <map>
@@ -35,9 +35,21 @@
 #include <log4cxx/logger.h>
 #include <log4cxx/basicconfigurator.h>
 #include <log4cxx/propertyconfigurator.h>
-
+#include "app/SignalHandler.hpp"
 
 static log4cxx::LoggerPtr dashboard_logger = log4cxx::Logger::getLogger("dashboard.dashboard_main");
+
+app::capabilities::GraphCapability *g_graph_capability = nullptr;
+
+void ExitHandler()
+{    
+    LOG4CXX_WARN(dashboard_logger, "ExitHandler invoked, requesting shutdown...");
+    if (g_graph_capability)
+    {
+        LOG4CXX_WARN(dashboard_logger, "ExitHandler stopping..");
+        g_graph_capability->SetStopped();
+    }
+}
 
 class DashboardApplication {
 public:
@@ -266,6 +278,7 @@ public:
         return log_config_;
     }
 
+
  private:
     std::string graph_config_;
     std::string log_config_;
@@ -285,9 +298,13 @@ public:
 
 };
 
+
 int main(int argc, char* argv[]) {
     try {
         DashboardApplication app;
+
+        app::SignalHandler::GetInstance().RegisterSignals();
+        app::SignalHandler::GetInstance().Register(ExitHandler);
 
         app.ParseForLogConfig(argc, argv);
         std::string log_config = app.GetLogConfig();
@@ -308,8 +325,10 @@ int main(int argc, char* argv[]) {
         }
 
         auto executor = app.BuildExecutor();
-        //auto heights = app.GetHeights();
-        auto graph_capability = executor->GetCapability<app::capabilities::GraphCapability>();
+        g_graph_capability = executor->GetCapability<app::capabilities::GraphCapability>().get();
+        if(g_graph_capability == nullptr) {
+            throw std::runtime_error("Failed to get GraphCapability from executor");
+        }
 
         graph::InitializationResult init_result = executor->Init();
         if (!init_result.success) {

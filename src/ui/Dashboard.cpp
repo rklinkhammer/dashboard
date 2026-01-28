@@ -111,25 +111,28 @@ bool Dashboard::Initialize() {
  * @see Initialize, CreateWindows
  */
 bool Dashboard::SetupTerminal() {
-    // Set locale to UTF-8 for proper Unicode character support
-    if(!setlocale(LC_ALL, "")) {       // Use system locale
-        setlocale(LC_CTYPE, "en_US.UTF-8");  // Explicitly set UTF-8
-    }
-    
+    // Use user's locale (should be UTF-8 if environment is set)
+    setlocale(LC_ALL, "");
+
     initscr();
     cbreak();
     noecho();
+
+    timeout(100);          // tick every 100ms
     keypad(stdscr, TRUE);
-    curs_set(1);
-    start_color();
-    
-    // Clear screen after initialization
+
+    curs_set(1);           // visible, but you must wmove() in CommandWindow::Render()
+
+    if (has_colors()) {
+        start_color();
+        use_default_colors(); // optional
+    }
+
     clear();
     refresh();
 
     getmaxyx(stdscr, term_h, term_w);
-    
-    // Minimum terminal size
+
     if (term_h < 10 || term_w < 40) {
         endwin();
         fprintf(stderr, "Terminal too small. Minimum: 10x40\n");
@@ -139,7 +142,8 @@ bool Dashboard::SetupTerminal() {
     return true;
 }
 
-bool Dashboard::CreateWindows() {
+bool Dashboard::CreateWindows()
+{
     // Calculate heights based on percentages
     // Metrics: 50%, Logs: 25%, Command: 20%, Status: 5%
     int metrics_h = std::max(3, term_h / 2);
@@ -152,14 +156,26 @@ bool Dashboard::CreateWindows() {
     cmd_win = newwin(cmd_h, term_w, metrics_h + log_h, 0);
     status_win = newwin(status_h, term_w, metrics_h + log_h + cmd_h, 0);
 
+    if (!metrics_win || !log_win || !cmd_win || !status_win)
+    {
+        if (metrics_win)
+            delwin(metrics_win);
+        if (log_win)
+            delwin(log_win);
+        if (cmd_win)
+            delwin(cmd_win);
+        if (status_win)
+            delwin(status_win);
+        metrics_win = log_win = cmd_win = status_win = nullptr;
+        return false;
+    }
+
     leaveok(metrics_win, TRUE);
     leaveok(log_win, TRUE);
     leaveok(status_win, TRUE);
-
-    // Command window should control the cursor position
     leaveok(cmd_win, FALSE);
 
-    return (metrics_win && log_win && cmd_win && status_win);
+    return true;
 }
 
 bool Dashboard::CreatePanels() {
@@ -304,28 +320,36 @@ void Dashboard::HandleInput(int ch) {
             if (metrics_panel) metrics_panel->ScrollDown();
             if (log_window) log_window->ScrollDown();
             break;
-        case 10: // Enter - Execute command
-            {
-                std::string cmd = command_window->GetCommand();
-                if (!cmd.empty()) {
-                    AddLog("> " + cmd);
-                    command_window->AddHistory(cmd);
-                    ExecuteCommand(cmd);
-                    command_window->ClearBuffer();
-                }
+        case 10: // Enter
+        {
+            std::string cmd = command_window->GetCommand();
+            if (!cmd.empty()) {
+                AddLog("> " + cmd);
+                command_window->AddHistory(cmd);
+                ExecuteCommand(cmd);
+                command_window->ClearBuffer();
             }
             break;
+        }
+        case 8: // Ctrl-H on some terminals
         case KEY_BACKSPACE:
         case 127:
             command_window->DeleteChar();
             break;
+
+        case KEY_RESIZE:
+            HandleResize();
+            break;
+
         default:
-            if (isprint(ch)) {
-                command_window->AddChar(ch);
+            if (ch >= 0 && ch <= 255 &&
+                isprint(static_cast<unsigned char>(ch))) {
+                command_window->AddChar(static_cast<char>(ch));
             }
             break;
     }
 }
+
 
 void Dashboard::ExecuteCommand(const std::string& cmd) {
     // Split input into command and arguments
@@ -416,7 +440,7 @@ void Dashboard::Cleanup() {
 
 void Dashboard::Run() {
     int ch;
-    while ((ch = getch()) != KEY_F(1)) { // F1 to quit
+    while ((ch = getch()) != KEY_F(1) && !graph_capability_->IsStopped()) { // F1 to quit
         
         HandleInput(ch);
         
@@ -427,4 +451,5 @@ void Dashboard::Run() {
 
         Render();
     }
+    graph_capability_->SetStopped();
 }

@@ -36,7 +36,7 @@
 #include "app/capabilities/GraphCapability.hpp"
 #include "app/FactoryManager.hpp"
 #include "app/GraphBuilder.hpp"
-#include "graph/GraphExecutorContext.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include <log4cxx/logger.h>
 #include <filesystem>
 #include <stdexcept>
@@ -305,11 +305,7 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
   
         auto command_policy = std::make_unique<app::policies::CommandPolicy>();
         chain->AppendNext(std::make_unique<graph::ExecutionPolicyChain>(std::move(command_policy), nullptr));
-
-        auto executor = std::make_shared<GraphExecutor>(std::move(chain));
-
-        executor->Register<app::capabilities::GraphCapability>(graph_cap);
-        executor->SetGraphManager(graph_cap->GetGraphManager());
+        auto executor = std::make_shared<GraphExecutor>(std::move(chain), graph_cap);
         return executor;
 
     } catch (const std::exception& e) {
