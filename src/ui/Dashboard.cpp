@@ -20,6 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+/**
+ * @file Dashboard.cpp
+ * @brief Implementation of the interactive ncurses dashboard UI
+ *
+ * This file implements the Dashboard class, which manages the real-time
+ * metrics visualization and command input for the graph execution engine.
+ *
+ * Key Implementation Details:
+ * 1. **Terminal Setup**: Uses ncurses with UTF-8 locale support
+ * 2. **Window Layout**: Creates 4 ncurses windows (metrics, logs, commands, status)
+ * 3. **Panel Management**: Stacks panels in Z-order for proper rendering
+ * 4. **30 FPS Event Loop**: Main thread runs at 30 FPS, processes keyboard input
+ * 5. **Thread-Safe Metrics**: Mutex protects latest_values_ from callback thread updates
+ * 6. **Command Execution**: Routes keyboard input to CommandRegistry
+ * 7. **Graceful Shutdown**: Restores terminal state on exit
+ *
+ * Threading Model:
+ * - Dashboard runs on main thread (UI thread)
+ * - Metrics callbacks arrive from executor thread
+ * - SetLatestValue() uses mutex to safely queue metric updates
+ * - UpdateAllMetrics() processes queue without blocking callbacks
+ * - No blocking operations in 30 FPS render loop
+ *
+ * File-level Responsibilities:
+ * - Terminal initialization and cleanup (initscr, endwin)
+ * - Window creation and resizing
+ * - Keyboard event handling and dispatching
+ * - Metrics panel updates from callbacks
+ * - Status bar updates and logging
+ */
+
 #include "ui/Dashboard.hpp"
 #include <signal.h>
 #include <locale.h>
@@ -28,6 +59,18 @@
 #include <iomanip>
 #include <algorithm>
 
+/**
+ * @brief Initialize the dashboard after construction
+ *
+ * Sets up the ncurses terminal, creates windows and panels, and subscribes
+ * to metrics events. Must be called before Run().
+ *
+ * @return True if initialization succeeded, false on error
+ *
+ * @note Sets up terminal for UTF-8, creates 4-panel layout
+ * @note Registers this dashboard as metrics subscriber
+ * @note Minimum terminal size: 10 rows x 40 columns
+ */
 bool Dashboard::Initialize() {
     if (!SetupTerminal()) return false;
     if (!CreateWindows()) return false;
@@ -53,6 +96,20 @@ bool Dashboard::Initialize() {
     return true;
 }
 
+/**
+ * @brief Set up ncurses terminal with proper locale and configuration
+ *
+ * Initializes ncurses mode, sets UTF-8 locale for Unicode support,
+ * configures keyboard input, and enables color mode.
+ *
+ * @return True if setup succeeded, false if terminal too small or other error
+ *
+ * @note Validates minimum terminal size (10x40)
+ * @note Enables raw input mode (cbreak) without local echo
+ * @note Enables color support for future color-coded metrics
+ *
+ * @see Initialize, CreateWindows
+ */
 bool Dashboard::SetupTerminal() {
     // Set locale to UTF-8 for proper Unicode character support
     if(!setlocale(LC_ALL, "")) {       // Use system locale
