@@ -151,16 +151,6 @@ public:
         if( graph_config_.empty()) {
             throw std::invalid_argument("--json-config is required");
         }   
-        // Set heights
-        heights_ = WindowHeightConfig();
-        heights_.logging_height_percent = logging_height_percent_;
-        heights_.command_height_percent = command_height_percent_;
-        if(!heights_.Validate()) {
-            LOG4CXX_WARN(dashboard_logger, "Window heights do not sum to 100%");
-            LOG4CXX_WARN(dashboard_logger, "Using default heights instead");
-            heights_ = WindowHeightConfig();  // Reset to defaults
-        }
-        LOG4CXX_INFO(dashboard_logger, "Using window heights: " << heights_.DebugString());
         return true;
     }
 
@@ -254,15 +244,7 @@ public:
         return log_config_;
     }
 
-    /**
-     * @brief Get the window heights
-     * @return heights_;
-     */
-    WindowHeightConfig GetHeights() const {
-        return heights_;
-    }
-
-private:
+ private:
     std::string graph_config_;
     std::string log_config_;
     std::string plugin_dir_{"./plugins"};
@@ -273,7 +255,6 @@ private:
     int command_height_percent_{30};  // Match WindowHeightConfig default
     bool verbose_logging_{false};
     bool cli_{false};
-    WindowHeightConfig heights_;
 
     std::shared_ptr<graph::PluginRegistry> plugin_registry_{nullptr};
     std::shared_ptr<graph::PluginLoader> plugin_loader_{nullptr};

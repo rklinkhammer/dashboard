@@ -70,13 +70,9 @@ target_include_directories(gdashboard_lib PUBLIC
 )
 
 target_compile_definitions(gdashboard_lib PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}")
-
 # Link dependencies
 target_link_libraries(gdashboard_lib PUBLIC
     nlohmann_json::nlohmann_json
-    ftxui::component
-    ftxui::dom
-    ftxui::screen
     Eigen3::Eigen
 )
 
@@ -88,9 +84,7 @@ add_executable(gdashboard
 # Link with library and dependencies
 target_link_libraries(gdashboard PRIVATE
     gdashboard_lib
-    ftxui::component
-    ftxui::dom
-    ftxui::screen
+    ncurses
     Eigen3::Eigen
     log4cxx
 )
@@ -119,7 +113,7 @@ endif()
 if(MSVC)
     target_compile_options(gdashboard_lib PRIVATE /W4 /WX)
 else()
-    target_compile_options(gdashboard_lib PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(gdashboard_lib PRIVATE -Wall -Wextra -Wpedantic -Werror -finput-charset=UTF-8 -fexec-charset=UTF-8)
 endif()
 
 # Set C++ standard
@@ -133,34 +127,35 @@ foreach(src ${GDASHBOARD_SOURCES})
     message(STATUS "  - ${src}")
 endforeach()
 
-# Create demo_gui executable
-add_executable(demo_gui
-    gdashboard/demo_gui_improved.cpp
-)
+# # Create demo_gui executable
+# add_executable(demo_gui
+#     gdashboard/demo_gui_improved.cpp
+#     ui/Dashboard.cpp
+# )
 
-# Link with library and dependencies
-target_link_libraries(demo_gui PRIVATE
-    Eigen3::Eigen
-    log4cxx
-    ncurses
-)
+# # Link with library and dependencies
+# target_link_libraries(demo_gui PRIVATE
+#     Eigen3::Eigen
+#     log4cxx
+#     ncurses
+# )
 
-target_compile_definitions(demo_gui PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}")
+# target_compile_definitions(demo_gui PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}")
 
-target_include_directories(demo_gui PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-)
+# target_include_directories(demo_gui PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+# )
 
 
-# Set C++ standard
-set_target_properties(demo_gui PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-)
+# # Set C++ standard
+# set_target_properties(demo_gui PROPERTIES
+#     CXX_STANDARD 23
+#     CXX_STANDARD_REQUIRED ON
+# )
 
 # Compiler flags
-if(MSVC)
-    target_compile_options(demo_gui PRIVATE /W4 /WX)
-else()
-    target_compile_options(demo_gui PRIVATE -Wall -Wextra -Wpedantic -Werror)
-endif()
+# if(MSVC)
+#     target_compile_options(demo_gui PRIVATE /W4 /WX)
+# else()
+#     target_compile_options(demo_gui PRIVATE -Wall -Wextra -Wpedantic -Werror -finput-charset=UTF-8 -fexec-charset=UTF-8)
+# endif()

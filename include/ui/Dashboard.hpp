@@ -1,59 +1,85 @@
-#pragma once
+#ifndef GDASHBOARD_DASHBOARD_HPP
+#define GDASHBOARD_DASHBOARD_HPP
 
-#include <memory>
+#include <ncurses.h>
 #include <string>
 #include <chrono>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/event.hpp>
-#include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/terminal.hpp>
-#include "graph/GraphExecutor.hpp"
+#include <thread>
+#include <memory>
+
+#include "ui/MetricsPanel.hpp"
+#include "ui/LogWindow.hpp"
+#include "ui/CommandWindow.hpp"
+#include "ui/StatusBar.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
+#include "app/metrics/MetricsEvent.hpp"
+#include "app/metrics/IMetricsSubscriber.hpp"
 
-// Forward declarations
-class MetricsPanel;
-class LoggingWindow;
-class CommandWindow;
-class StatusBar;
-class CommandRegistry;
+// Using declarations for production types
 
-struct WindowHeightConfig {
-    int metrics_height_percent = 68;       // Fixed
-    int logging_height_percent = 15;       // Adjustable
-    int command_height_percent = 15;       // Adjustable (40+20+38+2=100)
-    int status_height_percent = 2;         // Fixed
+// ============================================================================
+// Dashboard Manager - Coordinates all panels and layout
+// ============================================================================
+class Dashboard : public app::metrics::IMetricsSubscriber {
 
-    bool Validate() const {
-        return (metrics_height_percent + logging_height_percent +
-                command_height_percent + status_height_percent) == 100;
-    }
-
-    std::string DebugString() const {
-        return "Metrics:" + std::to_string(metrics_height_percent) + "% " +
-               "Logging:" + std::to_string(logging_height_percent) + "% " +
-               "Command:" + std::to_string(command_height_percent) + "% " +
-               "Status:" + std::to_string(status_height_percent) + "%";
-    }
-};
-
-class Dashboard {
 public:
-    // Constructor receives executor and window heights
-    explicit Dashboard(
-        std::shared_ptr<app::capabilities::MetricsCapability> capabilitys);
+    Dashboard(std::shared_ptr<app::capabilities::GraphCapability> graph_cap,
+              std::shared_ptr<app::capabilities::MetricsCapability> metrics_cap) 
+        : metrics_panel(nullptr), log_window(nullptr), 
+          command_window(nullptr), status_bar(nullptr),
+          metrics_win(nullptr), log_win(nullptr), 
+          cmd_win(nullptr), status_win(nullptr),
+          last_update_(std::chrono::steady_clock::now()),
+          graph_capability_(graph_cap),
+          metrics_capability_(metrics_cap) {}
+    ~Dashboard() {
+        Cleanup();
+    }
 
-    // Destructor - cleanup resources
-    ~Dashboard();
-
-    // Initialization: create UI panels, validate heights, setup layout
-    void Initialize() {}
-
-    // Main event loop: 30 FPS rendering until user exits
+    bool Initialize();
+    
+    void OnMetricsEvent(const app::metrics::MetricsEvent& event);
+    void HandleInput(int ch);
+    void ExecuteCommand(const std::string& cmd);
+    void Render();
+    void HandleResize();
+    void Cleanup();
     void Run();
 
+    void AddMetricsTile(const NodeMetricsTile& tile);
+    void AddLog(const std::string& line);
+
 private:
-    // Executor reference
-    std::shared_ptr<app::capabilities::MetricsCapability> capability_;
-    ftxui::ScreenInteractive screen_;
+    MetricsPanel* metrics_panel;
+    LogWindow* log_window;
+    CommandWindow* command_window;
+    StatusBar* status_bar;
+
+    WINDOW* metrics_win;
+    WINDOW* log_win;
+    WINDOW* cmd_win;
+    WINDOW* status_win;
+
+    int term_h = 0;
+    int term_w = 0;
+    
+    // Real-time update mechanism
+    std::chrono::steady_clock::time_point last_update_;
+    
+    std::shared_ptr<app::capabilities::GraphCapability> graph_capability_;
+    std::shared_ptr<app::capabilities::MetricsCapability> metrics_capability_;
+    
+    // Filter state
+    std::string filter_pattern_;
+    bool filter_active_ = false;
+
+    // Helper methods
+    bool SetupTerminal();
+    bool CreateWindows();
+    bool CreatePanels();
+    void UpdateStatusBarWithFilter();
+
 };
+
+#endif // GDASHBOARD_DASHBOARD_HPP
