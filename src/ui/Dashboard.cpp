@@ -108,7 +108,6 @@ void Dashboard::AddLog(const std::string& line) {
     }
 }
 
-
 void Dashboard::OnMetricsEvent(const app::metrics::MetricsEvent& event) {
     // Find or create tile for this source
     NodeMetricsTile* tile = nullptr;
@@ -250,350 +249,35 @@ void Dashboard::HandleInput(int ch) {
 }
 
 void Dashboard::ExecuteCommand(const std::string& cmd) {
+    // Split input into command and arguments
     std::istringstream iss(cmd);
-    std::string command;
-    iss >> command;
+    std::string command_name;
+    iss >> command_name;
     
-    if (command == "filter_metrics") {
-        std::string pattern;
-        if (iss >> pattern) {
-            if (metrics_panel) {
-                metrics_panel->SetFilterPattern(pattern);
-                filter_pattern_ = pattern;
-                filter_active_ = true;
-                AddLog("Filter applied: " + pattern);
-                UpdateStatusBarWithFilter();
-            }
-        } else {
-            AddLog("Usage: filter_metrics <pattern>");
-        }
-    } else if (command == "clear_filter" || command == "clearfilter") {
-        if (metrics_panel) {
-            metrics_panel->ClearFilter();
-            filter_pattern_.clear();
-            filter_active_ = false;
-            AddLog("Filter cleared");
-            UpdateStatusBarWithFilter();
-        }
-    } else if (command == "toggle_sparklines") {
-        if (metrics_panel) {
-            metrics_panel->ToggleSparklines();
-            std::string status = metrics_panel->AreSparklesEnabled() ? "enabled" : "disabled";
-            AddLog("Sparklines " + status);
-        } else {
-            AddLog("No metrics panel available");
-        }
-    } else if (command == "status") {
-        AddLog("Dashboard Status:");
-        if (metrics_panel) {
-            AddLog("  Tiles: " + std::to_string(metrics_panel->GetTileCount()));
-            if (filter_active_) {
-                AddLog("  Filter: " + filter_pattern_);
-            } else {
-                AddLog("  Filter: None");
-            }
-        }
-    } else if (command == "help") {
-        AddLog("Commands:");
-        AddLog("  filter_metrics <pattern> - Show only metrics matching pattern");
-        AddLog("  clear_filter - Show all metrics");
-        AddLog("  list_metrics [node] - List all metrics (optionally filtered by node)");
-        AddLog("  show_events - Display event type counts and statistics");
-        AddLog("  show_history <node>::<metric> - Display metric history with statistics");
-        AddLog("  set_metric <node>::<metric> <value> - Manually update a metric");
-        AddLog("  clear_metrics - Reset all metrics");
-        AddLog("  export_metrics [json|csv] - Export metrics (default: json)");
-        AddLog("  set_confidence <node> <metric> <value> - Set confidence (0.0-1.0)");
-        AddLog("  toggle_sparklines - Show/hide sparkline trends (Unicode by default)");
-        AddLog("  status - Display dashboard state");
-        AddLog("  help - Show this help");
-    } else if (command == "set_confidence") {
-        std::string node_name, metric_name, value_str;
-        if (iss >> node_name >> metric_name >> value_str) {
-            try {
-                double conf_value = std::stod(value_str);
-                
-                // Clamp to 0.0-1.0 range
-                if (conf_value < 0.0) conf_value = 0.0;
-                if (conf_value > 1.0) conf_value = 1.0;
-                
-                // Find and update metric
-                bool found = false;
-                if (metrics_panel) {
-                    for (auto& tile : metrics_panel->tiles) {
-                        if (tile.name == node_name) {
-                            for (auto& metric : tile.metrics) {
-                                if (metric.name == metric_name) {
-                                    metric.confidence = conf_value;
-                                    // Update alert level based on new confidence
-                                    if (conf_value < 0.2) {
-                                        metric.alert_level = 2;  // critical
-                                    } else if (conf_value < 0.5) {
-                                        metric.alert_level = 1;  // warning
-                                    } else {
-                                        metric.alert_level = 0;  // ok
-                                    }
-                                    found = true;
-                                    AddLog("Confidence updated: " + node_name + "::" + metric_name + 
-                                           " = " + std::to_string((int)(conf_value * 100)) + "%");
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-                if (!found) {
-                    AddLog("Metric not found: " + node_name + "::" + metric_name);
-                }
-            } catch (...) {
-                AddLog("Invalid confidence value: " + value_str + " (use 0.0-1.0)");
-            }
-        } else {
-            AddLog("Usage: set_confidence <node> <metric> <value>");
-            AddLog("  Example: set_confidence EstimationPipelineNode altitude_confidence 0.75");
-        }
-    } else if (command == "list_metrics" || command == "ls") {
-        // List all metrics for current or specified node
-        std::string node_filter;
-        iss >> node_filter;  // Optional node filter
+    std::vector<std::string> args;
+    std::string arg;
+    while (iss >> arg) {
+        args.push_back(arg);
+    }
         
-        bool found_any = false;
-        if (metrics_panel) {
-            for (const auto& tile : metrics_panel->tiles) {
-                if (!node_filter.empty() && tile.name.find(node_filter) == std::string::npos) {
-                    continue;  // Skip if filter doesn't match
-                }
-                
-                AddLog(tile.name + " (" + std::to_string(tile.metrics.size()) + " metrics):");
-                for (const auto& metric : tile.metrics) {
-                    std::string type_str;
-                    switch (metric.type) {
-                        case MetricType::INT: type_str = "int"; break;
-                        case MetricType::FLOAT: type_str = "float"; break;
-                        case MetricType::BOOL: type_str = "bool"; break;
-                        case MetricType::STRING: type_str = "string"; break;
-                    }
-                    AddLog("  " + metric.name + " (" + type_str + "): " + metric.GetFormattedValue());
-                }
-                found_any = true;
-            }
+    if (command_name == "help") {
+        if (!registry_) {
+            AddLog("[ERROR] Command registry not initialized");
+            return;
         }
-        if (!found_any) {
-            AddLog("No metrics found" + (node_filter.empty() ? "" : " matching: " + node_filter));
-        }
-    } else if (command == "show_events") {
-        // Show event type counts and statistics
-        if (metrics_panel) {
-            AddLog("Event Statistics:");
-            int total_events = 0;
-            for (const auto& tile : metrics_panel->tiles) {
-                if (!tile.event_type_counts.empty()) {
-                    AddLog(tile.name + ":");
-                    for (const auto& [evt_type, count] : tile.event_type_counts) {
-                        AddLog("  " + evt_type + ": " + std::to_string(count) + " updates");
-                        total_events += count;
-                    }
-                }
-            }
-            AddLog("Total events: " + std::to_string(total_events));
-        } else {
-            AddLog("No metrics available");
-        }
-    } else if (command == "show_history") {
-        // Display metric history with statistics
-        std::string path_str;
-        if (!(iss >> path_str)) {
-            AddLog("Usage: show_history <node>::<metric>");
-            AddLog("  Example: show_history EstimationPipelineNode::altitude_estimate_m");
-        } else {
-            // Parse node::metric path
-            size_t delim = path_str.find("::");
-            if (delim == std::string::npos) {
-                AddLog("Error: Use format node::metric (e.g., EstimationPipelineNode::altitude_estimate_m)");
-            } else {
-                std::string node_name = path_str.substr(0, delim);
-                std::string metric_name = path_str.substr(delim + 2);
-                
-                bool found = false;
-                if (metrics_panel) {
-                    for (auto& tile : metrics_panel->tiles) {
-                        if (tile.name == node_name) {
-                            for (auto& metric : tile.metrics) {
-                                if (metric.name == metric_name) {
-                                    found = true;
-                                    
-                                    // Display history information
-                                    AddLog("History for " + node_name + "::" + metric_name);
-                                    
-                                    if (metric.GetHistorySize() == 0) {
-                                        AddLog("  No history data yet");
-                                    } else {
-                                        AddLog("  Current value: " + metric.GetFormattedValue());
-                                        AddLog("  History entries: " + std::to_string(metric.GetHistorySize()) + "/" + 
-                                               std::to_string(Metric::HISTORY_SIZE));
-                                        
-                                        // Display statistics for numeric metrics
-                                        if (metric.type == MetricType::INT || metric.type == MetricType::FLOAT) {
-                                            double min_val = metric.GetHistoryMin();
-                                            double max_val = metric.GetHistoryMax();
-                                            double avg_val = metric.GetHistoryAvg();
-                                            
-                                            std::ostringstream oss;
-                                            oss << std::fixed << std::setprecision(3);
-                                            
-                                            AddLog("  Min: " + oss.str() + std::to_string(min_val) + 
-                                                   (metric.unit.empty() ? "" : " " + metric.unit));
-                                            
-                                            oss.str("");
-                                            oss.clear();
-                                            oss << std::fixed << std::setprecision(3) << max_val;
-                                            AddLog("  Max: " + oss.str() + 
-                                                   (metric.unit.empty() ? "" : " " + metric.unit));
-                                            
-                                            oss.str("");
-                                            oss.clear();
-                                            oss << std::fixed << std::setprecision(3) << avg_val;
-                                            AddLog("  Avg: " + oss.str() + 
-                                                   (metric.unit.empty() ? "" : " " + metric.unit));
-                                            
-                                            // Simple trend indicator
-                                            if (metric.value_history.size() >= 2) {
-                                                double first = metric.value_history.front();
-                                                double last = metric.value_history.back();
-                                                if (last > first * 1.01) {
-                                                    AddLog("  Trend: /\\ Rising");
-                                                } else if (last < first * 0.99) {
-                                                    AddLog("  Trend: \\/ Falling");
-                                                } else {
-                                                    AddLog("  Trend: -- Stable");
-                                                }
-                                            }
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-                if (!found) {
-                    AddLog("Metric not found: " + node_name + "::" + metric_name);
-                }
-            }
-        }
-    } else if (command == "set_metric") {
-        // Manual metric update: set_metric <node>::<metric> <value>
-        std::string path_str, value_str;
-        if (!(iss >> path_str >> value_str)) {
-            AddLog("Usage: set_metric <node>::<metric> <value>");
-            AddLog("  Example: set_metric EstimationPipelineNode::altitude_estimate_m 1550.5");
-        } else {
-            // Parse node::metric path
-            size_t delim = path_str.find("::");
-            if (delim == std::string::npos) {
-                AddLog("Error: Use format node::metric (e.g., EstimationPipelineNode::altitude_estimate_m)");
-            } else {
-                std::string node_name = path_str.substr(0, delim);
-                std::string metric_name = path_str.substr(delim + 2);
-                
-                bool found = false;
-                if (metrics_panel) {
-                    for (auto& tile : metrics_panel->tiles) {
-                        if (tile.name == node_name) {
-                            for (auto& metric : tile.metrics) {
-                                if (metric.name == metric_name) {
-                                    try {
-                                        // Try to parse as different types
-                                        if (value_str == "true" || value_str == "false") {
-                                            metric.type = MetricType::BOOL;
-                                            metric.value = (value_str == "true");
-                                        } else if (value_str.find('.') != std::string::npos) {
-                                            metric.type = MetricType::FLOAT;
-                                            metric.value = std::stod(value_str);
-                                        } else {
-                                            metric.type = MetricType::INT;
-                                            metric.value = std::stoi(value_str);
-                                        }
-                                        metric.last_update = std::chrono::system_clock::now();
-                                        AddLog("Updated: " + node_name + "::" + metric_name + " = " + value_str);
-                                        found = true;
-                                    } catch (...) {
-                                        AddLog("Error parsing value: " + value_str);
-                                    }
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-                if (!found) {
-                    AddLog("Metric not found: " + node_name + "::" + metric_name);
-                }
-            }
-        }
-    } else if (command == "clear_metrics") {
-        // Clear all metrics from all tiles
-        if (metrics_panel) {
-            int cleared_count = 0;
-            for (auto& tile : metrics_panel->tiles) {
-                cleared_count += tile.metrics.size();
-                tile.metrics.clear();
-                tile.event_type_counts.clear();
-            }
-            AddLog("Cleared " + std::to_string(cleared_count) + " metrics from " + 
-                   std::to_string(metrics_panel->GetTileCount()) + " nodes");
-        } else {
-            AddLog("No metrics to clear");
-        }
-    } else if (command == "export_metrics") {
-        // Export metrics to JSON or CSV format
-        std::string format;
-        if (!(iss >> format)) {
-            format = "json";  // Default format
-        }
-        
-        if (metrics_panel && !metrics_panel->tiles.empty()) {
-            if (format == "json") {
-                AddLog("{\"metrics\": [");
-                bool first = true;
-                for (const auto& tile : metrics_panel->tiles) {
-                    for (const auto& metric : tile.metrics) {
-                        if (!first) AddLog(",");
-                        AddLog("  {\"node\": \"" + tile.name + "\", \"name\": \"" + metric.name + 
-                               "\", \"value\": \"" + metric.GetFormattedValue() + "\"}");
-                        first = false;
-                    }
-                }
-                AddLog("]}");
-                AddLog("Exported " + std::to_string(metrics_panel->GetTileCount()) + " nodes to JSON");
-            } else if (format == "csv") {
-                AddLog("node,metric,value,type,confidence");
-                for (const auto& tile : metrics_panel->tiles) {
-                    for (const auto& metric : tile.metrics) {
-                        std::string type_str;
-                        switch (metric.type) {
-                            case MetricType::INT: type_str = "int"; break;
-                            case MetricType::FLOAT: type_str = "float"; break;
-                            case MetricType::BOOL: type_str = "bool"; break;
-                            case MetricType::STRING: type_str = "string"; break;
-                        }
-                        int conf_percent = (int)(metric.confidence * 100);
-                        AddLog(tile.name + "," + metric.name + "," + metric.GetFormattedValue() + 
-                               "," + type_str + "," + std::to_string(conf_percent) + "%");
-                    }
-                }
-                AddLog("Exported " + std::to_string(metrics_panel->GetTileCount()) + " nodes to CSV");
-            } else {
-                AddLog("Unknown format: " + format + " (use 'json' or 'csv')");
-            }
-        } else {
-            AddLog("No metrics to export");
-        }
-    } else {
-        AddLog("Unknown command: " + command + " (type 'help' for commands)");
+        registry_->GenerateHelpText(this);
+        return;
+    }
+    
+    // Execute via registry if available
+    if (!registry_) {
+        AddLog("[ERROR] Command registry not initialized");
+        return;
+    }
+    
+    CommandResult result = registry_->ExecuteCommand(command_name, args);
+    if (!result.success) {
+        AddLog("[ERROR] " + result.message);
     }
 }
 

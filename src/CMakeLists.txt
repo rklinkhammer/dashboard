@@ -26,8 +26,8 @@ set(GDASHBOARD_SOURCES
     # ui/LoggingAppender.cpp
     # ui/LoggingWindowAppender.cpp
     # #ui/CommandWindow.cpp
-    # ui/CommandRegistry.cpp
-    # ui/BuiltinCommands.cpp
+    ui/CommandRegistry.cpp
+    ui/BuiltinCommands.cpp
     # ui/LayoutConfig.cpp
     # ui/TabContainer.cpp
     # ui/StatusBar.cpp

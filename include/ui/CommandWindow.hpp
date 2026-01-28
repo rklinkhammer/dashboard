@@ -113,6 +113,8 @@ public:
             mvwin(win, starty, 0);
         }
     }
+        
+
 };
 
 #endif // GDASHBOARD_COMMAND_WINDOW_HPP

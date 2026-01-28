@@ -8,6 +8,7 @@
 #include "app/capabilities/MetricsCapability.hpp"
 #include "app/capabilities/GraphCapability.hpp"
 #include "ui/Dashboard.hpp"
+#include "ui/BuiltinCommands.hpp"
 
 namespace app::policies
 {
@@ -25,7 +26,10 @@ namespace app::policies
             LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnInit called");
             auto metrics_capability = context.capability_bus.Get<app::capabilities::MetricsCapability>();
             auto graph_capability = context.capability_bus.Get<app::capabilities::GraphCapability>();
-            dashboard_ = std::make_shared<Dashboard>(graph_capability, metrics_capability);
+            auto command_registry = std::make_shared<CommandRegistry>();
+            dashboard_ = std::make_shared<Dashboard>(graph_capability, metrics_capability, command_registry);
+            commands::RegisterBuiltinCommands(command_registry, dashboard_.get());
+
             dashboard_->Initialize();
             // Initialize metrics system here if needed
             return true;

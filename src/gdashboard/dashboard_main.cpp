@@ -294,7 +294,7 @@ int main(int argc, char* argv[]) {
             LOG4CXX_ERROR(dashboard_logger, "Executor initialization failed: " << init_result.message);
             return 1;
         }
-        LOG4CXX_INFO(dashboard_logger, "Executor initialized successfully in "
+        LOG4CXX_DEBUG(dashboard_logger, "Executor initialized successfully in "
                         << init_result.elapsed_time_ms << " ms. Nodes initialized: "
                         << init_result.nodes_initialized << ", failed: " << init_result.nodes_failed);
 
@@ -304,7 +304,7 @@ int main(int argc, char* argv[]) {
             LOG4CXX_ERROR(dashboard_logger, "Executor start failed: " << start_result.message);
             return 1;
         }
-        LOG4CXX_INFO(dashboard_logger, "Executor initialized successfully in "
+        LOG4CXX_DEBUG(dashboard_logger, "Executor initialized successfully in "
                         << start_result.elapsed_time_ms << " ms. ");
 
         graph::ExecutionResult run_results = executor->Run();
@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
             LOG4CXX_ERROR(dashboard_logger, "Executor run failed");
             return 1;
         }
-        LOG4CXX_INFO(dashboard_logger, "Executor run completed successfully in "
+        LOG4CXX_DEBUG(dashboard_logger, "Executor run completed successfully in "
                         << run_results.elapsed_time_ms << " ms.  ");
 
         graph::ExecutionResult stop_result = executor->Stop();
@@ -320,7 +320,7 @@ int main(int argc, char* argv[]) {
             LOG4CXX_ERROR(dashboard_logger, "Executor stop failed: " << stop_result.message);
             return 1;
         }
-        LOG4CXX_INFO(dashboard_logger, "Executor stopped successfully in "
+        LOG4CXX_DEBUG(dashboard_logger, "Executor stopped successfully in "
                         << stop_result.elapsed_time_ms << " ms.  ");
 
         graph::ExecutionResult join_result = executor->Join();
@@ -328,7 +328,7 @@ int main(int argc, char* argv[]) {
             LOG4CXX_ERROR(dashboard_logger, "Executor join failed: " << join_result.message);
             return 1;
         }
-        LOG4CXX_INFO(dashboard_logger, "Executor joined successfully in "
+        LOG4CXX_DEBUG(dashboard_logger, "Executor joined successfully in "
                         << join_result.elapsed_time_ms << " ms.  ");
    
         // Determine exit code based on results

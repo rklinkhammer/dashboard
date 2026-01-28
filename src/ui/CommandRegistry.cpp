@@ -1,4 +1,5 @@
 #include "ui/CommandRegistry.hpp"
+#include "ui/Dashboard.hpp"
 #include <sstream>
 #include <iostream>
 #include <algorithm>
@@ -36,7 +37,7 @@ CommandResult CommandRegistry::ExecuteCommand(
     
     auto it = commands_.find(name);
     if (it == commands_.end()) {
-        return CommandResult(false, "Command not found: " + name + "\nType 'help' for available commands");
+        return CommandResult(false, "Command not found: " + name + " 'help' for available commands");
     }
     
     try {
@@ -66,17 +67,10 @@ const CommandInfo* CommandRegistry::GetCommandInfo(const std::string& name) cons
     return nullptr;
 }
 
-std::string CommandRegistry::GenerateHelpText() const {
-    std::ostringstream oss;
-    oss << "\n╔════════════════════════════════════════════════════════╗\n";
-    oss << "║         Available Commands                             ║\n";
-    oss << "╠════════════════════════════════════════════════════════╣\n";
-    
+void CommandRegistry::GenerateHelpText(Dashboard* dashboard) const {
+     
     for (const auto& [name, info] : commands_) {
-        oss << "║ " << std::left << std::setw(50) << (name + " - " + info.description) << " ║\n";
-        oss << "║   Usage: " << std::setw(40) << info.usage << " ║\n";
+        dashboard->AddLog(name + " - " + info.description);
+        dashboard->AddLog("   Usage: " + info.usage);
     }
-    
-    oss << "╚════════════════════════════════════════════════════════╝\n";
-    return oss.str();
 }

@@ -8,13 +8,14 @@
 
 // Forward declaration
 class CommandRegistry;
+class Dashboard;
 
 // Result from executing a command
 struct CommandResult {
     bool success;
     std::string message;
     
-    CommandResult(bool ok, const std::string& msg) 
+    CommandResult(bool ok, const std::string& msg="") 
         : success(ok), message(msg) {}
 };
 
@@ -58,7 +59,7 @@ public:
     const CommandInfo* GetCommandInfo(const std::string& name) const;
 
     // Generate help text for all commands
-    std::string GenerateHelpText() const;
+    void GenerateHelpText(Dashboard* dashboard) const;
 
 private:
     // Store commands in insertion order
