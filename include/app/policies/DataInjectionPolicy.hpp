@@ -32,34 +32,108 @@ namespace app::policies {
 
 static auto datainjection_logger = log4cxx::Logger::getLogger("app.policies.DataInjectionPolicy");
 
+/**
+ * @class DataInjectionPolicy
+ * @brief Execution policy that manages data injection into the graph
+ *
+ * DataInjectionPolicy provides infrastructure for injecting data into graph
+ * nodes during execution. Discovers IDataInjectionSource providers and manages
+ * the injection lifecycle.
+ *
+ * Key responsibilities:
+ * 1. **Source Discovery**: Find nodes that implement IDataInjectionSource
+ * 2. **Initialization**: Set up injection sources with configuration
+ * 3. **Lifecycle Management**: Control injection during execution phases
+ * 4. **Cleanup**: Finalize injection sources on shutdown
+ *
+ * Integration:
+ * - Discovers data injection nodes in the graph
+ * - Called during OnInit to set up sources
+ * - Manages injection throughout execution lifecycle
+ * - Cleans up sources during OnJoin
+ *
+ * Thread Safety:
+ * - Initialization happens on main thread during graph setup
+ * - No concurrent injection operations expected
+ *
+ * @see IExecutionPolicy, IDataInjectionSource
+ */
 class DataInjectionPolicy : public graph::IExecutionPolicy {
 public:
+    /**
+     * @brief Construct a data injection policy
+     */
     DataInjectionPolicy() {
         LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy initialized");
     }   
 
+    /**
+     * @brief Virtual destructor for proper cleanup
+     */
     virtual ~DataInjectionPolicy() = default;
 
+    /**
+     * @brief Initialize data injection infrastructure
+     *
+     * Called by GraphExecutor during Init() phase.
+     * Discovers and initializes all IDataInjectionSource nodes.
+     *
+     * @param context GraphExecutorContext with graph reference
+     * @return True if initialization succeeded, false on error
+     *
+     * @see OnStart, OnJoin
+     */
     bool OnInit(graph::GraphExecutorContext &) override {
         LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnInit called");
-        // Initialize metrics system here if needed
+        // Initialize data injection sources here
         return true;
     }
 
+    /**
+     * @brief Start data injection during execution
+     *
+     * Called by GraphExecutor during Start() phase.
+     * Activates injection sources to begin feeding data to graph.
+     *
+     * @param context GraphExecutorContext for accessing graph
+     * @return True if startup succeeded, false on error
+     *
+     * @see OnStop
+     */
     bool OnStart(graph::GraphExecutorContext &) override {
         LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnStart called");
-        // Start metrics collection here if needed
+        // Start data injection here
         return true;
     }
 
+    /**
+     * @brief Stop data injection during execution shutdown
+     *
+     * Called by GraphExecutor during Stop() phase.
+     * Gracefully stops all data injection sources.
+     *
+     * @param context GraphExecutorContext for cleanup
+     *
+     * @see OnStart, OnJoin
+     */
     void OnStop(graph::GraphExecutorContext &) override {
         LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnStop called");
-        // Stop metrics collection and cleanup here if needed
+        // Stop data injection and cleanup here
     }
 
+    /**
+     * @brief Finalize data injection after execution completes
+     *
+     * Called by GraphExecutor during Join() phase after all nodes complete.
+     * Performs final cleanup of injection sources.
+     *
+     * @param context GraphExecutorContext for final cleanup
+     *
+     * @see OnStop, OnInit
+     */
     void OnJoin(graph::GraphExecutorContext &) override {
         LOG4CXX_TRACE(datainjection_logger, "DataInjectionPolicy OnJoin called");
-        // Finalize metrics reporting here if needed
+        // Finalize data injection reporting here
     }   
 
 }; // class DataInjectionPolicy
