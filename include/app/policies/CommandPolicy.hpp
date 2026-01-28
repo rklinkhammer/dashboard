@@ -32,34 +32,109 @@ namespace app::policies {
 
 static auto command_logger = log4cxx::Logger::getLogger("app.policies.CommandPolicy");
 
+/**
+ * @class CommandPolicy
+ * @brief Execution policy for command injection and execution during graph runtime
+ *
+ * CommandPolicy provides hooks for the dashboard to inject commands (start, stop, pause)
+ * into the graph execution during runtime. Receives execution phase callbacks and can
+ * trigger command processing at appropriate points in the execution lifecycle.
+ *
+ * Key responsibilities:
+ * 1. **Initialization**: Set up command injection infrastructure
+ * 2. **Phase Transitions**: Detect and respond to state changes
+ * 3. **Command Processing**: Execute injected commands from dashboard
+ *
+ * Lifecycle:
+ * - OnInit(): Prepare command processing (optional)
+ * - OnStart(): Begin accepting commands (optional)
+ * - OnStop(): Finish processing pending commands
+ * - OnJoin(): Clean up after execution
+ *
+ * Integration Points:
+ * - Dashboard sends commands to GraphExecutor
+ * - GraphExecutor routes via policies during execution
+ * - CommandPolicy hooks key transition points
+ * - Policies can influence graph execution (pausing, stepping, etc.)
+ *
+ * @see IExecutionPolicy, GraphExecutor
+ */
 class CommandPolicy : public graph::IExecutionPolicy {
 public:
+    /**
+     * @brief Construct a command policy
+     */
     CommandPolicy() {
         LOG4CXX_TRACE(command_logger, "CommandPolicy initialized");
     }   
 
+    /**
+     * @brief Virtual destructor for proper cleanup
+     */
     virtual ~CommandPolicy() = default;
 
+    /**
+     * @brief Initialize command infrastructure during graph setup
+     *
+     * Called by GraphExecutor during Init() phase.
+     * Can set up command queues or other infrastructure.
+     *
+     * @param context GraphExecutorContext with graph reference
+     * @return True if initialization succeeded, false on error
+     *
+     * @see OnStart, OnStop
+     */
     bool OnInit(graph::GraphExecutorContext &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnInit called");
-        // Initialize metrics system here if needed
+        // Initialize command infrastructure here if needed
         return true;
     }
 
+    /**
+     * @brief Start accepting commands from the dashboard
+     *
+     * Called by GraphExecutor during Start() phase.
+     * Enables processing of dashboard commands during execution.
+     *
+     * @param context GraphExecutorContext for accessing shared resources
+     * @return True if startup succeeded, false on error
+     *
+     * @see OnStop, OnJoin
+     */
     bool OnStart(graph::GraphExecutorContext &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnStart called");
-        // Start metrics collection here if needed
+        // Start accepting commands here if needed
         return true;
     }
 
+    /**
+     * @brief Stop accepting new commands and finalize pending ones
+     *
+     * Called by GraphExecutor during Stop() phase.
+     * Flushes any pending commands and stops accepting new ones.
+     *
+     * @param context GraphExecutorContext for cleanup
+     *
+     * @see OnStart, OnJoin
+     */
     void OnStop(graph::GraphExecutorContext &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnStop called");
-        // Stop metrics collection and cleanup here if needed
+        // Stop command processing and cleanup here if needed
     }
 
+    /**
+     * @brief Finalize command processing after execution joins
+     *
+     * Called by GraphExecutor during Join() phase after all nodes complete.
+     * Performs final cleanup and reporting of command execution.
+     *
+     * @param context GraphExecutorContext for final cleanup
+     *
+     * @see OnStop, OnStart
+     */
     void OnJoin(graph::GraphExecutorContext &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnJoin called");
-        // Finalize metrics reporting here if needed
+        // Finalize command processing here if needed
     }   
 
 }; // class CommandPolicy

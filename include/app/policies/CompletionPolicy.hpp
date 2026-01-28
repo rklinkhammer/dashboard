@@ -31,25 +31,82 @@ namespace app::policies
 
     static auto completion_logger = log4cxx::Logger::getLogger("app.policies.CompletionPolicy");
 
+    /**
+     * @class CompletionPolicy
+     * @brief Execution policy that detects and handles graph completion
+     *
+     * CompletionPolicy monitors the graph for completion signals and manages
+     * graceful shutdown when all work is done. Integrates with sink nodes
+     * (like CompletionAggregatorNode) that report completion status.
+     *
+     * Key responsibilities:
+     * 1. **Completion Detection**: Register callbacks with completion aggregator nodes
+     * 2. **Signal Waiting**: Monitor for completion signals from nodes
+     * 3. **Graceful Shutdown**: Trigger execution stop when completion detected
+     * 4. **Timeout Handling**: Optional timeout to stop if completion takes too long
+     * 5. **Status Reporting**: Provide completion statistics to dashboard
+     *
+     * Integration:
+     * - Discovers CompletionAggregatorNode instances in the graph
+     * - Registers callbacks to receive completion notifications
+     * - Waits for completion signal with optional timeout
+     * - Signals ExecutionContext to stop when complete
+     *
+     * Thread Model:
+     * - Spins up thread during OnStart()
+     * - Thread waits on condition variable for completion signal
+     * - Completion callback from executor thread notifies condition variable
+     * - Main thread can also check completion status
+     *
+     * @see IExecutionPolicy, CompletionAggregatorNode
+     */
     class CompletionPolicy : public graph::IExecutionPolicy
     {
     public:
+        /**
+         * @brief Construct a completion policy
+         */
         CompletionPolicy()
         {
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy initialized");
         }
 
+        /**
+         * @brief Virtual destructor for proper cleanup
+         */
         virtual ~CompletionPolicy() = default;
 
+        /**
+         * @brief Initialize completion detection during graph setup
+         *
+         * Called by GraphExecutor during Init() phase.
+         * Discovers completion nodes and registers callbacks.
+         *
+         * @param context GraphExecutorContext with graph reference
+         * @return True if initialization succeeded, false on error
+         *
+         * @see OnStart
+         */
         bool OnInit(graph::GraphExecutorContext &context) override
         {
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnInit called");
-            // Initialize metrics system here if needed
+            // Register callbacks with completion nodes
             InitCompletionCallbacks(context);
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnInit completed");            
             return true;
         }
 
+        /**
+         * @brief Start the completion detection thread
+         *
+         * Called by GraphExecutor during Start() phase.
+         * Spawns thread that waits for completion signal.
+         *
+         * @param context GraphExecutorContext for accessing graph
+         * @return True if thread startup succeeded, false on error
+         *
+         * @see OnStop
+         */
         bool OnStart(graph::GraphExecutorContext &context) override
         {
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnStart called");

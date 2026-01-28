@@ -37,24 +37,105 @@ namespace app::policies {
 
 static auto metrics_logger = log4cxx::Logger::getLogger("app.policies.MetricsPolicy");
 
+/**
+ * @struct MetricsCapabilityCallback
+ * @brief Concrete callback implementation for publishing metrics to capability bus
+ *
+ * Implements IMetricsCallback interface and bridges metrics events from graph
+ * nodes to the MetricsCapability via PublishAsync().
+ *
+ * @see IMetricsCallback, MetricsPolicy, MetricsCapability
+ */
 struct MetricsCapabilityCallback : public graph::IMetricsCallback {
+    /**
+     * @brief Publish a metrics event asynchronously
+     *
+     * Forwards the event to the registered on_publish_async_ handler,
+     * which routes it to MetricsCapability for subscriber notification.
+     *
+     * @param event The metrics event to publish
+     */
     void PublishAsync(const app::metrics::MetricsEvent& event) noexcept override{
         if (on_publish_async_) {
             on_publish_async_(event);
         }
     }
+    
+    /// @brief Callback function for publishing metrics events
     std::function<void(const app::metrics::MetricsEvent&)> on_publish_async_;
 };
 
 
+/**
+ * @class MetricsPolicy
+ * @brief Execution policy that manages metrics publishing infrastructure
+ *
+ * MetricsPolicy implements the IExecutionPolicy interface to set up and manage
+ * the metrics publishing system during graph execution.
+ *
+ * Key responsibilities:
+ * 1. **Initialization**: Create MetricsCapability and register in CapabilityBus
+ * 2. **Metrics Source Setup**: Discover and initialize metrics from all nodes
+ * 3. **Event Queue Management**: Async queue for metrics events from graph execution thread
+ * 4. **Subscriber Publishing**: Dequeue events and forward to all registered subscribers
+ * 5. **Thread Management**: Spawn background thread for metrics event distribution
+ *
+ * Lifecycle:
+ * - OnInit(): Create MetricsCapability, discover metrics sources, register callback providers
+ * - OnStart(): Spawn async publishing thread that dequeues and distributes events
+ * - OnStop(): Signal thread shutdown, collect final metrics
+ * - OnDone(): Clean up resources and thread
+ *
+ * Thread Model:
+ * - Graph nodes run on executor thread, publish to metrics_event_queue_
+ * - MetricsPolicy spawns separate thread for dequeuing and distributing
+ * - Dashboard runs on main thread, receives events from MetricsCapability
+ * - No blocking operations between threads (lockfree queue for thread safety)
+ *
+ * Example integration (from GraphExecutor initialization):
+ * ```cpp
+ * auto metrics_policy = std::make_shared<MetricsPolicy>();
+ * ExecutionPolicyChain policies;
+ * policies.Push(metrics_policy);
+ * 
+ * GraphExecutor executor;
+ * executor.SetPolicies(policies);
+ * executor.Init(config);  // MetricsPolicy::OnInit() called
+ * executor.Start();       // MetricsPolicy::OnStart() called
+ * 
+ * // During execution, graph nodes publish metrics
+ * // MetricsPolicy routes them to subscribed dashboard
+ * 
+ * executor.Stop();        // MetricsPolicy::OnStop() called
+ * ```
+ *
+ * @see IExecutionPolicy, MetricsCapability, MetricsEvent
+ */
 class MetricsPolicy : public graph::IExecutionPolicy {
 public:
+    /**
+     * @brief Construct a metrics policy with logging
+     */
     MetricsPolicy() {
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy initialized");
     }   
 
+    /**
+     * @brief Virtual destructor for proper cleanup
+     */
     virtual ~MetricsPolicy() = default;
 
+    /**
+     * @brief Initialize metrics infrastructure during graph setup
+     *
+     * Called by GraphExecutor during Init() phase. Creates MetricsCapability,
+     * registers it with the CapabilityBus, and discovers all metrics sources.
+     *
+     * @param context GraphExecutorContext with capability bus and graph reference
+     * @return True if initialization succeeded, false on error
+     *
+     * @see OnStart, MetricsCapability
+     */
     bool OnInit(graph::GraphExecutorContext& context) override {
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy OnInit called");
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy::OnInit() - creating MetricsCapability");
@@ -65,6 +146,17 @@ public:
         return true;
     }
 
+    /**
+     * @brief Start the metrics publishing thread
+     *
+     * Called by GraphExecutor during Start() phase. Spawns a background thread
+     * that dequeues metrics events and forwards them to all subscribers.
+     *
+     * @param context GraphExecutorContext for accessing shared resources
+     * @return True if thread startup succeeded, false on error
+     *
+     * @see OnStop, OnDone
+     */
     bool OnStart(graph::GraphExecutorContext& context) override
     {
         LOG4CXX_TRACE(metrics_logger, "MetricsPolicy::OnStart()");
