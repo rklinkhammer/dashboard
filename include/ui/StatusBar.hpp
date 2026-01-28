@@ -27,9 +27,46 @@
 #include <string>
 #include <algorithm>
 
-// ============================================================================
-// Status Bar - Runtime info display
-// ============================================================================
+/**
+ * @class StatusBar
+ * @brief Minimal single-line status indicator at the bottom of dashboard
+ *
+ * StatusBar displays brief status information at the very bottom of the dashboard
+ * using reverse video (inverted colors) for visual distinction. Typically shows
+ * the current execution state, error messages, or user feedback.
+ *
+ * Key features:
+ * 1. **Reverse Video**: Displays with inverted colors for prominence
+ * 2. **Single Line**: Minimal height (2% of dashboard by default)
+ * 3. **Text Truncation**: Automatically truncates text to fit window width
+ * 4. **Status Updates**: Text can be updated during execution
+ *
+ * Integration:
+ * - Created as part of Dashboard's 4-panel layout (2% height)
+ * - Bottom-most panel for constant visibility
+ * - Updated by Dashboard::ExecuteCommand() or other status events
+ * - Renders as part of Dashboard::Render() during main event loop
+ *
+ * Example usage:
+ * ```cpp
+ * // Create status bar for the bottom of the terminal
+ * auto status_bar = StatusBar(ncurses_window_ptr, width, height);
+ * 
+ * // Update status text
+ * status_bar.SetText("Status: Running");
+ * status_bar.Render();
+ * 
+ * // Update with different state
+ * status_bar.SetText("Status: Paused");
+ * status_bar.Render();
+ * 
+ * // Window resized
+ * status_bar.Resize(new_height, new_width, new_y_position);
+ * status_bar.Render();
+ * ```
+ *
+ * @see Dashboard, LogWindow
+ */
 class StatusBar {
 private:
     WINDOW* win;
@@ -37,9 +74,27 @@ private:
     std::string text;
 
 public:
+    /**
+     * @brief Construct a status bar for ncurses display
+     *
+     * @param w The ncurses WINDOW pointer to render into
+     * @param wth Width of the window in characters
+     * @param hgt Height of the window in characters (usually 1-2)
+     */
     StatusBar(WINDOW* w, int wth, int hgt) 
         : win(w), width(wth), height(hgt) {}
 
+    /**
+     * @brief Set the status text to display
+     *
+     * Updates the internal status string. If the text is longer than the window
+     * width, it is automatically truncated to fit. The next Render() call will
+     * display this new text.
+     *
+     * @param t The status text to display (e.g., "Status: Running")
+     *
+     * @see Render(), GetText()
+     */
     void SetText(const std::string& t) {
         text = t;
         if ((int)text.length() > width - 4) {
@@ -47,6 +102,15 @@ public:
         }
     }
 
+    /**
+     * @brief Render the status bar to the ncurses display
+     *
+     * Displays the current status text in reverse video (inverted colors)
+     * for visual prominence. The text is centered or left-aligned depending
+     * on implementation.
+     *
+     * @see SetText()
+     */
     void Render() {
         if (!win) return;
         
@@ -57,6 +121,19 @@ public:
         wrefresh(win);
     }
 
+    /**
+     * @brief Resize the status bar dimensions
+     *
+     * Called when the terminal is resized or dashboard layout changes.
+     * Updates window height and width, resizes the ncurses window,
+     * and repositions it vertically.
+     *
+     * @param h New height in lines (usually 1-2)
+     * @param w New width in characters
+     * @param starty New Y position in the terminal
+     *
+     * @see Render()
+     */
     void Resize(int h, int w, int starty) {
         height = h;
         width = w;

@@ -39,34 +39,142 @@
 
 namespace graph {
 
+/**
+ * @class GraphExecutor
+ * @brief Orchestrates execution of a directed acyclic graph (DAG)
+ *
+ * GraphExecutor is the main engine for executing computational graphs, coordinating
+ * node execution, managing state transitions, and publishing metrics through
+ * capabilities (MetricsCapability, GraphCapability).
+ *
+ * Execution States:
+ * - **STOPPED**: Not executing, ready to start
+ * - **INITIALIZING**: Running Init() to prepare nodes
+ * - **RUNNING**: Active execution of graph nodes
+ * - **PAUSED**: Suspended execution (nodes retain state)
+ * - **STOPPING**: Graceful shutdown in progress
+ *
+ * Execution Flow:
+ * 1. Init() → Initialize graph and nodes
+ * 2. Start() → Begin execution
+ * 3. Run() → Execute nodes (blocking)
+ * 4. Stop() → Request graceful shutdown
+ * 5. Join() → Wait for completion
+ *
+ * Policies:
+ * The executor uses an ExecutionPolicyChain to customize behavior:
+ * - MetricsPolicy: Publishes metrics updates
+ * - CompletionPolicy: Detects when execution is complete
+ * - CommandPolicy: Handles external commands
+ * - Other policies can inject data or modify behavior
+ *
+ * Thread Safety:
+ * - Init(), Start(), Stop(), Join() are not thread-safe for concurrent calls
+ * - State queries (IsRunning(), GetState()) are thread-safe
+ * - Policies may run in executor threads and must handle synchronization
+ *
+ * @see ExecutionPolicyChain, IExecutionPolicy
+ * @see MetricsCapability, GraphCapability
+ *
+ * @example
+ *   auto graph = std::make_shared<GraphManager>();
+ *   // ... configure graph ...
+ *   
+ *   auto executor = std::make_unique<GraphExecutor>(policies);
+ *   executor->Init();
+ *   executor->Start();
+ *   
+ *   // Run blocking execution
+ *   auto result = executor->Run();
+ *   
+ *   executor->Stop();
+ *   executor->Join();
+ */
 class GraphExecutor {
 public:
 
     /**
-     * Construct executor with GraphManager
+     * @brief Construct executor with execution policies
      *
-     * @param graph Shared pointer to GraphManager
+     * @param policy_chain Unique pointer to execution policy chain containing
+     *                      all policies that customize executor behavior
      *
      * Preconditions:
-     * - graph must be a valid GraphManager pointer
-     * - graph must not be nullptr
+     * - policy_chain must be a valid ExecutionPolicyChain
+     * - policy_chain must not be nullptr
      *
      * Postconditions:
-     * - Executor holds reference to graph
-     * - Ready to call Execute()
+     * - Executor holds the policy chain
+     * - Ready to call Init()
+     * - State is STOPPED
      *
-     * @throws std::invalid_argument if graph is nullptr
+     * @throws std::invalid_argument if policy_chain is nullptr
      */
     explicit GraphExecutor(std::unique_ptr<ExecutionPolicyChain> policy_chain);
 
     /**
-     * Virtual destructor for proper cleanup of derived classes
+     * @brief Virtual destructor for proper cleanup of derived classes
+     *
+     * Ensures Stop() and Join() are called before destruction.
+     * Implementations should clean up policy resources.
      */
     virtual ~GraphExecutor() = default;
     
+    /**
+     * @brief Initialize the executor and all graph nodes
+     *
+     * Prepares the executor for execution:
+     * 1. Calls Init() on all policies in chain
+     * 2. Initializes all nodes in the graph
+     * 3. Validates graph structure and connections
+     * 4. Transitions to INITIALIZED or STOPPED state
+     *
+     * @return InitializationResult with status and error message if failed
+     *
+     * @pre State must be STOPPED
+     * @post State is INITIALIZED or STOPPED (on error)
+     */
     InitializationResult Init();
+    
+    /**
+     * @brief Start graph execution
+     *
+     * Begins the execution loop in the executor's worker thread.
+     * The Run() method must be called to actually execute the graph.
+     *
+     * @return ExecutionResult with status
+     *
+     * @pre State must be INITIALIZED
+     * @post State is RUNNING (or error)
+     */
     ExecutionResult Start();
+    
+    /**
+     * @brief Execute graph nodes (blocking)
+     *
+     * Main execution loop that:
+     * 1. Runs registered policies on each iteration
+     * 2. Executes ready nodes
+     * 3. Processes completion signals
+     * 4. Continues until graph is complete or Stop() is called
+     *
+     * @return ExecutionResult with final state and any error
+     *
+     * @pre State must be RUNNING
+     * @post State is STOPPED or other terminal state
+     */
     ExecutionResult Run();
+    
+    /**
+     * @brief Request graceful shutdown
+     *
+     * Signals executor to stop after current iteration.
+     * Does not wait for completion; call Join() to wait.
+     *
+     * @return ExecutionResult with status
+     *
+     * @post State transitions to STOPPING
+     */
     ExecutionResult Stop();
     ExecutionResult Join();
     

@@ -34,18 +34,64 @@
 // ============================================================================
 // Metrics Panel - Tabbed view with scrolling
 // ============================================================================
+
+/**
+ * @class MetricsPanel
+ * @brief Tabbed panel displaying metrics for graph execution nodes
+ *
+ * MetricsPanel manages a collection of NodeMetricsTiles organized as tabs,
+ * with one tab per node in the execution graph. Each tab displays metrics
+ * in a grid layout with support for filtering and scrolling.
+ *
+ * Features:
+ * - **Tabbed Interface**: One tab per node, switch with arrow keys
+ * - **Real-time Updates**: Metrics update as data arrives from executor
+ * - **Filtering**: Filter metrics by substring pattern
+ * - **Scrolling**: Navigate large metric lists with scroll offset
+ * - **Sparklines**: Optional Unicode sparkline visualization
+ * - **Thread-Safe Updates**: Uses mutex for callback thread safety
+ *
+ * Update Flow:
+ * 1. Graph executor publishes metrics → MetricsCapability callback
+ * 2. OnMetricsEvent() routes update to SetLatestValue()
+ * 3. SetLatestValue() stores value in thread-safe queue
+ * 4. UpdateAllMetrics() (called from main loop) processes updates
+ * 5. Render() displays current values with visual formatting
+ *
+ * @see NodeMetricsTile, Metric
+ *
+ * @example
+ *   MetricsPanel panel(window_ptr, width, height);
+ *   auto schema = capability->GetNodeMetrics("Sensor");
+ *   auto tile = NodeMetricsSchemaToTile("Sensor", schema);
+ *   panel.AddTile(tile);
+ *   
+ *   // Thread-safe update from callback
+ *   panel.SetLatestValue("Sensor::temperature", 42.5);
+ *   
+ *   // Main loop
+ *   panel.UpdateAllMetrics();
+ *   panel.Render();
+ */
 class MetricsPanel {
 private:
-    WINDOW* win;
-    int width, height;
-    size_t selected_tab = 0;
-    int scroll_y = 0;
-    std::string filter_pattern;  // Filter pattern for metric names
-    std::vector<size_t> filtered_indices;  // Cached filtered metric indices
-    bool filter_active = false;
-    bool sparklines_enabled = true;  // Display sparklines below metrics (Phase 7)
+    WINDOW* win;                          ///< ncurses window pointer
+    int width, height;                    ///< Panel dimensions
+    size_t selected_tab = 0;              ///< Currently selected tab index
+    int scroll_y = 0;                     ///< Vertical scroll offset for metric list
+    std::string filter_pattern;           ///< Current filter pattern (substring match)
+    std::vector<size_t> filtered_indices; ///< Cached indices of filtered metrics
+    bool filter_active = false;           ///< Whether filtering is currently enabled
+    bool sparklines_enabled = true;       ///< Display sparklines below metrics
 
-    // Helper: Check if metric matches filter pattern (simple substring match)
+    /**
+     * @brief Check if a metric name matches the current filter pattern
+     *
+     * Performs case-insensitive substring matching.
+     *
+     * @param metric_name The name of the metric to check
+     * @return true if metric matches filter or filter is empty
+     */
     bool MatchesFilter(const std::string& metric_name) const {
         if (filter_pattern.empty()) return true;
         std::string lower_name = metric_name;
@@ -55,7 +101,13 @@ private:
         return lower_name.find(lower_pattern) != std::string::npos;
     }
     
-    // Helper: Rebuild filtered indices for current tab
+    /**
+     * @brief Rebuild the filtered indices cache
+     *
+     * Iterates through all metrics in the current tab and builds
+     * a list of indices for metrics that match the filter pattern.
+     * Called whenever filter or selected tab changes.
+     */
     void RebuildFilteredIndices() {
         filtered_indices.clear();
         if (selected_tab < tiles.size()) {
@@ -69,16 +121,38 @@ private:
     }
 
 public:
-    std::vector<NodeMetricsTile> tiles;  // Public for event handling
+    std::vector<NodeMetricsTile> tiles;  ///< Collection of node metric tiles (tabs)
     
+    /**
+     * @brief Construct a MetricsPanel
+     *
+     * @param w ncurses window to render into
+     * @param wth Panel width in characters
+     * @param hgt Panel height in characters
+     */
     MetricsPanel(WINDOW* w, int wth, int hgt) 
         : win(w), width(wth), height(hgt) {}
 
+    /**
+     * @brief Add a metric tile (node) as a new tab
+     *
+     * @param tile The NodeMetricsTile to add
+     *
+     * @see NodeMetricsTile
+     */
     void AddTile(const NodeMetricsTile& tile) { 
         tiles.push_back(tile);
         RebuildFilteredIndices();
     }
 
+    /**
+     * @brief Apply a filter pattern to current metrics
+     *
+     * Only metrics whose names contain the pattern (case-insensitive)
+     * will be displayed. Resets scroll position.
+     *
+     * @param pattern The filter pattern (substring to match)
+     */
     void SetFilterPattern(const std::string& pattern) {
         filter_pattern = pattern;
         filter_active = !pattern.empty();
@@ -86,6 +160,11 @@ public:
         RebuildFilteredIndices();
     }
     
+    /**
+     * @brief Clear the current filter pattern
+     *
+     * All metrics will be displayed again.
+     */
     void ClearFilter() {
         filter_pattern.clear();
         filter_active = false;
@@ -93,9 +172,25 @@ public:
         filtered_indices.clear();
     }
     
+    /**
+     * @brief Get the current filter pattern
+     *
+     * @return The active filter pattern string
+     */
     std::string GetFilterPattern() const { return filter_pattern; }
+    
+    /**
+     * @brief Check if filtering is currently active
+     *
+     * @return true if a filter pattern is applied
+     */
     bool IsFilterActive() const { return filter_active; }
 
+    /**
+     * @brief Switch to the next tab (next node)
+     *
+     * Wraps around to first tab if at last tab.
+     */
     void NextTab() { 
         if (!tiles.empty()) {
             selected_tab = (selected_tab + 1) % tiles.size();
