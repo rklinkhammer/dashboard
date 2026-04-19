@@ -1,0 +1,30 @@
+{
+  "name": "SimpleMinimalGraph",
+  "num_threads": 1,
+  "nodes": [
+    {
+      "id": "producer",
+      "type": "SimpleProducerNode",
+      "node_config": {
+        "production_count": 1,
+        "interval_ms": 0
+      }
+    },
+    {
+      "id": "consumer",
+      "type": "SimpleConsumerNode",
+      "node_config": {
+        "expected_count": 1
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source_node_id": "producer",
+      "source_port": 0,
+      "target_node_id": "consumer",
+      "target_port": 0,
+      "buffer_size": 16
+    }
+  ]
+}

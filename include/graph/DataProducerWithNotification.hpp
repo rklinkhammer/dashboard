@@ -248,7 +248,8 @@ public:
             // Generator exhausted - don't emit data, completion signal will be on port 1
             this->OnDataExhausted();
             NotificationType notification = CreateNotification();
-            notification_queue_.Enqueue(notification);
+            // C++26: [[nodiscard]] return value intentionally unused (signal will be consumed by port 1)
+            static_cast<void>(notification_queue_.Enqueue(notification));
             LOG4CXX_TRACE(logger_, "Data exhausted in DataProducerWithNotification: " << producer_name_
                                      << " (samples=" << total_samples_generated_ << ")");
         }

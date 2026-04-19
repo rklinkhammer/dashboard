@@ -51,6 +51,7 @@
  * - Status bar updates and logging
  */
 
+#include "app/SignalHandler.hpp"
 #include "ui/Dashboard.hpp"
 #include <signal.h>
 #include <locale.h>
@@ -92,6 +93,9 @@ bool Dashboard::Initialize() {
         metrics_capability_->RegisterMetricsCallback(this);
     
     }
+    app::SignalHandler::GetInstance().RegisterScreenResize([this]() {
+        this->SetResizeSignal(true);
+    });
     status_bar->SetText("F1=Quit | Tab=Next Tab | Shift+Tab=Prev Tab | Arrows=Scroll");
     return true;
 }
@@ -322,11 +326,11 @@ void Dashboard::HandleInput(int ch) {
             break;
         case 10: // Enter
         {
-            std::string cmd = command_window->GetCommand();
+            const std::string cmd = command_window->GetCommand();
             if (!cmd.empty()) {
                 AddLog("> " + cmd);
                 command_window->AddHistory(cmd);
-                ExecuteCommand(cmd);
+                dashboard_capability_->EnqueueCommand(cmd);
                 command_window->ClearBuffer();
             }
             break;
@@ -351,38 +355,38 @@ void Dashboard::HandleInput(int ch) {
 }
 
 
-void Dashboard::ExecuteCommand(const std::string& cmd) {
-    // Split input into command and arguments
-    std::istringstream iss(cmd);
-    std::string command_name;
-    iss >> command_name;
+// void Dashboard::ExecuteCommand(const std::string& cmd) {
+//     // Split input into command and arguments
+//     std::istringstream iss(cmd);
+//     std::string command_name;
+//     iss >> command_name;
     
-    std::vector<std::string> args;
-    std::string arg;
-    while (iss >> arg) {
-        args.push_back(arg);
-    }
+//     std::vector<std::string> args;
+//     std::string arg;
+//     while (iss >> arg) {
+//         args.push_back(arg);
+//     }
         
-    if (command_name == "help") {
-        if (!registry_) {
-            AddLog("[ERROR] Command registry not initialized");
-            return;
-        }
-        registry_->GenerateHelpText(this);
-        return;
-    }
+//     if (command_name == "help") {
+//         if (!registry_) {
+//             AddLog("[ERROR] Command registry not initialized");
+//             return;
+//         }
+//         registry_->GenerateHelpText(this);
+//         return;
+//     }
     
-    // Execute via registry if available
-    if (!registry_) {
-        AddLog("[ERROR] Command registry not initialized");
-        return;
-    }
+//     // Execute via registry if available
+//     if (!registry_) {
+//         AddLog("[ERROR] Command registry not initialized");
+//         return;
+//     }
     
-    CommandResult result = registry_->ExecuteCommand(command_name, args);
-    if (!result.success) {
-        AddLog("[ERROR] " + result.message);
-    }
-}
+//     CommandResult result = registry_->ExecuteCommand(command_name, args);
+//     if (!result.success) {
+//         AddLog("[ERROR] " + result.message);
+//     }
+// }
 
 void Dashboard::UpdateStatusBarWithFilter() {
     std::string status_text = "F1=Quit | Tab=Next Tab | Shift+Tab=Prev Tab | Arrows=Scroll";
@@ -445,8 +449,9 @@ void Dashboard::Run() {
         HandleInput(ch);
         
         // Check for resize
-        if (ch == KEY_RESIZE) {
+        if (ch == KEY_RESIZE || GetResizeSignal()) {
             HandleResize();
+            SetResizeSignal(false);
         }
 
         Render();

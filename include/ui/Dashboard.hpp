@@ -36,6 +36,7 @@
 #include "ui/CommandRegistry.hpp"
 #include "app/capabilities/GraphCapability.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
+#include "app/capabilities/DashboardCapability.hpp"
 #include "app/metrics/MetricsEvent.hpp"
 #include "app/metrics/IMetricsSubscriber.hpp"
 
@@ -83,7 +84,7 @@ public:
      */
     Dashboard(std::shared_ptr<app::capabilities::GraphCapability> graph_cap,
               std::shared_ptr<app::capabilities::MetricsCapability> metrics_cap,
-              std::shared_ptr<CommandRegistry> registry) 
+              std::shared_ptr<app::capabilities::DashboardCapability> dashboard_cap) 
         : metrics_panel(nullptr), log_window(nullptr), 
           command_window(nullptr), status_bar(nullptr),
           metrics_win(nullptr), log_win(nullptr), 
@@ -91,7 +92,7 @@ public:
           last_update_(std::chrono::steady_clock::now()),
           graph_capability_(graph_cap),
           metrics_capability_(metrics_cap),
-          registry_(registry) {}
+          dashboard_capability_(dashboard_cap) {}
     
     /**
      * @brief Destructor: cleans up ncurses and resources
@@ -152,7 +153,7 @@ public:
      *
      * @see CommandRegistry::ExecuteCommand
      */
-    void ExecuteCommand(const std::string& cmd);
+    //void ExecuteCommand(const std::string& cmd);
     
     /**
      * @brief Render the dashboard (called at ~30 FPS from main loop)
@@ -210,7 +211,7 @@ public:
      *
      * @param registry New command registry to use
      */
-    void SetCommandRegistry(std::shared_ptr<CommandRegistry> registry) { registry_ = registry; }
+    //void SetCommandRegistry(std::shared_ptr<CommandRegistry> registry) { registry_ = registry; }
 
     /**
      * @brief Get pointer to metrics panel for testing or advanced operations
@@ -226,6 +227,8 @@ public:
     void ClearFilter() { filter_pattern_.clear(); filter_active_ = false; }
     void SetFilterPattern(const std::string& pattern) { filter_pattern_ = pattern; filter_active_ = true; }
     void UpdateStatusBarWithFilter();
+    bool GetResizeSignal() const { return resize_signal_; }
+    void SetResizeSignal(bool val) { resize_signal_ = val; }
 
 private:
     MetricsPanel* metrics_panel;
@@ -246,11 +249,12 @@ private:
     
     std::shared_ptr<app::capabilities::GraphCapability> graph_capability_;
     std::shared_ptr<app::capabilities::MetricsCapability> metrics_capability_;
-    std::shared_ptr<CommandRegistry> registry_;
+    std::shared_ptr<app::capabilities::DashboardCapability> dashboard_capability_;
 
     // Filter state
     std::string filter_pattern_;
     bool filter_active_ = false;
+    bool resize_signal_ = false;
 
     // Helper methods
     bool SetupTerminal();

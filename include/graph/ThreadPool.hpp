@@ -570,7 +570,7 @@ public:
      * @see Init() for next step in lifecycle
      * @see ThreadPool(size_t, const DeadlockConfig&) for custom configuration
      */
-    explicit ThreadPool(size_t num_threads = 0);
+    explicit ThreadPool(size_t num_threads = 0) noexcept;
 
     /**
      * @brief Construct a thread pool with custom deadlock detection configuration
@@ -615,7 +615,14 @@ public:
      * @see DeadlockConfig for configuration fields
      * @see Init() for next step in lifecycle
      */
-    ThreadPool(size_t num_threads, const DeadlockConfig& config);
+    ThreadPool(size_t num_threads, const DeadlockConfig& config) noexcept;
+
+    // C++26: Explicitly deleted copy/move semantics
+    // ThreadPool owns worker threads and cannot be safely copied or moved
+    ThreadPool(const ThreadPool&) = delete;
+    ThreadPool& operator=(const ThreadPool&) = delete;
+    ThreadPool(ThreadPool&&) = delete;
+    ThreadPool& operator=(ThreadPool&&) = delete;
 
     /**
      * @brief Destructor with guaranteed cleanup
@@ -667,7 +674,7 @@ public:
      * @see Stop() for explicit shutdown request
      * @see Join() for waiting on shutdown
      */
-    ~ThreadPool();
+    ~ThreadPool() noexcept;
 
     /**
      * @brief Initialize internal state (preparation phase)
@@ -708,7 +715,7 @@ public:
      * @see Start() for spawning worker threads
      * @see ThreadPool constructor for options
      */
-    bool Init();
+    [[nodiscard]] bool Init() noexcept;
 
     /**
      * @brief Start all worker threads and optional watchdog
@@ -761,7 +768,7 @@ public:
      * @see WorkerMain() for individual thread behavior
      * @see WatchdogMain() for deadlock detection
      */
-    bool Start();
+    [[nodiscard]] bool Start() noexcept;
 
     /**
      * @brief Request graceful shutdown (idempotent)
@@ -836,7 +843,7 @@ public:
      * @see JoinWithTimeout() for bounded waiting
      * @see GetStopRequested() for query current state
      */
-    void Stop();
+    void Stop() noexcept;
 
     /**
      * @brief Block until all worker and watchdog threads have exited
@@ -898,7 +905,7 @@ public:
      * @see JoinWithTimeout() for bounded waiting
      * @see Destructor which calls Join() implicitly
      */
-    void Join();
+    void Join() noexcept;
 
     /**
      * @brief Block until shutdown completes or timeout expires
@@ -958,7 +965,7 @@ public:
      * @see Join() for indefinite waiting
      * @see Stop() for requesting shutdown
      */
-    bool JoinWithTimeout(std::chrono::milliseconds timeout);
+    [[nodiscard]] bool JoinWithTimeout(std::chrono::milliseconds timeout) noexcept;
 
     /**
      * @brief Queue a task for immediate (non-blocking) execution
@@ -1062,7 +1069,7 @@ public:
      * @see Stop() for shutdown semantics
      * @see QueueResult enum for all possible return values
      */
-    QueueResult QueueTask(Task task);
+    [[nodiscard]] QueueResult QueueTask(Task task) noexcept;
 
     /**
      * @brief Queue a task with bounded waiting for queue capacity
@@ -1176,8 +1183,8 @@ public:
      * @see DeadlockConfig::max_queue_size for queue capacity
      * @see Stop() for shutdown detection (returns immediately)
      */
-    QueueResult QueueTaskWithTimeout(Task task,
-                                    std::chrono::milliseconds timeout);
+    [[nodiscard]] QueueResult QueueTaskWithTimeout(Task task,
+                                    std::chrono::milliseconds timeout) noexcept;
 
     /**
      * @brief Get current number of pending (queued but not yet executed) tasks
@@ -1222,7 +1229,7 @@ public:
      * @see GetStats() for peak_queue_size historical maximum
      * @see DeadlockConfig::max_queue_size for queue capacity limit
      */
-    size_t GetQueueDepth() const;
+    size_t GetQueueDepth() const noexcept;
 
     /**
      * @brief Get number of worker threads managed by this pool
@@ -1266,7 +1273,7 @@ public:
      * @see ThreadPool constructors for thread count specification
      * @see GetStats() for task execution statistics
      */
-    size_t GetThreadCount() const;
+    size_t GetThreadCount() const noexcept;
 
     /**
      * @brief Access complete execution statistics snapshot
@@ -1344,7 +1351,7 @@ public:
      * @see GetAverageTaskTimeMs() for derived metric
      * @see IsDeadlockDetected() for advisory status
      */
-    const ThreadPoolStats& GetStats() const;
+    const ThreadPoolStats& GetStats() const noexcept;
 
     /**
      * @brief Get average task execution time in milliseconds
@@ -1407,7 +1414,7 @@ public:
      * @see ThreadPoolStats::tasks_completed for total count
      * @see GetStats() for complete statistics
      */
-    double GetAverageTaskTimeMs() const;
+    double GetAverageTaskTimeMs() const noexcept;
 
     /**
      * @brief Check if the watchdog detected a potential deadlock condition
@@ -1484,7 +1491,7 @@ public:
      * @see DeadlockConfig::watchdog_interval for check frequency
      * @see ThreadPoolStats::deadlock_detections for detection count
      */
-    bool IsDeadlockDetected() const;
+    [[nodiscard]] bool IsDeadlockDetected() const noexcept;
 
     /**
      * @brief Clear the deadlock detection advisory flag
@@ -1548,7 +1555,7 @@ public:
      * @see SetConfig() for updating timeout values
      * @see GetStats() for detection statistics
      */
-    void ClearDeadlockFlag();
+    void ClearDeadlockFlag() noexcept;
 
     /**
      * @brief Access current configuration
@@ -1559,7 +1566,7 @@ public:
      * if worker threads are stuck. This may cause benign races on queue.Size(),
      * but the FIFO discipline ensures correctness.
      */
-    const DeadlockConfig& GetConfig() const {
+    const DeadlockConfig& GetConfig() const noexcept {
         return config_;
     }
 
@@ -1568,15 +1575,15 @@ public:
      *
      * Changes apply immediately to watchdog behavior.
      */
-    void SetConfig(const DeadlockConfig& config) {
+    void SetConfig(const DeadlockConfig& config) noexcept {
         config_ = config;   
     }
 
-    bool GetStopRequested() const {
+    [[nodiscard]] bool GetStopRequested() const noexcept {
         return stop_requested_.load();
     }   
 
-    void SetStopRequested(bool value) {
+void SetStopRequested(bool value) noexcept {
         stop_requested_.store(value);
     }   
 

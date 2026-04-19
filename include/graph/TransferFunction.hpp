@@ -370,7 +370,8 @@ namespace graph
                             ? std::chrono::high_resolution_clock::now() 
                             : std::chrono::high_resolution_clock::time_point{};
                         
-                        outputq.Enqueue(maybe_out.value());
+                        // C++26: [[nodiscard]] return value intentionally unused (output queue always accepts)
+                        static_cast<void>(outputq.Enqueue(maybe_out.value()));
                         
                         // ================================================================
                         // METRICS: Record enqueue time and increment produce counter

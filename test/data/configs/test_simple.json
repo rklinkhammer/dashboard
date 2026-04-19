@@ -1,0 +1,45 @@
+{
+  "name": "SimpleMessageGraph",
+  "num_threads": 2,
+  "nodes": [
+    {
+      "id": "producer1",
+      "type": "SimpleProducerNode",
+      "node_config": {
+        "production_count": 10,
+        "interval_ms": 10
+      }
+    },
+    {
+      "id": "producer2",
+      "type": "SimpleProducerNode",
+      "node_config": {
+        "production_count": 10,
+        "interval_ms": 15
+      }
+    },
+    {
+      "id": "consumer",
+      "type": "SimpleConsumerNode",
+      "node_config": {
+        "expected_count": 20
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source_node_id": "producer1",
+      "source_port": 0,
+      "target_node_id": "consumer",
+      "target_port": 0,
+      "buffer_size": 16
+    },
+    {
+      "source_node_id": "producer2",
+      "source_port": 0,
+      "target_node_id": "consumer",
+      "target_port": 0,
+      "buffer_size": 16
+    }
+  ]
+}

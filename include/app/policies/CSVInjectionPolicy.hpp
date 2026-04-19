@@ -24,7 +24,10 @@
 #include <chrono>
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
+#include "csv/CSVDataInjectionManager.hpp"
 #include "app/capabilities/GraphCapability.hpp"
+#include "app/capabilities/DataInjectionCapability.hpp"
+#include "app/capabilities/CSVDataInjectionCapability.hpp"
 
 
 
@@ -89,9 +92,20 @@ public:
      *
      * @see OnStart, SetCSVInputPaths
      */
-    bool OnInit(app::capabilities::GraphCapability &) override {
+    bool OnInit(app::capabilities::GraphCapability &context) override {
         LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy OnInit called");
-        // Initialize CSV injection here
+        auto data_injection_capability = context.GetCapabilityBus().Get<app::capabilities::DataInjectionCapability>();
+        if (!data_injection_capability) {
+            LOG4CXX_WARN(csv_injection_logger_, "CSVDataInjectionPolicy::OnInit() - no DataInjectionCapability");
+            return false;
+        }
+
+        csv_data_injection_manager_ = std::make_shared<csv::CSVDataInjectionManager>();
+        csv_data_injection_manager_->ProcessCSVInputs(csv_input_paths_, context);
+        auto node_configs = data_injection_capability->GetDataInjectionNodeConfigs();
+        csv_data_injection_manager_->BindCSVColumnsToDataInjectionNodes(node_configs, context);
+        csv_data_injection_capability_ = std::make_shared<app::capabilities::CSVDataInjectionCapability>();
+        context.GetCapabilityBus().Register<app::capabilities::CSVDataInjectionCapability>(csv_data_injection_capability_);
         return true;
     }
 
@@ -106,9 +120,32 @@ public:
      *
      * @see OnStop, SetCSVInputPaths
      */
-    bool OnStart(app::capabilities::GraphCapability &) override {
+    bool OnStart(app::capabilities::GraphCapability &context) override {
         LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy OnStart called");
-        // Start CSV injection here
+ 
+        auto fn = [this, &context]() {
+            LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy::CSVInjectionThread started");
+            while (!context.IsStopped()) {
+                app::capabilities::CSVDataInjectionCommand command;
+                if (csv_data_injection_capability_->DequeueCommand(command)) {
+                    LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy::Processing command to inject " 
+                                     << command.nrow << " rows");
+                    for (int i = 0; i < command.nrow; ++i) {
+                        if (!csv_data_injection_manager_->InjectRowToNodes(context)) {
+                            LOG4CXX_WARN(csv_injection_logger_, "CSVInjectionPolicy::Failed to inject row " 
+                                             << i << ", stopping injection");
+                            context.SetStopped();
+                            break;
+                        }
+                        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                    }
+                    // Here you would call the appropriate method on csv_data_injection_manager_ to inject data
+                } else {
+                    context.SetStopped();
+                }
+            }
+        };
+        csv_injection_thread_ = std::thread(fn);
         return true;
     }
 
@@ -124,8 +161,8 @@ public:
      */
     void OnStop(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy OnStop called");
-        // Stop CSV injection and cleanup here
-    }
+        csv_data_injection_capability_->DisableCommand();
+     }
 
     /**
      * @brief Finalize CSV injection after execution completes
@@ -139,7 +176,9 @@ public:
      */
     void OnJoin(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy OnJoin called");
-        // Finalize CSV injection reporting here
+        if (csv_injection_thread_.joinable()) {
+            csv_injection_thread_.join();
+        }
     }   
 
     /**
@@ -156,13 +195,16 @@ public:
      */
     void SetCSVInputPaths(const std::vector<std::pair<std::string, std::string>>& paths) {
         csv_input_paths_ = paths;
-        LOG4CXX_TRACE(csv_injection_logger_, "CSVDataInjectionPolicy::SetCSVInputPaths() - " 
+        LOG4CXX_TRACE(csv_injection_logger_, "CSVInjectionPolicy::SetCSVInputPaths() - " 
                          << paths.size() << " paths set");
     }   
 
-    private:
+private:
 
-        std::vector<std::pair<std::string, std::string>> csv_input_paths_;
+    std::thread csv_injection_thread_;
+    std::shared_ptr<csv::CSVDataInjectionManager> csv_data_injection_manager_;
+    std::shared_ptr<app::capabilities::CSVDataInjectionCapability> csv_data_injection_capability_;
+    std::vector<std::pair<std::string, std::string>> csv_input_paths_;
 
 }; // class CSVInjectionPolicy
     

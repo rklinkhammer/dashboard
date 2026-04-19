@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "app/capabilities/CSVDataInjectionCapability.hpp"
 #include "ui/BuiltinCommands.hpp"
 #include "ui/Dashboard.hpp"
 #include "ui/MetricsPanel.hpp"
@@ -568,9 +569,34 @@ namespace commands {
         return CommandResult(true);
     }
 
+    CommandResult cmd::CmdCsvStep(Dashboard *app, const std::vector<std::string> &args, 
+        std::shared_ptr<app::capabilities::GraphCapability> graph_capability)
+    {
+ 
+        int nrows = 1;
+        if (args.size() >= 1)
+        {
+            nrows = std::stoi(args[0]);
+            if (nrows < 1)
+                nrows = 1;  
+            
+        }
+        auto csv_capability = graph_capability->GetCapabilityBus().Get<app::capabilities::CSVDataInjectionCapability>();
+        if (!csv_capability)
+        {
+            app->AddLog("CSV Data Injection Capability not available");
+            return CommandResult(false, "CSV Capability unavailable");
+        }
+        app::capabilities::CSVDataInjectionCommand csv_command(nrows);
+        csv_capability->EnqueueCommand(csv_command);
+
+        return CommandResult(true);
+    }
+
     void RegisterBuiltinCommands(
         std::shared_ptr<CommandRegistry> registry,
-        Dashboard *app)
+        Dashboard *app,
+        std::shared_ptr<app::capabilities::GraphCapability> graph_capability)
     {
 
         if (!registry || !app)
@@ -675,6 +701,15 @@ namespace commands {
             [app](const std::vector<std::string> &args)
             {
                 return cmd::CmdExportMetrics(app, args);
+            });
+        // CSV Step
+        registry->RegisterCommand(
+            "step",
+            "Step through CSV data",
+            "csv [nrows]",
+            [app, graph_capability](const std::vector<std::string> &args)
+            {
+                return cmd::CmdCsvStep(app, args, graph_capability);
             });
         
     }

@@ -24,12 +24,12 @@ namespace graph
     // Static logger initialization
     log4cxx::LoggerPtr ThreadPool::logger_ = log4cxx::Logger::getLogger("graph.threadpool");
 
-    ThreadPool::ThreadPool(size_t num_threads)
+    ThreadPool::ThreadPool(size_t num_threads) noexcept
         : ThreadPool(num_threads, DeadlockConfig())
     {
     }
 
-    ThreadPool::ThreadPool(size_t num_threads, const DeadlockConfig &config)
+    ThreadPool::ThreadPool(size_t num_threads, const DeadlockConfig &config) noexcept
         : num_threads_(num_threads > 0 ? num_threads : std::thread::hardware_concurrency()),
           config_(config)
     {
@@ -37,7 +37,7 @@ namespace graph
         LOG4CXX_TRACE(logger_, "Deadlock detection: " << (config_.enable_detection ? "enabled" : "disabled"));
     }
 
-    ThreadPool::~ThreadPool()
+    ThreadPool::~ThreadPool() noexcept
     {
         LOG4CXX_TRACE(logger_, "ThreadPool destructor called " << active_tasks_.load() << " active tasks " << running_.load() << " running");
         LOG4CXX_TRACE(logger_, "ThreadPool destructor - queued tasks: " << task_queue_.Size());
@@ -47,17 +47,21 @@ namespace graph
 
         if( running_.load()) {
             Stop();
-            JoinWithTimeout(std::chrono::milliseconds(5000));
+            // C++26: [[nodiscard]] requires explicit void cast for ignored return values
+            // Intentionally ignoring timeout result - destructor will wait with best-effort
+            static_cast<void>(JoinWithTimeout(std::chrono::milliseconds(5000)));
         }
     }
 
-    bool ThreadPool::Init()
+    bool ThreadPool::Init() noexcept
     {
         LOG4CXX_TRACE(logger_, "ThreadPool initializing with " << num_threads_ << " worker threads");
+        // Configure the queue with capacity limit from config
+        task_queue_.SetCapacity(config_.max_queue_size);
         return true;
     }
 
-    bool ThreadPool::Start()
+    bool ThreadPool::Start() noexcept
     {
 
         LOG4CXX_TRACE(logger_, "ThreadPool starting " << num_threads_ << " worker threads");
@@ -92,16 +96,17 @@ namespace graph
         }
     }
 
-    void ThreadPool::Stop()
+    void ThreadPool::Stop() noexcept
     {
         LOG4CXX_TRACE(logger_, "ThreadPool stopping");
 
         SetStopRequested(true);
-        // ActiveQueue::Disable() prevents further enqueuing and wakes up workers
+        // Disable the queue to wake up any workers blocked in Dequeue()
+        // Workers will switch to DequeueNonBlocking to drain remaining tasks
         task_queue_.Disable();
     }
 
-    void ThreadPool::Join()
+    void ThreadPool::Join() noexcept
     {
         LOG4CXX_TRACE(logger_, "ThreadPool Join");
         running_.store(false);
@@ -123,23 +128,29 @@ namespace graph
             watchdog_.join();
         }
 
+        // Drain any remaining tasks that weren't executed
+        // (can happen if Stop() was called while tasks were queued)
+        Task remaining_task;
+        while (task_queue_.DequeueNonBlocking(remaining_task))
+        {
+            LOG4CXX_TRACE(logger_, "Discarding remaining queued task during Join");
+        }
+
         LOG4CXX_TRACE(logger_, "ThreadPool joined - stats: " << stats_.tasks_completed
                                                              << " completed, " << stats_.tasks_failed << " failed");
     }
 
-    bool ThreadPool::JoinWithTimeout(std::chrono::milliseconds timeout)
+    bool ThreadPool::JoinWithTimeout(std::chrono::milliseconds timeout) noexcept
     {
         LOG4CXX_TRACE(logger_, "ThreadPool JoinWithTimeout " << timeout.count() << "ms");
         running_.store(false);
         std::unique_lock lock(join_mtx_);
-        if (!join_cv_.wait_for(lock, timeout, [&]
-                               { return live_workers_.load() == 0 &&
-                                        active_tasks_.load() == 0 &&
-                                        task_queue_.Size() == 0; }))
-        {
-            return false;
-        }
+        bool completed = join_cv_.wait_for(lock, timeout, [&]
+                           { return live_workers_.load() == 0 &&
+                                    active_tasks_.load() == 0 &&
+                                    task_queue_.Size() == 0; });
 
+        // Always join threads, regardless of timeout result
         for (auto &t : worker_threads_)
             if (t.joinable())
                 t.join();
@@ -147,10 +158,10 @@ namespace graph
         if (watchdog_.joinable())
             watchdog_.join();
 
-        return true;
+        return completed;
     }
 
-    ThreadPool::QueueResult ThreadPool::QueueTask(Task task)
+    ThreadPool::QueueResult ThreadPool::QueueTask(Task task) noexcept
     {
         if (!task)
         {
@@ -164,7 +175,7 @@ namespace graph
             return QueueResult::Stopped;
         }
         QueueResult result = QueueResult::Error;
-        // ActiveQueue handles capacity checking and returns false if disabled
+        // ActiveQueue handles capacity checking and returns false if disabled or full
         if (task_queue_.Enqueue(std::move(task)))
         {
             stats_.tasks_queued++;
@@ -174,13 +185,14 @@ namespace graph
         {
             LOG4CXX_TRACE(logger_, "ThreadPool not accepting tasks");
             stats_.tasks_rejected++;  // Phase 2: Track rejections
-            result = QueueResult::Stopped;
+            // Distinguish between queue disabled vs. queue full
+            result = task_queue_.Enabled() ? QueueResult::Full : QueueResult::Stopped;
         }
 
         return result;
     }
 
-    ThreadPool::QueueResult ThreadPool::QueueTaskWithTimeout(Task task, std::chrono::milliseconds timeout)
+    ThreadPool::QueueResult ThreadPool::QueueTaskWithTimeout(Task task, std::chrono::milliseconds timeout) noexcept
     {
         if (!task)
         {
@@ -212,29 +224,29 @@ namespace graph
         return QueueResult::Timeout;
     }
 
-    size_t ThreadPool::GetQueueDepth() const
+    size_t ThreadPool::GetQueueDepth() const noexcept
     {
         return task_queue_.Size();
     }
 
-    size_t ThreadPool::GetThreadCount() const
+    size_t ThreadPool::GetThreadCount() const noexcept
     {
         return num_threads_;
     }
 
-    bool ThreadPool::IsDeadlockDetected() const
+    bool ThreadPool::IsDeadlockDetected() const noexcept
     {
         return deadlock_detected_.load();
     }
 
-    void ThreadPool::ClearDeadlockFlag()
+    void ThreadPool::ClearDeadlockFlag() noexcept
     {
         deadlock_detected_.store(false);
         LOG4CXX_TRACE(logger_, "Deadlock flag cleared");
     }
 
     // Phase 2 Enhancement: Calculate average task execution time
-    double ThreadPool::GetAverageTaskTimeMs() const
+    double ThreadPool::GetAverageTaskTimeMs() const noexcept
     {
         size_t completed = stats_.tasks_completed.load();
         if (completed == 0) return 0.0;
@@ -242,7 +254,7 @@ namespace graph
         return (total_ns / 1'000'000.0) / completed;
     }
 
-    const ThreadPoolStats& ThreadPool::GetStats() const
+    const ThreadPoolStats& ThreadPool::GetStats() const noexcept
     {
         return stats_;
     }
@@ -254,16 +266,39 @@ namespace graph
             LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " started");
             live_workers_++;
 
-            while (!GetStopRequested())
+            while (true)
             {
                 Task task;
-                LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " waiting for task");
-                if (!task_queue_.Dequeue(task))
+
+                // Try blocking dequeue if stop not requested
+                if (!GetStopRequested())
                 {
-                    LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " dequeue returned false");
+                    LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " waiting for task (blocking)");
+                    if (!task_queue_.Dequeue(task))
+                    {
+                        // Queue was disabled - switch to draining mode with nonblocking
+                        LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " blocking dequeue failed, switching to drain mode");
+                        // Continue to drain loop below
+                    }
+                    else
+                    {
+                        // Got a task, execute it
+                        LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " executing task");
+                        ExecuteTask(task);
+                        continue;
+                    }
+                }
+
+                // Drain remaining tasks using non-blocking dequeue
+                // (either stop was requested or blocking dequeue failed)
+                if (!task_queue_.DequeueNonBlocking(task))
+                {
+                    // No more items - we're done
+                    LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " no more tasks, exiting");
                     break;
                 }
-                LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " executing task");
+
+                LOG4CXX_TRACE(logger_, "Worker thread " << std::this_thread::get_id() << " executing drained task");
                 ExecuteTask(task);
             }
         }
@@ -307,7 +342,8 @@ namespace graph
             // FIFO ordering and single watchdog thread. This is safe by design.
             while(task_queue_.Size() > 0) {
                 Task task;  
-                task_queue_.DequeueNonBlocking(task);
+                // C++26: [[nodiscard]] return value intentionally unused (queue flush-only)
+                static_cast<void>(task_queue_.DequeueNonBlocking(task));
             }
         }
         catch (const std::exception &e)

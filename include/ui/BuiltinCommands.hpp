@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ui/CommandRegistry.hpp"
+#include "app/capabilities/GraphCapability.hpp"
 #include <memory>
 #include <string>
 
@@ -44,7 +45,8 @@ namespace commands {
  */
 void RegisterBuiltinCommands(
     std::shared_ptr<CommandRegistry> registry,
-    Dashboard* app);
+    Dashboard* app,
+    std::shared_ptr<app::capabilities::GraphCapability> graph_capability);
 
 // Individual command implementations
 namespace cmd {
@@ -61,6 +63,9 @@ CommandResult CmdShowHistory(Dashboard* app, const std::vector<std::string>& arg
 CommandResult CmdSetMetric(Dashboard* app, const std::vector<std::string>& args);
 CommandResult CmdClearMetrics(Dashboard* app, const std::vector<std::string>& args);
 CommandResult CmdExportMetrics(Dashboard* app, const std::vector<std::string>& args);
+CommandResult CmdCsvStep(Dashboard* app, const std::vector<std::string>& args, 
+    std::shared_ptr<app::capabilities::GraphCapability> graph_capability);
+
 
 }  // namespace cmd
 

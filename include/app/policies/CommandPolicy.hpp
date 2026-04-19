@@ -84,9 +84,16 @@ public:
      *
      * @see OnStart, OnStop
      */
-    bool OnInit(app::capabilities::GraphCapability &) override {
+    bool OnInit(app::capabilities::GraphCapability &context) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnInit called");
         // Initialize command infrastructure here if needed
+        auto dashboard_capability = context.GetCapabilityBus().Get<app::capabilities::DashboardCapability>();
+        auto graph_capability = context.GetCapabilityBus().Get<app::capabilities::GraphCapability>();
+        registry_ = std::make_shared<CommandRegistry>();
+        commands::RegisterBuiltinCommands(registry_, 
+            dashboard_capability->GetDashboard().get(),
+            graph_capability);
+
         return true;
     }
 
@@ -101,8 +108,19 @@ public:
      *
      * @see OnStop, OnJoin
      */
-    bool OnStart(app::capabilities::GraphCapability &) override {
+    bool OnStart(app::capabilities::GraphCapability &context) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnStart called");
+        auto graph_capability = context.GetCapabilityBus().Get<app::capabilities::GraphCapability>();
+        dashboard_capability_ = context.GetCapabilityBus().Get<app::capabilities::DashboardCapability>();
+
+        auto command_processor = [this, graph_capability]() {
+            // Command processing loop
+            std::string command;
+            while (dashboard_capability_->DequeueCommand(command) && !graph_capability->IsStopped()) {
+                ExecuteCommand(command);
+            }
+        };
+        command_thread_ = std::thread(command_processor);
         // Start accepting commands here if needed
         return true;
     }
@@ -120,6 +138,7 @@ public:
     void OnStop(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnStop called");
         // Stop command processing and cleanup here if needed
+ 
     }
 
     /**
@@ -135,7 +154,50 @@ public:
     void OnJoin(app::capabilities::GraphCapability &) override {
         LOG4CXX_TRACE(command_logger, "CommandPolicy OnJoin called");
         // Finalize command processing here if needed
+        if (command_thread_.joinable()) {
+            command_thread_.join();
+        }
     }   
+
+private:
+
+    std::thread command_thread_;
+    std::shared_ptr<CommandRegistry> registry_;
+    std::shared_ptr<app::capabilities::DashboardCapability> dashboard_capability_;
+
+    void ExecuteCommand(const std::string& cmd) {
+        // Split input into command and arguments
+        std::istringstream iss(cmd);
+        std::string command_name;
+        iss >> command_name;
+        
+        std::vector<std::string> args;
+        std::string arg;
+        while (iss >> arg) {
+            args.push_back(arg);
+        }
+            
+        if (command_name == "help") {
+            if (!registry_) {
+                dashboard_capability_->GetDashboard()->AddLog("[ERROR] Command registry not initialized");
+                return;
+            }
+            registry_->GenerateHelpText(dashboard_capability_->GetDashboard().get());
+            return;
+        }
+        
+        // Execute via registry if available
+        if (!registry_) {
+            dashboard_capability_->GetDashboard()->AddLog("[ERROR] Command registry not initialized");
+            return;
+        }
+        
+        CommandResult result = registry_->ExecuteCommand(command_name, args);
+        if (!result.success) {
+            dashboard_capability_->GetDashboard()->AddLog("[ERROR] " + result.message);
+        }
+    }
+
 
 }; // class CommandPolicy
     

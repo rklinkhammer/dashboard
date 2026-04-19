@@ -110,7 +110,9 @@ namespace app::policies
         bool OnStart(app::capabilities::GraphCapability &context) override
         {
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy OnStart called");
-
+            if(!cli_mode_) {
+                return true;
+            }
             auto fn = [this, &context]()
             {
                 LOG4CXX_TRACE(completion_logger, "CompletionPolicy::OnRun() - waiting for completion signal or timeout");
@@ -165,6 +167,16 @@ namespace app::policies
             LOG4CXX_TRACE(completion_logger, "CompletionPolicy signaled completion");
         }
         
+        void SetCliMode(bool enabled)
+        {
+            cli_mode_ = enabled;
+        }
+
+        bool IsCliMode() const
+        {
+            return cli_mode_;
+        }
+
     private:
         bool InitCompletionCallbacks(app::capabilities::GraphCapability &context);
 
@@ -172,6 +184,7 @@ namespace app::policies
         std::condition_variable completion_cv_;
         std::mutex completion_mutex_;
         bool completion_signaled_ = false;
+        bool cli_mode_ = false;
         std::chrono::milliseconds max_duration_;
         std::vector<std::shared_ptr<void>> completion_callbacks_;
 

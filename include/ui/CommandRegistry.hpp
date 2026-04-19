@@ -27,6 +27,7 @@
 #include <memory>
 #include <functional>
 #include <vector>
+#include "app/capabilities/GraphCapability.hpp"
 
 // Forward declaration
 class CommandRegistry;

@@ -307,7 +307,8 @@ namespace graph
             // FIFO ordering and single watchdog thread. This is safe by design.
             while(task_queue_.Size() > 0) {
                 Task task;  
-                task_queue_.DequeueNonBlocking(task);
+                // C++26: [[nodiscard]] return value intentionally unused (queue flush-only)
+                static_cast<void>(task_queue_.DequeueNonBlocking(task));
             }
         }
         catch (const std::exception &e)

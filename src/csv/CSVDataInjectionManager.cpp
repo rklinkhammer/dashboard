@@ -122,7 +122,8 @@ bool CSVDataInjectionManager::InjectRowToNodes(app::capabilities::GraphCapabilit
                           << node_name << " at row index: " << current_row_index_);
             continue;
         }
-        config.injection_queue->Enqueue(*payload_opt);
+        // C++26: [[nodiscard]] return value intentionally unused (fire-and-forget data injection)
+        static_cast<void>(config.injection_queue->Enqueue(*payload_opt));
         LOG4CXX_TRACE(g_logger, "Injected row index: " << current_row_index_ 
                          << " to node: " << node_name);
     }

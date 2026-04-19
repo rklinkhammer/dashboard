@@ -29,9 +29,9 @@ set(GDASHBOARD_SOURCES
     ui/CommandRegistry.cpp
     ui/BuiltinCommands.cpp
     # ui/LayoutConfig.cpp
-    # ui/TabContainer.cpp
+    ui/TabContainer.cpp
     # ui/StatusBar.cpp
-    # ui/MetricsTileWindow.cpp
+    ui/MetricsTileWindow.cpp
     # ui/MetricsTilePanel.cpp
     # ui/NodeMetricsTile.cpp
     ui/Dashboard.cpp
@@ -102,7 +102,7 @@ target_include_directories(gdashboard PRIVATE
 
 # Set C++ standard
 set_target_properties(gdashboard PROPERTIES
-    CXX_STANDARD 23
+    CXX_STANDARD 26
     CXX_STANDARD_REQUIRED ON
 )
 
@@ -122,7 +122,7 @@ endif()
 
 # Set C++ standard
 set_target_properties(gdashboard_lib PROPERTIES
-    CXX_STANDARD 23
+    CXX_STANDARD 26
     CXX_STANDARD_REQUIRED ON
 )
 
@@ -153,7 +153,7 @@ endforeach()
 
 # # Set C++ standard
 # set_target_properties(demo_gui PROPERTIES
-#     CXX_STANDARD 23
+#     CXX_STANDARD 26
 #     CXX_STANDARD_REQUIRED ON
 # )
 

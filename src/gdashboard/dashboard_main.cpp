@@ -224,9 +224,13 @@ public:
         {
             builder.WithCSVInputs(csv_inputs_);
         }
-
+        if (!plugin_dir_.empty())
+        {
+            builder.WithPluginDirectory(plugin_dir_);
+        }
         builder.WithExecutorTimeout(executor_timeout_)
             .WithGraphThreads(graph_threads_)
+            .WithCliMode(cli_)
             .WithVerboseLogging(verbose_logging_);
 
         auto executor = builder.Build();
@@ -256,6 +260,7 @@ public:
         std::cout << "  --executor-timeout SECS    Execution timeout in seconds (default: 30)\n";
         std::cout << "  --graph-threads N          Number of worker threads (default: 4)\n";
         std::cout << "  --verbose                  Enable verbose logging\n";
+        std::cout << "  --cli                      Enable command-line interface mode\n";
         std::cout << "  --help                     Show this help message\n\n";
         std::cout << "Examples:\n";
         std::cout << "  # Simple execution\n";

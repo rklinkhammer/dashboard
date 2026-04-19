@@ -9,7 +9,7 @@ project(gdashboard
 # Build Configuration
 # ============================================================================
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -50,6 +50,13 @@ find_package(Curses REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # ============================================================================
+# Testing Setup
+# ============================================================================
+
+# Enable testing at root level so CTest discovers all tests
+enable_testing()
+
+# ============================================================================
 # Source Organization
 # ============================================================================
 
@@ -61,7 +68,7 @@ add_subdirectory(plugins)
 
 # Add tests (optional, controlled by ENABLE_TESTS)
 if(GTest_FOUND)
- #   add_subdirectory(test)
+    add_subdirectory(test)
 else()
     message(WARNING "Google Test not found. Tests will not be built. Install gtest to enable tests.")
 endif()

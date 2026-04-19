@@ -129,6 +129,22 @@ public:
         is_stopped.store(true);
     }
 
+    /// @brief Check if CLI mode is enabled
+    /// @return true if CLI mode is enabled, false otherwise
+
+    bool IsCliMode() const {
+        return cli_mode_;
+    }
+
+    /// @brief Set CLI mode
+    /// @param enabled If true, enable CLI mode; if false, disable CLI mode
+
+    void SetCliMode(bool enabled) {
+        cli_mode_ = enabled;
+    }
+
+    /// @brief Get the capability bus for inter-capability communication
+    /// @return Reference to the capability bus
     graph::CapabilityBus& GetCapabilityBus()
     {
         return capability_bus;
@@ -149,6 +165,7 @@ private:
     std::vector<std::string> node_names;
     std::vector<std::string> edge_descriptions;
     mutable std::atomic<bool> is_stopped{false};
+    bool cli_mode_{false};
     graph::CapabilityBus capability_bus;
 };
 

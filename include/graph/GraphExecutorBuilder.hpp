@@ -184,6 +184,17 @@ public:
     GraphExecutorBuilder& WithGraphThreads(size_t count);
 
     /**
+     * @brief Enable or disable CLI mode
+     * 
+     * Default: false (normal operation with dashboard)
+     * When enabled, executor will run in command-line mode.
+     *
+     * @param enabled If true, enable CLI mode; if false, disable CLI mode
+     * @return Reference to this builder (fluent API)
+     */
+    GraphExecutorBuilder& WithCliMode(bool enabled);
+
+    /**
      * @brief Enable/disable verbose logging
      *
      * Default: false (normal operation)
@@ -228,7 +239,8 @@ private:
     size_t graph_threads_;
     bool verbose_logging_;
     bool already_built_;
-
+    bool cli_mode_;
+    
     /**
      * @brief Get default plugin directory
      *

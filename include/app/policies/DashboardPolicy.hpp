@@ -29,6 +29,7 @@
 #include "app/capabilities/GraphCapability.hpp"
 #include "app/capabilities/MetricsCapability.hpp"
 #include "app/capabilities/GraphCapability.hpp"
+#include "app/capabilities/DashboardCapability.hpp"
 #include "ui/Dashboard.hpp"
 #include "ui/BuiltinCommands.hpp"
 
@@ -108,10 +109,10 @@ namespace app::policies
             LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnInit called");
             auto metrics_capability = context.GetCapabilityBus().Get<app::capabilities::MetricsCapability>();
             auto graph_capability = context.GetCapabilityBus().Get<app::capabilities::GraphCapability>();
-            auto command_registry = std::make_shared<CommandRegistry>();
-            dashboard_ = std::make_shared<Dashboard>(graph_capability, metrics_capability, command_registry);
-            commands::RegisterBuiltinCommands(command_registry, dashboard_.get());
-
+            auto dashboard_capability = std::make_shared<app::capabilities::DashboardCapability>();
+            context.GetCapabilityBus().Register<app::capabilities::DashboardCapability>(dashboard_capability);
+            dashboard_ = std::make_shared<Dashboard>(graph_capability, metrics_capability, dashboard_capability);
+            dashboard_capability->SetDashboard(dashboard_);
             dashboard_->Initialize();
             // Initialize dashboard here
             return true;
@@ -148,9 +149,13 @@ namespace app::policies
          *
          * @see OnStart, OnJoin
          */
-        void OnStop(app::capabilities::GraphCapability &) override
+        void OnStop(app::capabilities::GraphCapability &context) override
         {
             LOG4CXX_TRACE(dashboard_logger, "DashboardPolicy OnStop called");
+            auto dashboard_capability = context.GetCapabilityBus().Get<app::capabilities::DashboardCapability>();
+            dashboard_capability->DisableCommandQueue();
+            dashboard_capability->DisableLogQueue();        
+
             // Stop metrics collection and cleanup here if needed
         }
 

@@ -66,7 +66,8 @@ void MetricsPolicy::InitMetricsSources(app::capabilities::GraphCapability& conte
     
         auto metrics_callback = std::make_shared<MetricsCapabilityCallback>();
         metrics_callback->on_publish_async_ = [this, node_name](const app::metrics::MetricsEvent& event) {
-            metrics_event_queue_.Enqueue(event);
+            // C++26: [[nodiscard]] return value intentionally unused in async publish
+            static_cast<void>(metrics_event_queue_.Enqueue(event));
         };
         metrics_node->SetMetricsCallback(metrics_callback.get());
         AddNodeMetrics(node_name, metrics_callback, metrics_node->GetNodeMetricsSchema());

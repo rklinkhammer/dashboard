@@ -136,14 +136,22 @@ struct QueueMetrics {
 template<class Element> class ActiveQueue {
     
 public:
-    ActiveQueue(const std::size_t capacity = 0, bool block_on_full = false) 
+    ActiveQueue(const std::size_t capacity = 0, bool block_on_full = false) noexcept
         : capacity_(capacity), block_on_full_(block_on_full), metrics_enabled_(false) {
     }
     
-    virtual ~ActiveQueue() {
+    ~ActiveQueue() {
         Disable();
         Clear();
     }
+    
+    // Explicit deletion of copy operations (C++26: non-copyable by design)
+    ActiveQueue(const ActiveQueue&) = delete;
+    ActiveQueue& operator=(const ActiveQueue&) = delete;
+    
+    // Move operations are default-deleted due to mutex; provide explicit deletions
+    ActiveQueue(ActiveQueue&&) = delete;
+    ActiveQueue& operator=(ActiveQueue&&) = delete;
     
     /**
      * @brief Enable metrics collection for this queue
@@ -151,7 +159,7 @@ public:
      * Once enabled, all enqueue/dequeue operations will track timing and statistics.
      * Can be toggled at runtime without side effects.
      */
-    void EnableMetrics(bool enabled = true) {
+    void EnableMetrics(bool enabled = true) noexcept {
         metrics_enabled_.store(enabled, std::memory_order_release);
     }
     
@@ -161,7 +169,7 @@ public:
      * Metrics are updated continuously if EnableMetrics(true) has been called.
      * Safe to read at any time from any thread.
      */
-    const core::QueueMetrics& GetMetrics() const {
+    [[nodiscard]] const core::QueueMetrics& GetMetrics() const {
         return metrics_;
     }
     
@@ -170,7 +178,7 @@ public:
      * 
      * Clears all counters and timing statistics. Safe to call during operation.
      */
-    void ResetMetrics() {
+    void ResetMetrics() noexcept {
         metrics_.enqueued_count.store(0, std::memory_order_release);
         metrics_.dequeued_count.store(0, std::memory_order_release);
         metrics_.enqueue_rejections.store(0, std::memory_order_release);
@@ -197,7 +205,7 @@ public:
      *         successfully enqueued; otherwise, the function will return
      *         <em>false</em> if disabled.
      */
-    bool Enqueue(Element element) {
+    [[nodiscard]] bool Enqueue(Element element) {
         auto start_time = metrics_enabled_.load(std::memory_order_acquire) 
             ? std::chrono::high_resolution_clock::now() 
             : std::chrono::high_resolution_clock::time_point{};
@@ -307,7 +315,7 @@ public:
      *         successfully dequeued; otherwise, the function will return
      *         <em>false</em> if there is nothing left to dequeue.
      */
-    bool DequeueNonBlocking(Element& element) {
+    [[nodiscard]] bool DequeueNonBlocking(Element& element) {
         std::unique_lock<std::mutex> lock(mutex_);
         if (deque_.empty()) return false;
         
@@ -336,7 +344,7 @@ public:
      *         <em>false</em> if disabled.
      
      */
-    bool Dequeue(Element& element) {
+    [[nodiscard]] bool Dequeue(Element& element) {
         auto start_time = metrics_enabled_.load(std::memory_order_acquire) 
             ? std::chrono::high_resolution_clock::now() 
             : std::chrono::high_resolution_clock::time_point{};
@@ -356,9 +364,9 @@ public:
             auto wait_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(wait_end - wait_start).count();
             metrics_.total_wait_time_ns.fetch_add(wait_ns, std::memory_order_acq_rel);
         }
-        
+
         if (exit_) return false;
-        
+
         element = std::move(deque_.front());
         deque_.pop_front();
         
@@ -384,7 +392,7 @@ public:
     }
     
     template<class... Args>
-    bool Emplace(Args&&... args) {
+    [[nodiscard]] bool Emplace(Args&&... args) {
         std::unique_lock<std::mutex> lock(mutex_);
     
         if (exit_) return false;
@@ -415,7 +423,7 @@ public:
      * This method will set the exit flag and notify a single
      * waiter.  This will not effect any pending queue elements.
      */
-    void Disable() {
+    void Disable() noexcept {
         {
             std::unique_lock<std::mutex> lock(mutex_);
             exit_ = true;
@@ -430,7 +438,7 @@ public:
      * This method will clear the exit flag and allow waiters
      * to retrieve elements.
      */
-    void Enable() {
+    void Enable() noexcept {
         // set condition variable
         std::unique_lock<std::mutex> lock(mutex_);
         exit_ = false;
@@ -439,12 +447,12 @@ public:
     // -------------------------------------------------------------
     // Utility
     // -------------------------------------------------------------
-    std::size_t Size() const {
+    [[nodiscard]] std::size_t Size() const {
         std::unique_lock<std::mutex> lock(mutex_);
         return deque_.size();
     }
     
-    std::size_t Capacity() const {
+    [[nodiscard]] std::size_t Capacity() const {
         return capacity_;
     }
     
@@ -457,7 +465,7 @@ public:
      * 
      * @param new_capacity New capacity limit (0 for unbounded)
      */
-    void SetCapacity(std::size_t new_capacity) {
+    void SetCapacity(std::size_t new_capacity) noexcept {
         std::unique_lock<std::mutex> lock(mutex_);
         capacity_ = new_capacity;
     }
@@ -472,7 +480,7 @@ public:
      * @param block_on_full New block-on-full setting
      * @return true if the setting was changed, false if queue contains data
      */
-    bool SetBlockOnFull(bool block_on_full) {
+    [[nodiscard]] bool SetBlockOnFull(bool block_on_full) {
         std::unique_lock<std::mutex> lock(mutex_);
         
         // Cannot change blocking behavior if there's data in the queue
@@ -489,23 +497,23 @@ public:
      * 
      * @return true if queue blocks when full, false if it drops elements
      */
-    bool GetBlockOnFull() const {
+    [[nodiscard]] bool GetBlockOnFull() const {
         std::unique_lock<std::mutex> lock(mutex_);
         return block_on_full_;
     }
     
-    bool Empty() const {
+    [[nodiscard]] bool Empty() const {
         std::unique_lock<std::mutex> lock(mutex_);
         return deque_.empty();
     }
     
-    bool Enabled() const {
+    [[nodiscard]] bool Enabled() const {
         std::unique_lock<std::mutex> lock(mutex_);
         return !exit_;
     }
     
     // Remove all items without blocking
-    void Clear() {
+    void Clear() noexcept {
         std::unique_lock<std::mutex> lock(mutex_);
         deque_.clear();
     }
@@ -517,7 +525,7 @@ public:
     /**
      * @brief Add element to the front of the queue
      */
-    bool PushFront(Element element) {
+    [[nodiscard]] bool PushFront(Element element) {
         std::unique_lock<std::mutex> lock(mutex_);
         
         if (exit_) return false;
@@ -545,14 +553,14 @@ public:
     /**
      * @brief Add element to the back of the queue (alias for Enqueue)
      */
-    bool PushBack(Element element) {
+    [[nodiscard]] bool PushBack(Element element) {
         return Enqueue(std::move(element));
     }
     
     /**
      * @brief Remove element from the back of the queue (non-blocking)
      */
-    bool PopBack(Element& element) {
+    [[nodiscard]] bool PopBack(Element& element) {
         std::unique_lock<std::mutex> lock(mutex_);
         if (deque_.empty()) return false;
         
@@ -570,14 +578,14 @@ public:
     /**
      * @brief Remove element from the front (alias for DequeueNonBlocking)
      */
-    bool PopFront(Element& element) {
+    [[nodiscard]] bool PopFront(Element& element) {
         return DequeueNonBlocking(element);
     }
     
     /**
      * @brief Access front element without removing (non-blocking)
      */
-    bool Front(Element& element) const {
+    [[nodiscard]] bool Front(Element& element) const {
         std::unique_lock<std::mutex> lock(mutex_);
         if (deque_.empty()) return false;
         
@@ -588,7 +596,7 @@ public:
     /**
      * @brief Access back element without removing (non-blocking)
      */
-    bool Back(Element& element) const {
+    [[nodiscard]] bool Back(Element& element) const {
         std::unique_lock<std::mutex> lock(mutex_);
         if (deque_.empty()) return false;
         
@@ -599,7 +607,7 @@ public:
     /**
      * @brief Access element at index (non-blocking, bounds-checked)
      */
-    bool At(std::size_t index, Element& element) const {
+    [[nodiscard]] bool At(std::size_t index, Element& element) const {
         std::unique_lock<std::mutex> lock(mutex_);
         if (index >= deque_.size()) return false;
         
@@ -608,7 +616,10 @@ public:
     }
     
 private:
-    ActiveQueue(const ActiveQueue &theThreadedQueue);
+    // C++26: Thread-synchronization primitives (mutex, condition_variable) are non-movable,
+    // making the entire queue non-movable by design for thread-safety guarantees.
+    // Explicit deletion clarifies intent.
+    
     std::condition_variable condition_; /*!< condition variable for dequeue */
     std::condition_variable not_full_condition_; /*!< condition variable for blocking enqueue */
     mutable std::mutex mutex_; /*!< mutex variable */

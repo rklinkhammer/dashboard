@@ -54,7 +54,8 @@ GraphExecutorBuilder::GraphExecutorBuilder()
       executor_timeout_(std::chrono::seconds(30)),
       graph_threads_(4),
       verbose_logging_(false),
-      already_built_(false) {
+      already_built_(false),
+      cli_mode_(false) {
     LOG4CXX_TRACE(g_logger, "GraphExecutorBuilder constructed with defaults");
 }
 
@@ -128,6 +129,12 @@ GraphExecutorBuilder& GraphExecutorBuilder::WithGraphThreads(size_t count) {
     }
     graph_threads_ = count;
     LOG4CXX_TRACE(g_logger, "Set graph threads: " << count);
+    return *this;
+}
+
+GraphExecutorBuilder& GraphExecutorBuilder::WithCliMode(bool enabled) {
+    cli_mode_ = enabled;
+    LOG4CXX_TRACE(g_logger, "Set CLI mode: " << (enabled ? "enabled" : "disabled"));
     return *this;
 }
 
@@ -247,7 +254,8 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
         graph_cap->SetPluginLoader(loader);
         graph_cap->SetPluginRegistry(factory->GetPluginRegistry());
         graph_cap->SetJsonConfigPath(json_config_);
-        
+        graph_cap->SetCliMode(cli_mode_);
+
         LOG4CXX_TRACE(g_logger, "AppContext created");
 
         if (graph_manager_) {
@@ -279,6 +287,7 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
 
         auto completion_policy = std::make_unique<app::policies::CompletionPolicy>();
         completion_policy->SetMaxDuration(std::chrono::duration_cast<std::chrono::milliseconds>(executor_timeout_));
+        completion_policy->SetCliMode(cli_mode_);
         auto injection_policy = std::make_unique<app::policies::DataInjectionPolicy>();  
         auto metrics_policy = std::make_unique<app::policies::MetricsPolicy>();
         auto dashboard_policy = std::make_unique<app::policies::DashboardPolicy>();
@@ -303,8 +312,12 @@ std::shared_ptr<GraphExecutor> GraphExecutorBuilder::Build() {
             LOG4CXX_TRACE(g_logger, "GraphExecutor configured successfully with CSVDataInjectionPolicy");         
         }
   
-        auto command_policy = std::make_unique<app::policies::CommandPolicy>();
-        chain->AppendNext(std::make_unique<graph::ExecutionPolicyChain>(std::move(command_policy), nullptr));
+        if(cli_mode_) {
+            LOG4CXX_TRACE(g_logger, "CLI mode enabled - using CommandPolicy");
+            auto command_policy = std::make_unique<app::policies::CommandPolicy>();
+            chain->AppendNext(std::make_unique<graph::ExecutionPolicyChain>(std::move(command_policy), 
+                nullptr));
+        }
         auto executor = std::make_shared<GraphExecutor>(std::move(chain), graph_cap);
         return executor;
 
