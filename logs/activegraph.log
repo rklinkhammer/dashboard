@@ -63,3 +63,15 @@
 2026-04-19 19:56:02,802 [0x16af63000] ERROR graph.threadpool - Task execution failed: Test error
 2026-04-19 19:56:02,802 [0x16afef000] ERROR graph.threadpool - Task execution failed: Test error
 2026-04-19 19:56:02,802 [0x16af63000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:29:07,430 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 21:29:07,430 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 21:29:07,430 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 21:29:07,430 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 21:29:07,430 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 21:29:09,083 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 21:29:14,102 [0x16b40b000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 21:29:16,110 [0x16b40b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:29:16,111 [0x16b40b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:29:16,111 [0x16b497000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:29:16,111 [0x16b497000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:29:16,111 [0x16b40b000] ERROR graph.threadpool - Task execution failed: Test error
