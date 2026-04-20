@@ -158,58 +158,45 @@ TEST(TypeInfo, StdTypeIndexIntegration)
 
 #### 2.1 GraphConfigParser Tests
 
-**File**: `test/graph/test_graph_config_parser.cpp` (NEW)
+**File**: `test/graph/test_graph_config_parser.cpp` (✅ COMPLETE - 23/24 passing)
 
-**What to Test**:
-- Parse valid JSON configurations
-- Node extraction with proper structure
-- Edge extraction and validation
-- Port specification parsing
-- Error handling for malformed configs
+**Status**: DONE
+- [x] Parse valid JSON configurations
+- [x] Node extraction with proper structure
+- [x] Edge extraction and validation
+- [x] Port specification parsing
+- [x] Error handling for malformed configs
+- [x] Dual-port architecture support
+- [x] Node configuration application
+- [x] Edge buffer sizes and backpressure settings
 
-**Test Cases**:
-```cpp
-TEST(GraphConfigParser, ParseValidConfiguration)
-TEST(GraphConfigParser, ExtractNodes)
-TEST(GraphConfigParser, ExtractEdges)
-TEST(GraphConfigParser, ValidatePortConnections)
-TEST(GraphConfigParser, RejectMalformedJSON)
-TEST(GraphConfigParser, HandlesPhase2DualPortArchitecture)
-```
-
-**Test Data**:
-- Use `config/graph_csv_pipeline_dual_port_integration.json` as primary test input
-- Create minimal configs (1 node, 1 edge) for edge cases
-- Create invalid configs for error testing
+**Results**: 23/24 tests passing (95.8%), 1 conditional skip
 
 ---
 
 #### 2.2 JsonDynamicGraphLoader Tests
 
-**File**: `test/graph/test_json_dynamic_graph_loader.cpp` (NEW)
+**File**: `test/graph/test_json_dynamic_graph_loader.cpp` (✅ COMPLETE - 18/18 passing)
 
-**What to Test**:
-- Load graph from valid configuration
-- Node registry population
-- Edge creation and connection
-- Port validation
-- Graph topology correctness after loading
+**Status**: DONE
+- [x] Load graph from valid configuration
+- [x] Node registry population
+- [x] Edge creation and connection
+- [x] Port validation
+- [x] Graph topology correctness after loading
+- [x] Configuration parsing (minimal, single-node, multi-node, dual-port)
+- [x] Edge extraction and validation
+- [x] Error handling (malformed JSON, missing arrays, duplicate IDs)
+- [x] File I/O operations
+- [x] Integration scenarios (Phase 2 multi-sensor pipelines)
 
-**Test Cases**:
-```cpp
-TEST(JsonDynamicGraphLoader, LoadFromConfiguration)
-TEST(JsonDynamicGraphLoader, CreateAllNodeTypes)
-TEST(JsonDynamicGraphLoader, EstablishAllEdges)
-TEST(JsonDynamicGraphLoader, VerifyNodeConnectivity)
-TEST(JsonDynamicGraphLoader, ValidatePortMatching)
-TEST(JsonDynamicGraphLoader, LoadCompletePhase2Pipeline)
-```
+**Results**: 18/18 tests passing (100%)
 
 ---
 
 #### 2.3 NodeFactory Tests
 
-**File**: `test/graph/test_node_factory.cpp` (NEW)
+**File**: `test/graph/test_node_factory.cpp` (🔄 IN PROGRESS)
 
 **What to Test**:
 - Node type registration

@@ -317,16 +317,27 @@ public:
      */
     [[nodiscard]] bool DequeueNonBlocking(Element& element) {
         std::unique_lock<std::mutex> lock(mutex_);
-        if (deque_.empty()) return false;
-        
+        if (deque_.empty()) {
+            if (metrics_enabled_.load(std::memory_order_acquire)) {
+                metrics_.dequeue_empty.fetch_add(1, std::memory_order_acq_rel);
+            }
+            return false;
+        }
+
         element = std::move(deque_.front());
         deque_.pop_front();
-        
+
+        // Update metrics
+        if (metrics_enabled_.load(std::memory_order_acquire)) {
+            metrics_.dequeued_count.fetch_add(1, std::memory_order_acq_rel);
+            metrics_.current_size.store(deque_.size(), std::memory_order_release);
+        }
+
         // Notify blocked enqueuers that space is available
         if (block_on_full_ && capacity_ > 0) {
             not_full_condition_.notify_one();
         }
-        
+
         return true;
     }
     

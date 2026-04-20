@@ -15,6 +15,7 @@ add_executable(test_phase0_unit
     graph/test_mock_graph_executor.cpp
     graph/test_graph_config_parser.cpp
     graph/test_json_dynamic_graph_loader.cpp
+    graph/test_node_factory.cpp
     core/test_active_queue.cpp
     core/test_thread_pool.cpp
     core/test_type_info.cpp

@@ -49,3 +49,17 @@
 2026-04-19 19:53:28,784 [0x16af67000] ERROR graph.threadpool - Task execution failed: Test error
 2026-04-19 19:53:28,784 [0x16aff3000] ERROR graph.threadpool - Task execution failed: Test error
 2026-04-19 19:53:28,784 [0x16af67000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:54:48,680 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 19:54:52,692 [0x16cf23000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 19:54:55,702 [0x16cfaf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:54:55,702 [0x16cf23000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:54:55,703 [0x16cfaf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:54:55,703 [0x16cf23000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:54:55,703 [0x16cfaf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:55:54,775 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 19:55:59,788 [0x16af63000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 19:56:02,802 [0x16af63000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:56:02,802 [0x16afef000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:56:02,802 [0x16af63000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:56:02,802 [0x16afef000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 19:56:02,802 [0x16af63000] ERROR graph.threadpool - Task execution failed: Test error
