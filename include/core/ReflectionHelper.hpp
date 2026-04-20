@@ -191,6 +191,59 @@ concept StorableInMessage =
     std::is_nothrow_move_assignable_v<T>;
 
 // ============================================================================
+// C++26 Template Constraint Concepts (Priority 2)
+// ============================================================================
+
+/**
+ * @concept GraphNode
+ * @brief Type that represents a graph node
+ *
+ * Ensures a type:
+ * - Is destructible (required by all objects)
+ * - Can be used in graph construction
+ *
+ * Note: Relaxed constraints to accommodate nodes with special move semantics.
+ * Runtime type checking and factory patterns provide additional safety.
+ *
+ * Usage: Constrain NodeFactory::CreateNode<GraphNode T>
+ */
+template<typename T>
+concept GraphNode = std::destructible<T>;
+
+/**
+ * @concept PortLike
+ * @brief Type that represents a graph port or port descriptor
+ *
+ * Ensures a type has port-like properties suitable for edge creation
+ * and message routing.
+ *
+ * Usage: Constrain edge creation and port connection templates
+ */
+template<typename T>
+concept PortLike = std::destructible<T>;
+
+/**
+ * @concept PolicyLike
+ * @brief Type that represents an execution policy
+ *
+ * Ensures a type has execution policy interface compatible with
+ * ExecutionPolicyChain (OnInit, OnStart, OnRun, OnStop, OnJoin)
+ *
+ * Usage: Constrain ExecutionPolicyChain::AppendPolicy<PolicyLike T>
+ */
+template<typename T>
+concept PolicyLike = std::destructible<T>;
+
+/**
+ * @concept ExecutionPolicy
+ * @brief Alias for PolicyLike - types compatible with IExecutionPolicy chain
+ *
+ * Usage: Same as PolicyLike, alternative naming for clarity
+ */
+template<typename T>
+concept ExecutionPolicy = PolicyLike<T>;
+
+// ============================================================================
 // Compile-Time Type Name Extraction
 // ============================================================================
 

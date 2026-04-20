@@ -247,6 +247,7 @@
 #include <typeinfo>
 #include <cxxabi.h>
 #include <cstdlib>
+#include "core/ReflectionHelper.hpp"
 #include "graph/Nodes.hpp"
 #include "graph/NodeFacadeAdapterWrapper.hpp"
 #include "ThreadPool.hpp"
@@ -430,7 +431,7 @@ public:
      * 
      * Creates a new node and stores it in the graph for lifecycle management.
      */
-    template <typename NodeType, typename... Args>
+    template <reflection::GraphNode NodeType, typename... Args>
     std::shared_ptr<NodeType> AddNode(Args&&... args) {
         std::unique_lock lock(lifecycle_mtx_);
         
@@ -499,7 +500,7 @@ public:
      * 
      * Exception safety: Strong guarantee. If creation fails, edges_ unchanged.
      */
-    template <typename SrcNode, std::size_t SrcPort, typename DstNode, std::size_t DstPort>
+    template <reflection::GraphNode SrcNode, std::size_t SrcPort, reflection::GraphNode DstNode, std::size_t DstPort>
     Edge<SrcNode, SrcPort, DstNode, DstPort>& AddEdge(
         std::shared_ptr<SrcNode> src,
         std::shared_ptr<DstNode> dst,

@@ -27,6 +27,7 @@
 #include <functional>
 #include <vector>
 #include <log4cxx/logger.h>
+#include "core/ReflectionHelper.hpp"
 #include "graph/NodeFacade.hpp"
 #include "graph/NodeFactoryRegistry.hpp"
 
@@ -89,12 +90,14 @@ public:
      * @tparam Args Constructor argument types
      * @param args Arguments to pass to NodeType constructor
      * @return Shared pointer to the created node
+     *
+     * @requires NodeType is a GraphNode (satisfies move construction/assignment)
      */
-    template <typename NodeType, typename... Args>
+    template <reflection::GraphNode NodeType, typename... Args>
     std::shared_ptr<NodeType> CreateNode(Args&&... args) {
         try {
             auto node = std::make_shared<NodeType>(std::forward<Args>(args)...);
-            LOG4CXX_TRACE(logger_, "Created compile-time node: " 
+            LOG4CXX_TRACE(logger_, "Created compile-time node: "
                 << typeid(NodeType).name());
             return node;
         } catch (const std::exception& e) {
