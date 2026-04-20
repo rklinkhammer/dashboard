@@ -25,6 +25,7 @@
 #include "graph/GraphConfig.hpp"
 #include <nlohmann/json.hpp>
 #include <filesystem>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -494,18 +495,41 @@ TEST_F(GraphConfigParserTest, RejectEdgeWithNonexistentNode) {
 // ============================================================================
 
 TEST_F(GraphConfigParserTest, ParseFromFile) {
-    // Test with the actual phase 2 config file if it exists
-    std::string config_path = "config/graph_csv_pipeline_dual_port_integration.json";
+    // Create a temporary config file with valid JSON
+    json config_obj;
+    config_obj["name"] = "FileTestGraph";
+    config_obj["version"] = "1.0";
+    config_obj["nodes"] = json::array({
+        {{"id", "node1"}, {"type", "Type1"}},
+        {{"id", "node2"}, {"type", "Type2"}}
+    });
+    config_obj["edges"] = json::array({
+        {
+            {"source_node_id", "node1"},
+            {"source_port", 0},
+            {"target_node_id", "node2"},
+            {"target_port", 0}
+        }
+    });
 
-    if (fs::exists(config_path)) {
-        EXPECT_NO_THROW({
-            auto config = graph::config::GraphConfigParser::ParseFile(config_path);
-            EXPECT_FALSE(config.name.empty());
-            EXPECT_FALSE(config.nodes.empty());
-        });
-    } else {
-        GTEST_SKIP() << "Test config file not found: " << config_path;
-    }
+    std::string config_json = config_obj.dump();
+
+    // Write to temporary file
+    std::string filepath = "/tmp/test_graph_config_" + std::to_string(std::rand()) + ".json";
+    std::ofstream file(filepath);
+    file << config_json;
+    file.close();
+
+    // Parse from file
+    EXPECT_NO_THROW({
+        auto config = graph::config::GraphConfigParser::ParseFile(filepath);
+        EXPECT_EQ(config.name, "FileTestGraph");
+        EXPECT_EQ(config.nodes.size(), 2);
+        EXPECT_EQ(config.edges.size(), 1);
+    });
+
+    // Cleanup
+    std::remove(filepath.c_str());
 }
 
 TEST_F(GraphConfigParserTest, RejectNonexistentFile) {
