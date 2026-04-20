@@ -21,6 +21,10 @@ add_executable(test_phase0_unit
     graph/test_graph_manager.cpp
     graph/test_execution_policy_chain.cpp
     graph/test_real_node_integration.cpp
+    graph/test_capability_bus.cpp
+    graph/test_metrics_policy.cpp
+    graph/test_data_injection_policy.cpp
+    graph/test_csv_injection_policy.cpp
     core/test_active_queue.cpp
     core/test_thread_pool.cpp
     core/test_type_info.cpp
