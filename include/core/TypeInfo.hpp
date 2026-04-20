@@ -30,14 +30,24 @@
 #include <string_view>
 #include <cstdint>
 #include <typeinfo>
+#include "core/ReflectionHelper.hpp"
 
 // ===================================================================================
-// Utilities: compile-time type-name helper
+// Utilities: compile-time type-name helper with C++26 Reflection-Ready Pattern
 // -----------------------------------------------------------------------------------
-// Small `consteval` helper that extracts the pretty function signature to give a
-// human-readable type name at compile time. Useful for building reflection tables.
+// Uses compile-time type name extraction prepared for std::reflect migration.
+// Supports all types including void, const-qualified, and container types.
 // ===================================================================================
 
+// Universal type name extraction (reflection-ready for all types)
+template<typename T>
+consteval std::string_view type_name_const() {
+    // Use metadata extraction (works with reflection when available)
+    // For now, uses compile-time type name extraction
+    return reflection::ExtractTypeNameFromFunction<T>();
+}
+
+// Helper to trim whitespace from type names
 consteval std::string_view rtrim(std::string_view sv) {
     while (!sv.empty()) {
         char c = sv.back();
@@ -47,40 +57,6 @@ consteval std::string_view rtrim(std::string_view sv) {
             break;
     }
     return sv;
-}
-
-template <typename T>
-consteval std::string_view type_name_const() {
-#if defined(__clang__) || defined(__GNUC__)
-    constexpr std::string_view fn = __PRETTY_FUNCTION__;
-
-    constexpr std::string_view key = "T = ";
-    const auto start = fn.find(key);
-    if (start == std::string_view::npos)
-        return fn;
-
-    const auto name_start = start + key.size();
-    const auto name_end   = fn.find(']', name_start);
-
-    if (name_end == std::string_view::npos)
-        return fn;
-    return fn.substr(name_start, name_end - name_start);
-
-#elif defined(_MSC_VER)
-    constexpr std::string_view fn = __FUNCSIG__;
-    constexpr std::string_view key = "type_name_const<";
-
-    const auto start = fn.find(key);
-    if (start == std::string_view::npos)
-        return fn;
-
-    const auto name_start = start + key.size();
-    const auto name_end   = fn.find('>', name_start);
-
-    return fn.substr(name_start, name_end - name_start);
-#else
-    return "type";
-#endif
 }
 
 template <typename T>
