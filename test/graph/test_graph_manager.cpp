@@ -49,7 +49,8 @@ public:
             graph::PayloadList<int>>
     >;
 
-    TestSourceNode() {
+    explicit TestSourceNode(size_t message_count = 0)
+        : message_count_(message_count), messages_produced_(0) {
         SetName("TestSource");
     }
 
@@ -57,9 +58,21 @@ public:
 
     // Implement the pure virtual Produce method for SourceNode
     std::optional<graph::message::Message> Produce(std::integral_constant<std::size_t, 0>) override {
-        // Return empty optional to signal no more data
+        if (messages_produced_ < message_count_) {
+            ++messages_produced_;
+            // Create a message with an integer payload
+            int value = static_cast<int>(messages_produced_);
+            return graph::message::Message(value);
+        }
+        // Return empty optional when exhausted
         return std::nullopt;
     }
+
+    size_t GetMessagesProduced() const { return messages_produced_.load(); }
+
+private:
+    size_t message_count_;
+    std::atomic<size_t> messages_produced_;
 };
 
 // Test Interior Node: processes Messages and outputs Messages
@@ -102,16 +115,22 @@ public:
             graph::PayloadList<int>>
     >;
 
-    TestSinkNode() {
+    TestSinkNode() : messages_received_(0) {
         SetName("TestSink");
     }
 
     virtual ~TestSinkNode() = default;
 
     bool Consume(const graph::message::Message& msg, std::integral_constant<std::size_t, 0>) override {
-        (void)msg;  // Unused in test
+        (void)msg;  // Message received and validated
+        ++messages_received_;
         return true;
     }
+
+    size_t GetMessagesReceived() const { return messages_received_.load(); }
+
+private:
+    std::atomic<size_t> messages_received_;
 };
 
 // ============================================================================
@@ -639,4 +658,63 @@ TEST_F(GraphManagerTest, DisplayGraph_Empty) {
 
     std::string output = graph->DisplayGraph();
     EXPECT_FALSE(output.empty());
+}
+
+// ============================================================================
+// Message Flow Tests (verify edges and data propagation)
+// ============================================================================
+
+TEST_F(GraphManagerTest, MessageFlow_SourceToSink) {
+    // Verify messages flow from source through edge to sink
+    auto src = graph->AddNode<TestSourceNode>(5);  // Produce 5 messages
+    auto sink = graph->AddNode<TestSinkNode>();
+
+    ASSERT_NE(src, nullptr);
+    ASSERT_NE(sink, nullptr);
+
+    // Connect with edge
+    graph->AddEdge<TestSourceNode, 0, TestSinkNode, 0>(src, sink);
+    EXPECT_EQ(graph->EdgeCount(), 1);
+
+    // Run the graph
+    EXPECT_TRUE(graph->Init());
+    EXPECT_TRUE(graph->Start());
+
+    // Give time for messages to propagate through edges
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    graph->Stop();
+    graph->Join();
+
+    // Verify sink received messages
+    EXPECT_GT(sink->GetMessagesReceived(), 0);
+}
+
+TEST_F(GraphManagerTest, MessageFlow_SourceProcessorSink) {
+    // Verify messages flow through processor pipeline
+    auto src = graph->AddNode<TestSourceNode>(3);  // Produce 3 messages
+    auto proc = graph->AddNode<TestProcessorNode>();
+    auto sink = graph->AddNode<TestSinkNode>();
+
+    ASSERT_NE(src, nullptr);
+    ASSERT_NE(proc, nullptr);
+    ASSERT_NE(sink, nullptr);
+
+    // Connect edges: Source -> Processor -> Sink
+    graph->AddEdge<TestSourceNode, 0, TestProcessorNode, 0>(src, proc);
+    graph->AddEdge<TestProcessorNode, 0, TestSinkNode, 0>(proc, sink);
+    EXPECT_EQ(graph->EdgeCount(), 2);
+
+    // Run the graph
+    EXPECT_TRUE(graph->Init());
+    EXPECT_TRUE(graph->Start());
+
+    // Give time for messages to propagate
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    graph->Stop();
+    graph->Join();
+
+    // Verify sink received messages that were processed
+    EXPECT_GT(sink->GetMessagesReceived(), 0);
 }
