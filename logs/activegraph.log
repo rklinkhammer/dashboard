@@ -84,3 +84,363 @@
 2026-04-19 21:35:22,357 [0x16afd7000] ERROR graph.threadpool - Task execution failed: Test exception
 2026-04-19 21:35:23,363 [0x16afd7000] ERROR graph.threadpool - Task execution failed: Test error
 2026-04-19 21:35:23,363 [0x16b063000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:49:44,464 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 21:49:44,465 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 21:49:44,466 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 21:49:44,466 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 21:49:46,470 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 21:50:12,606 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 21:50:12,606 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 21:50:12,606 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 21:50:12,606 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 21:50:12,607 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 21:50:15,614 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 21:50:15,614 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 21:50:16,619 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 21:50:16,619 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 21:50:18,629 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 21:50:30,312 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 21:50:32,317 [0x16bdbf000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 21:50:35,331 [0x16bdbf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:50:35,331 [0x16be4b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:50:35,331 [0x16bdbf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:50:35,331 [0x16be4b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 21:50:35,331 [0x16bdbf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:12:05,730 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:12:05,730 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:12:06,733 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:12:06,733 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:12:08,738 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:12:34,535 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 22:12:34,535 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 22:12:34,535 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 22:12:34,535 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 22:12:34,535 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 22:12:37,549 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:12:37,549 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:12:38,551 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:12:38,551 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:12:40,562 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:12:54,266 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 22:12:59,286 [0x16d2cb000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 22:13:02,296 [0x16d357000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:13:02,296 [0x16d2cb000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:13:02,296 [0x16d357000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:13:02,296 [0x16d2cb000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:13:02,296 [0x16d357000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:14:05,881 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 22:14:05,881 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 22:14:05,881 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 22:14:05,881 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 22:14:05,881 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 22:14:08,892 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:14:08,892 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:14:09,893 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:14:09,893 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:14:11,901 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:14:24,587 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 22:14:29,601 [0x16afd3000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 22:14:31,604 [0x16afd3000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:14:31,604 [0x16b05f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:14:46,626 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:14:46,626 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:14:47,631 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:14:47,632 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:14:49,638 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:24:04,022 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:24:04,024 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:24:05,024 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:24:05,024 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:24:07,034 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:24:34,665 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 22:24:34,665 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 22:24:34,665 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 22:24:34,665 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 22:24:34,665 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 22:24:37,678 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:24:37,678 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:24:38,681 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:24:38,682 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:24:40,692 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:24:56,398 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 22:25:00,413 [0x16f517000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 22:25:03,425 [0x16f517000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:25:03,425 [0x16f5a3000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:25:03,425 [0x16f517000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:25:03,425 [0x16f5a3000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:25:03,425 [0x16f517000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:25:20,302 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:25:20,303 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:25:21,305 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:25:21,305 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:25:23,315 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:25:42,379 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:25:42,379 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:25:43,383 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:25:43,384 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:25:45,392 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:34:44,303 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 22:34:44,303 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 22:34:44,303 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 22:34:44,303 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 22:34:44,303 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 22:34:47,314 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:34:47,315 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:34:48,317 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:34:48,317 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:34:50,323 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:35:05,022 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 22:35:08,034 [0x16d60f000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 22:35:11,043 [0x16d60f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:35:11,043 [0x16d583000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:35:11,044 [0x16d60f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:35:11,044 [0x16d583000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:35:11,044 [0x16d60f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:50:33,087 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 22:50:33,087 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 22:50:33,087 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 22:50:33,087 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 22:50:33,087 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 22:50:36,102 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:50:36,102 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:50:37,107 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:50:37,108 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:50:39,113 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:53:24,025 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 22:53:24,025 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 22:53:24,025 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 22:53:24,025 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 22:53:24,025 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 22:53:27,041 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:53:27,041 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:53:28,046 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:53:28,047 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:53:30,052 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:53:44,767 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 22:53:49,783 [0x16dd63000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 22:53:52,791 [0x16ddef000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:53:52,791 [0x16dd63000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:53:52,792 [0x16ddef000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:53:52,792 [0x16dd63000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:53:52,792 [0x16ddef000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:55:15,233 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 22:55:15,233 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 22:55:15,233 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 22:55:15,233 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 22:55:15,234 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 22:55:18,245 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 22:55:18,245 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:55:19,249 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 22:55:19,249 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 22:55:21,256 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 22:55:37,967 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 22:55:42,985 [0x16b007000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 22:55:45,998 [0x16b093000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:55:45,998 [0x16b093000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:55:45,998 [0x16b093000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:55:45,998 [0x16b093000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 22:55:45,998 [0x16b007000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:04:05,079 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 23:04:05,079 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 23:04:05,079 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 23:04:05,079 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 23:04:05,079 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 23:04:08,089 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 23:04:08,089 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 23:04:09,094 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 23:04:09,094 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 23:04:11,101 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 23:04:26,813 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 23:04:31,838 [0x16d1bf000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 23:04:33,850 [0x16d1bf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:04:33,850 [0x16d24b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:04:33,850 [0x16d1bf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:04:33,850 [0x16d24b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:04:33,850 [0x16d1bf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:05:42,386 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-19 23:05:42,387 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-19 23:05:42,387 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-19 23:05:42,387 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-19 23:05:42,387 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-19 23:05:45,399 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-19 23:05:45,400 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 23:05:46,405 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-19 23:05:46,405 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-19 23:05:48,414 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-19 23:06:03,123 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-19 23:06:08,140 [0x16dc13000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-19 23:06:11,150 [0x16dc9f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:06:11,150 [0x16dc13000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:06:11,150 [0x16dc9f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:06:11,150 [0x16dc13000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-19 23:06:11,150 [0x16dc9f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:00:52,976 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:00:52,977 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:00:52,977 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:00:52,977 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:00:52,977 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:00:55,994 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:00:55,995 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:00:56,996 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:00:56,996 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:00:59,004 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:01:14,713 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:01:19,734 [0x16b8a7000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:01:22,745 [0x16b933000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:01:22,745 [0x16b8a7000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:01:22,745 [0x16b933000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:01:22,745 [0x16b8a7000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:01:22,745 [0x16b933000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:11:09,611 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:11:09,611 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:11:09,611 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:11:09,611 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:11:09,611 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:11:12,628 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:11:12,628 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:11:13,633 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:11:13,634 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:11:15,638 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:11:28,331 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:11:33,347 [0x16f46b000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:11:35,356 [0x16f46b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:11:35,357 [0x16f46b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:11:35,357 [0x16f4f7000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:12:00,187 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:12:00,187 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:12:00,187 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:12:00,187 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:12:00,187 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:12:03,199 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:12:03,199 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:12:04,201 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:12:04,201 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:12:06,208 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:12:20,916 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:12:25,941 [0x16b163000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:12:28,955 [0x16b1ef000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:12:28,955 [0x16b163000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:12:28,955 [0x16b1ef000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:12:28,955 [0x16b163000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:12:28,955 [0x16b1ef000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:12:56,972 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:12:56,972 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:12:56,972 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:12:56,972 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:12:56,972 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:12:59,980 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:12:59,980 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:13:00,986 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:13:00,986 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:13:02,997 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:13:17,699 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:13:22,722 [0x16ba0b000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:13:25,736 [0x16ba97000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:13:25,736 [0x16ba0b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:13:25,736 [0x16ba97000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:13:25,736 [0x16ba0b000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:13:25,736 [0x16ba97000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:13:55,587 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:13:55,587 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:13:55,587 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:13:55,587 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:13:55,587 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:13:58,600 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:13:58,600 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:13:59,605 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:13:59,605 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:14:01,609 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:14:17,306 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:14:22,323 [0x16f3eb000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:14:25,334 [0x16f35f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:14:25,334 [0x16f3eb000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:14:25,334 [0x16f35f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:14:25,334 [0x16f3eb000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:14:25,334 [0x16f35f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:14:53,175 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:14:53,175 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:14:53,175 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:14:53,175 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:14:53,176 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:14:56,191 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:14:56,192 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:14:57,197 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:14:57,197 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:14:59,204 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:15:13,913 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:15:18,926 [0x16fc53000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:15:21,932 [0x16fc53000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:15:21,932 [0x16fcdf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:15:21,932 [0x16fc53000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:15:21,932 [0x16fcdf000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:15:21,932 [0x16fc53000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:15:42,765 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:15:42,765 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:15:42,765 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:15:42,765 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:15:42,766 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:15:45,780 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:15:45,781 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:15:46,786 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:15:46,787 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:15:48,791 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:16:03,491 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:16:08,508 [0x16b3df000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:16:33,378 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:16:33,378 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:16:33,378 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:16:33,378 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:16:33,379 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:16:36,386 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:16:36,386 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:16:37,391 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:16:37,391 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:16:39,397 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:16:54,106 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:16:59,111 [0x16b9b3000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:17:01,119 [0x16b9b3000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:17:01,119 [0x16ba3f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:17:01,119 [0x16b9b3000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:17:01,119 [0x16ba3f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:17:01,119 [0x16b9b3000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:17:50,433 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:17:50,433 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:17:50,433 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:17:50,433 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:17:50,434 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:17:53,443 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:17:53,444 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:17:54,445 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:17:54,446 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:17:56,456 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:18:10,146 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:18:13,161 [0x16b7c7000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:18:38,591 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:18:38,591 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:18:38,591 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:18:38,591 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:18:38,591 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:18:41,605 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:18:41,606 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:18:42,609 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:18:42,609 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:18:44,619 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:18:58,312 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:19:02,331 [0x16b2f3000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:19:26,313 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 17:19:26,313 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 17:19:26,313 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 17:19:26,313 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 17:19:26,313 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 17:19:29,320 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 17:19:29,320 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:19:30,326 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 17:19:30,326 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 17:19:32,336 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 17:19:46,028 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 17:19:50,042 [0x16bd93000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 17:19:52,052 [0x16be1f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:19:52,052 [0x16bd93000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:19:52,052 [0x16be1f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:19:52,052 [0x16bd93000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 17:19:52,052 [0x16be1f000] ERROR graph.threadpool - Task execution failed: Test error

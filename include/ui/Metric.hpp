@@ -292,4 +292,48 @@ struct Metric {
     }
 };
 
+/**
+ * @brief Convert MetricType enum to string representation
+ *
+ * Centralizes MetricType→string conversion to eliminate code duplication.
+ * Used by BuiltinCommands and other components for serialization.
+ *
+ * @param type The MetricType to convert
+ * @return String representation: "int", "float", "bool", or "string"
+ */
+inline std::string MetricTypeToString(MetricType type) {
+    switch (type) {
+        case MetricType::INT:
+            return "int";
+        case MetricType::FLOAT:
+            return "float";
+        case MetricType::BOOL:
+            return "bool";
+        case MetricType::STRING:
+            return "string";
+    }
+    return "unknown";
+}
+
+/**
+ * @brief Convert string to MetricType enum
+ *
+ * Reverse of MetricTypeToString for parsing string representations.
+ * Case-insensitive parsing for flexibility.
+ *
+ * @param type_str String representation (e.g., "int", "float", "bool", "string")
+ * @return MetricType enum value (defaults to STRING if not recognized)
+ */
+inline MetricType StringToMetricType(const std::string& type_str) {
+    if (type_str == "int" || type_str == "INT") {
+        return MetricType::INT;
+    } else if (type_str == "float" || type_str == "FLOAT" || type_str == "double" || type_str == "DOUBLE") {
+        return MetricType::FLOAT;
+    } else if (type_str == "bool" || type_str == "BOOL" || type_str == "boolean") {
+        return MetricType::BOOL;
+    } else {
+        return MetricType::STRING;
+    }
+}
+
 #endif // GDASHBOARD_METRIC_HPP

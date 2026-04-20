@@ -82,22 +82,7 @@ namespace commands {
                 app->AddLog(tile.name + " (" + std::to_string(tile.metrics.size()) + " metrics):");
                 for (const auto &metric : tile.metrics)
                 {
-                    std::string type_str;
-                    switch (metric.type)
-                    {
-                    case MetricType::INT:
-                        type_str = "int";
-                        break;
-                    case MetricType::FLOAT:
-                        type_str = "float";
-                        break;
-                    case MetricType::BOOL:
-                        type_str = "bool";
-                        break;
-                    case MetricType::STRING:
-                        type_str = "string";
-                        break;
-                    }
+                    std::string type_str = MetricTypeToString(metric.type);
                     app->AddLog("  " + metric.name + " (" + type_str + "): " + metric.GetFormattedValue());
                 }
                 found_any = true;
@@ -534,22 +519,7 @@ namespace commands {
                 {
                     for (const auto &metric : tile.metrics)
                     {
-                        std::string type_str;
-                        switch (metric.type)
-                        {
-                        case MetricType::INT:
-                            type_str = "int";
-                            break;
-                        case MetricType::FLOAT:
-                            type_str = "float";
-                            break;
-                        case MetricType::BOOL:
-                            type_str = "bool";
-                            break;
-                        case MetricType::STRING:
-                            type_str = "string";
-                            break;
-                        }
+                        std::string type_str = MetricTypeToString(metric.type);
                         int conf_percent = (int)(metric.confidence * 100);
                         app->AddLog(tile.name + "," + metric.name + "," + metric.GetFormattedValue() +
                                     "," + type_str + "," + std::to_string(conf_percent) + "%");

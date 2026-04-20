@@ -34,6 +34,7 @@
 #include <chrono>
 #include "graph/DataGeneratorBase.hpp"
 #include "core/ActiveQueue.hpp"
+#include "core/VariantHelper.hpp"
 
 namespace graph {
 
@@ -75,12 +76,12 @@ public:
     std::optional<DataType> Produce(size_t /*index*/) override {
         PayloadType sample;
         if (queue_.Dequeue(sample)) {
-            auto data_ptr = std::get_if<DataType>(&sample);
-            if (!data_ptr) {
+            auto data_ref = reflection::GetIfVariant<DataType>(sample);
+            if (!data_ref) {
                 return std::nullopt;  // Wrong type (should not happen)
             }
-            last_sample_ = *data_ptr;
-            return *data_ptr;
+            last_sample_ = data_ref->get();
+            return data_ref->get();
         } else {
             return std::nullopt; // Queue is empty or disabled
         }

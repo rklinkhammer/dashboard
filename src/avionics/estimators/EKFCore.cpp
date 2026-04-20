@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "avionics/estimators/EKFCore.hpp"
+#include "core/VariantHelper.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -107,7 +108,7 @@ void EKFCore::Predict(const Vec3& accel, const Vec3& gyro, float dt) {
 
 void EKFCore::Update(const EKFMeasurement& measurement) {
     // Compute Jacobian H matrix for this measurement type
-    Matrix9x9 H = ComputeH_Jacobian(measurement.type);
+    Matrix9x9 H = ComputeH_Jacobian(measurement);
     
     // Compute innovation (measurement residual)
     Vec3 innovation = ComputeInnovation(measurement);
@@ -194,71 +195,60 @@ Matrix9x9 EKFCore::ComputeF_Jacobian(float dt) {
     return F;
 }
 
-Matrix9x9 EKFCore::ComputeH_Jacobian(EKFMeasurement::Type measurement_type) {
+Matrix9x9 EKFCore::ComputeH_Jacobian(const EKFMeasurement& measurement) {
     Matrix9x9 H;  // Initialize to zero
     for (int i = 0; i < 9; ++i) {
         for (int j = 0; j < 9; ++j) {
             H(i, j) = 0;
         }
     }
-    
-    switch (measurement_type) {
-        case EKFMeasurement::Accelerometer:
+
+    std::visit(reflection::Overload{
+        [&H](const AccelerometerMeasurement&) {
             // Measurement is accel, which relates to attitude
             // H maps state to expected accel measurement
             for (int i = 0; i < 3; ++i) {
                 H(i, i + 6) = 1.0f;  // Attitude affects observed accel
             }
-            break;
-            
-        case EKFMeasurement::Barometer:
+        },
+        [&H](const BarometerMeasurement&) {
             // Measurement is altitude
             H(0, 0) = 1.0f;  // Altitude is state[0]
-            break;
-            
-        case EKFMeasurement::Velocity:
+        },
+        [&H](const VelocityMeasurement&) {
             // Measurement is 3D velocity
             for (int i = 0; i < 3; ++i) {
                 H(i, i + 3) = 1.0f;  // Velocity is state[3:6]
             }
-            break;
-            
-        case EKFMeasurement::Heading:
+        },
+        [&H](const HeadingMeasurement&) {
             // Measurement is yaw (3rd Euler angle)
             H(0, 8) = 1.0f;  // Yaw is state[8]
-            break;
-    }
-    
+        }
+    }, measurement.measurement);
+
     return H;
 }
 
 Vec3 EKFCore::ComputeInnovation(const EKFMeasurement& measurement) {
-    Vec3 predicted_measurement;
-    
-    switch (measurement.type) {
-        case EKFMeasurement::Accelerometer:
-            // Predicted accel from attitude
-            // (Simplified: just use Euler angles)
-            predicted_measurement = state_.attitude;
-            break;
-            
-        case EKFMeasurement::Barometer:
-            // Predicted altitude
-            predicted_measurement = Vec3(state_.position.x, 0, 0);
-            break;
-            
-        case EKFMeasurement::Velocity:
+    return std::visit(reflection::Overload{
+        [this](const AccelerometerMeasurement& m) -> Vec3 {
+            // Predicted accel from attitude (simplified)
+            return m.value - state_.attitude;
+        },
+        [this](const BarometerMeasurement& m) -> Vec3 {
+            // Predicted altitude (scalar stored in x, y/z = 0)
+            return Vec3(m.value, 0, 0) - Vec3(state_.position.x, 0, 0);
+        },
+        [this](const VelocityMeasurement& m) -> Vec3 {
             // Predicted velocity
-            predicted_measurement = state_.velocity;
-            break;
-            
-        case EKFMeasurement::Heading:
-            // Predicted heading (yaw)
-            predicted_measurement = Vec3(state_.attitude.z, 0, 0);
-            break;
-    }
-    
-    return measurement.value - predicted_measurement;
+            return m.value - state_.velocity;
+        },
+        [this](const HeadingMeasurement& m) -> Vec3 {
+            // Predicted heading (yaw, scalar stored in x, y/z = 0)
+            return Vec3(m.value, 0, 0) - Vec3(state_.attitude.z, 0, 0);
+        }
+    }, measurement.measurement);
 }
 
 void EKFCore::InitializeQ() {

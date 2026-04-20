@@ -26,6 +26,7 @@
 #include "config/ConfigParser.hpp"
 #include "avionics/config/KalmanConfig.hpp"
 #include "avionics/config/MovingAverageConfig.hpp"
+#include "core/VariantHelper.hpp"
 #include <variant>
 
 namespace graph {
@@ -115,26 +116,34 @@ struct FilterConfig {
     
     /**
      * Get Kalman config if selected, throw otherwise.
-     * 
+     *
+     * Uses GetIfVariant helper for type-safe access with optional return.
+     * Converts optional to exception for backward compatibility.
+     *
      * @throws ConfigError if Kalman filter not selected
      */
     const KalmanConfig& GetKalmanConfig() const {
-        if (type != Type::Kalman) {
+        auto cfg = reflection::GetIfVariant<KalmanConfig>(const_cast<decltype(params)&>(params));
+        if (!cfg) {
             throw ConfigError("Kalman config requested but filter type is not Kalman");
         }
-        return std::get<KalmanConfig>(params);
+        return cfg->get();
     }
-    
+
     /**
      * Get MovingAverage config if selected, throw otherwise.
-     * 
+     *
+     * Uses GetIfVariant helper for type-safe access with optional return.
+     * Converts optional to exception for backward compatibility.
+     *
      * @throws ConfigError if MovingAverage filter not selected
      */
     const MovingAverageConfig& GetMovingAverageConfig() const {
-        if (type != Type::MovingAverage) {
+        auto cfg = reflection::GetIfVariant<MovingAverageConfig>(const_cast<decltype(params)&>(params));
+        if (!cfg) {
             throw ConfigError("MovingAverage config requested but filter type is not MovingAverage");
         }
-        return std::get<MovingAverageConfig>(params);
+        return cfg->get();
     }
     
     /**

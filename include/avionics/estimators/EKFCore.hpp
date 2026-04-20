@@ -26,9 +26,30 @@
 #include <cmath>
 #include <cstdint>
 #include <vector>
+#include <variant>
 #include "AdaptiveComplementaryFilter.hpp"
+#include "core/VariantHelper.hpp"
 
 namespace avionics::estimators {
+
+/**
+ * @brief Measurement-specific types for variant-based dispatch
+ */
+struct AccelerometerMeasurement {
+    Vec3 value;  // 3D acceleration in m/s²
+};
+
+struct BarometerMeasurement {
+    float value;  // Altitude in meters
+};
+
+struct VelocityMeasurement {
+    Vec3 value;  // 3D velocity in m/s
+};
+
+struct HeadingMeasurement {
+    float value;  // Yaw angle in radians
+};
 
 /**
  * @struct Matrix9x9
@@ -234,23 +255,51 @@ struct EKFState {
 
 /**
  * @struct EKFMeasurement
- * @brief Extended Kalman Filter measurement
+ * @brief Extended Kalman Filter measurement (variant-based)
+ *
+ * Uses std::variant for type-safe measurement dispatch with compile-time
+ * exhaustiveness checking. Replaces enum-based approach with measurement-
+ * specific types for better type safety and reduced switch statements.
  */
 struct EKFMeasurement {
-    enum Type {
-        Accelerometer = 0,  // 3D acceleration measurement
-        Barometer = 1,      // Altitude measurement
-        Velocity = 2,       // 3D velocity measurement (GPS)
-        Heading = 3         // Heading/yaw measurement (magnetometer)
-    };
-    
-    Type type;
-    Vec3 value;
+    /// Union of measurement types
+    std::variant<AccelerometerMeasurement, BarometerMeasurement,
+                 VelocityMeasurement, HeadingMeasurement> measurement;
     float variance;
     uint64_t timestamp_us;
-    
-    EKFMeasurement(Type t, const Vec3& v, float var, uint64_t ts)
-        : type(t), value(v), variance(var), timestamp_us(ts) {}
+
+    // Factory methods for construction
+    static EKFMeasurement CreateAccelerometer(const Vec3& value, float var, uint64_t ts) {
+        EKFMeasurement m;
+        m.measurement = AccelerometerMeasurement{value};
+        m.variance = var;
+        m.timestamp_us = ts;
+        return m;
+    }
+
+    static EKFMeasurement CreateBarometer(float value, float var, uint64_t ts) {
+        EKFMeasurement m;
+        m.measurement = BarometerMeasurement{value};
+        m.variance = var;
+        m.timestamp_us = ts;
+        return m;
+    }
+
+    static EKFMeasurement CreateVelocity(const Vec3& value, float var, uint64_t ts) {
+        EKFMeasurement m;
+        m.measurement = VelocityMeasurement{value};
+        m.variance = var;
+        m.timestamp_us = ts;
+        return m;
+    }
+
+    static EKFMeasurement CreateHeading(float value, float var, uint64_t ts) {
+        EKFMeasurement m;
+        m.measurement = HeadingMeasurement{value};
+        m.variance = var;
+        m.timestamp_us = ts;
+        return m;
+    }
 };
 
 /**
@@ -349,10 +398,10 @@ private:
     
     /**
      * @brief Compute measurement Jacobian (H matrix)
-     * @param measurement_type Type of measurement
+     * @param measurement The measurement containing type information
      * @return H matrix (linearized measurement model)
      */
-    Matrix9x9 ComputeH_Jacobian(EKFMeasurement::Type measurement_type);
+    Matrix9x9 ComputeH_Jacobian(const EKFMeasurement& measurement);
     
     /**
      * @brief Compute measurement residual (innovation)
