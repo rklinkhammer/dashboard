@@ -243,6 +243,28 @@ concept PolicyLike = std::destructible<T>;
 template<typename T>
 concept ExecutionPolicy = PolicyLike<T>;
 
+/**
+ * @concept IsPolicy
+ * @brief Type that implements execution policy interface
+ *
+ * Ensures a type has the complete ExecutionPolicy lifecycle interface
+ * with all required methods: OnInit, OnStart, OnRun, OnStop, OnJoin.
+ *
+ * Usage: Validation for policy registration and composition
+ *
+ * Note: Forward declaration - requires app::capabilities::GraphCapability
+ * which creates circular dependency. Kept as documentation template.
+ * Use PolicyLike or ExecutionPolicy concepts for actual constraints.
+ */
+// template<typename T>
+// concept IsPolicy = requires(T t, app::capabilities::GraphCapability& ctx) {
+//     { t.OnInit(ctx) } -> std::convertible_to<bool>;
+//     { t.OnStart(ctx) } -> std::convertible_to<bool>;
+//     { t.OnRun(ctx) } -> std::convertible_to<bool>;
+//     { t.OnStop(ctx) };
+//     { t.OnJoin(ctx) };
+// };
+
 // ============================================================================
 // Compile-Time Type Name Extraction
 // ============================================================================

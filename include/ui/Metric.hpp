@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include "core/VariantHelper.hpp"
 
 // ============================================================================
 // Data Structures
@@ -81,33 +82,38 @@ struct Metric {
     /**
      * @brief Get value formatted as string with appropriate precision
      * Shows confidence metrics as percentage (e.g., "87.3%")
+     * Uses modern std::visit pattern with Overload helper for type safety
      */
     std::string GetFormattedValue() const {
-        switch (type) {
-            case MetricType::INT:
-                return std::to_string(std::get<int>(value));
-            case MetricType::FLOAT: {
-                double v = std::get<double>(value);
-                
+        return std::visit(reflection::Overload{
+            // INT case
+            [](int v) {
+                return std::to_string(v);
+            },
+            // FLOAT/DOUBLE case
+            [this](double v) {
                 // Show confidence metrics as percentage
                 if (name.find("confidence") != std::string::npos) {
                     std::ostringstream oss;
                     oss << std::fixed << std::setprecision(1) << (v * 100.0) << "%";
                     return oss.str();
                 }
-                
+
                 // Determine precision based on unit/name
                 int precision = 2;  // default for altitudes, velocities
                 std::ostringstream oss;
                 oss << std::fixed << std::setprecision(precision) << v;
                 return oss.str();
+            },
+            // BOOL case
+            [](bool v) {
+                return v ? std::string("true") : std::string("false");
+            },
+            // STRING case
+            [](const std::string& v) {
+                return v;
             }
-            case MetricType::BOOL:
-                return std::get<bool>(value) ? "true" : "false";
-            case MetricType::STRING:
-                return std::get<std::string>(value);
-        }
-        return "?";
+        }, value);
     }
     
     /**
@@ -126,24 +132,32 @@ struct Metric {
     
     /**
      * @brief Get numeric value from current value (for history)
+     * Uses modern std::visit pattern for type-safe conversion
      */
     double GetNumericValue() const {
-        switch (type) {
-            case MetricType::INT:
-                return static_cast<double>(std::get<int>(value));
-            case MetricType::FLOAT:
-                return std::get<double>(value);
-            case MetricType::BOOL:
-                return std::get<bool>(value) ? 1.0 : 0.0;
-            case MetricType::STRING:
+        return std::visit(reflection::Overload{
+            // INT case
+            [](int v) -> double {
+                return static_cast<double>(v);
+            },
+            // FLOAT/DOUBLE case
+            [](double v) -> double {
+                return v;
+            },
+            // BOOL case
+            [](bool v) -> double {
+                return v ? 1.0 : 0.0;
+            },
+            // STRING case
+            [](const std::string& v) -> double {
                 // Try to parse string as number
                 try {
-                    return std::stod(std::get<std::string>(value));
+                    return std::stod(v);
                 } catch (...) {
                     return 0.0;
                 }
-        }
-        return 0.0;
+            }
+        }, value);
     }
     
     /**

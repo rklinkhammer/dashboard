@@ -25,6 +25,7 @@
 
 #include "ui/Metric.hpp"
 #include "app/metrics/NodeMetricsSchema.hpp"
+#include "core/VariantHelper.hpp"
 #include <string>
 #include <vector>
 #include <map>
