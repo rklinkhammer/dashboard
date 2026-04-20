@@ -18,6 +18,7 @@ add_executable(test_phase0_unit
     graph/test_node_factory.cpp
     graph/test_edge_registry.cpp
     graph/test_port_types_message_routing.cpp
+    graph/test_graph_manager.cpp
     core/test_active_queue.cpp
     core/test_thread_pool.cpp
     core/test_type_info.cpp
