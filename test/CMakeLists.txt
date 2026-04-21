@@ -26,6 +26,8 @@ add_executable(test_phase0_unit
     graph/test_data_injection_policy.cpp
     graph/test_csv_injection_policy.cpp
     graph/nodes/test_data_injection_nodes.cpp
+    graph/nodes/test_flight_fsm_node.cpp
+    graph/nodes/test_altitude_fusion_node.cpp
     core/test_active_queue.cpp
     core/test_thread_pool.cpp
     core/test_type_info.cpp
