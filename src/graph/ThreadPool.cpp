@@ -128,12 +128,13 @@ namespace graph
             watchdog_.join();
         }
 
-        // Drain any remaining tasks that weren't executed
+        // Execute any remaining tasks that weren't executed
         // (can happen if Stop() was called while tasks were queued)
         Task remaining_task;
         while (task_queue_.DequeueNonBlocking(remaining_task))
         {
-            LOG4CXX_TRACE(logger_, "Discarding remaining queued task during Join");
+            LOG4CXX_TRACE(logger_, "Executing remaining queued task during Join");
+            ExecuteTask(remaining_task);
         }
 
         LOG4CXX_TRACE(logger_, "ThreadPool joined - stats: " << stats_.tasks_completed
