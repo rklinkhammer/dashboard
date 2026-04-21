@@ -64,6 +64,7 @@ add_test(
 
 add_executable(test_phase0_integration
     integration/test_phase0_metrics_discovery.cpp
+    integration/test_csv_pipeline_dual_port_integration.cpp
 )
 
 target_include_directories(test_phase0_integration
