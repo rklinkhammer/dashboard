@@ -633,3 +633,123 @@
 2026-04-20 17:36:28,407 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
 2026-04-20 17:36:28,458 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
 2026-04-20 17:36:31,098 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 20:58:01,980 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 20:58:01,980 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 20:58:01,981 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 20:58:01,981 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 20:58:01,981 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 20:58:04,996 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 20:58:04,996 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 20:58:05,998 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 20:58:05,998 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 20:58:08,007 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 20:58:20,046 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,046 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,046 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,046 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,046 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,046 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.CSVInjectionPolicy - CSVDataInjectionPolicy::OnInit() - no DataInjectionCapability
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,059 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:20,114 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:58:21,745 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 20:58:25,764 [0x16d56f000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 20:58:48,901 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 20:58:48,902 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 20:58:48,902 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 20:58:48,902 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 20:58:48,902 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 20:58:51,918 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 20:58:51,918 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 20:58:52,923 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 20:58:52,923 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 20:58:54,934 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 20:59:06,991 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:06,991 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:06,991 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:06,991 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:06,991 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:06,991 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.CSVInjectionPolicy - CSVDataInjectionPolicy::OnInit() - no DataInjectionCapability
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,004 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,005 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,005 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,055 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:07,691 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 20:59:16,708 [0x16b14f000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 20:59:16,708 [0x16b0c3000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 20:59:39,478 [0x205807100] WARN  graph.config.NodeFactoryRegistry - Replacing existing factory for type: Node
+2026-04-20 20:59:39,478 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Node type not registered: UnregisteredNode
+2026-04-20 20:59:39,478 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Failed to create node of type 'FailingNode': Factory not implemented for testing
+2026-04-20 20:59:39,478 [0x205807100] ERROR graph.config.NodeFactoryRegistry - Cannot register factory with empty type name
+2026-04-20 20:59:39,478 [0x205807100] ERROR graph.NodeFactory - Failed to create node: Construction failed
+2026-04-20 20:59:42,492 [0x205807100] WARN  graph.graph - Init() called multiple times - ignoring
+2026-04-20 20:59:42,492 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 20:59:43,493 [0x205807100] ERROR graph.graph - Start() called before Init(). Call Init() first.
+2026-04-20 20:59:43,493 [0x205807100] ERROR graph.graph - Cannot AddNode after Init() has been called
+2026-04-20 20:59:45,501 [0x205807100] WARN  graph.graph - Start() called multiple times - ignoring
+2026-04-20 20:59:57,537 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,538 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,538 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,538 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,538 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,538 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,548 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.MetricsPolicy - MetricsPolicy::InitMetricsSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.CSVInjectionPolicy - CSVDataInjectionPolicy::OnInit() - no DataInjectionCapability
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,549 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 20:59:57,604 [0x205807100] WARN  app.policies.DataInjectionPolicy - DataInjectionPolicy::InitDataInjectionSources() - no GraphManager
+2026-04-20 21:00:01,250 [0x205807100] WARN  graph.threadpool - Attempt to queue null task
+2026-04-20 21:00:05,259 [0x16fb97000] ERROR graph.threadpool - Task execution failed: Test exception
+2026-04-20 21:00:07,269 [0x16fc23000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 21:00:07,269 [0x16fb97000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 21:00:07,269 [0x16fc23000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 21:00:07,269 [0x16fb97000] ERROR graph.threadpool - Task execution failed: Test error
+2026-04-20 21:00:07,269 [0x16fc23000] ERROR graph.threadpool - Task execution failed: Test error
