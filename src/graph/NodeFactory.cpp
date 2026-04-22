@@ -174,27 +174,23 @@ void NodeFactory::RegisterPluginNodes() {
 
 void NodeFactory::RegisterStaticNodes() {
     LOG4CXX_TRACE(logger_, "Registering static nodes in unified factory");
-    
-    // Register built-in static nodes
-    // These are compile-time typed nodes that are always available
-    
-    // Example: FlightFSMNode (uncomment when available)
-    // try {
-    //     unified_registry_->Register(
-    //         "FlightFSMNode",
-    //         []() {
-    //             auto node = std::make_shared<avionics::FlightFSMNode>();
-    //             return config::StaticNodeAdapter::Adapt(node, "FlightFSMNode");
-    //         }
-    //     );
-    //     LOG4CXX_TRACE(logger_, "Registered static node type: FlightFSMNode");
-    // } catch (const std::exception& e) {
-    //     LOG4CXX_ERROR(logger_, "Failed to register FlightFSMNode: " << e.what());
-    //     throw;
-    // }
-    
-    // Note: Add more static node registrations here as needed
-    
+
+    // Note: Static node registration is deferred.
+    // All Layer 5 nodes will be available through the unified factory via
+    // the CreateNode(string) fallback to CreateDynamicNode().
+    // This is acceptable as long as the plugin system provides these nodes.
+    //
+    // If direct static node registration is needed (without plugin dependency),
+    // the pattern would be to create factory lambdas like:
+    //
+    //   unified_registry_->Register("FlightFSMNode", [this]() {
+    //       auto node = std::make_shared<avionics::FlightFSMNode>();
+    //       return config::StaticNodeAdapter::Adapt(node, "FlightFSMNode");
+    //   });
+    //
+    // However, this requires careful lambda type handling due to
+    // NodeFacadeAdapter being a move-only type.
+
     LOG4CXX_TRACE(logger_, "Finished registering static nodes");
 }
 

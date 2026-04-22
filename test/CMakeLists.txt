@@ -32,6 +32,7 @@ add_executable(test_phase0_unit
     graph/nodes/test_flight_monitor_node.cpp
     graph/nodes/test_feedback_test_sink_node.cpp
     graph/nodes/test_state_vector_capture_sink_node.cpp
+    graph/nodes/test_feedback_test_sink_node_dynamic.cpp
     core/test_active_queue.cpp
     core/test_thread_pool.cpp
     core/test_type_info.cpp
