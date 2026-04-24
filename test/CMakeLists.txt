@@ -19,6 +19,7 @@ add_executable(test_phase0_unit
     graph/test_edge_registry.cpp
     graph/test_port_types_message_routing.cpp
     graph/test_message_pool.cpp
+    graph/test_lazy_allocation.cpp
     graph/test_graph_manager.cpp
     graph/test_execution_policy_chain.cpp
     graph/test_real_node_integration.cpp

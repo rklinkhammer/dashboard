@@ -264,7 +264,7 @@ private:
     /// Free buffer LIFO stack (push = release, pop = acquire)
     std::vector<void*> available_buffers_;
 
-    /// Protects available_buffers_ and total_capacity_
+    /// Protects available_buffers_ and related state
     mutable std::mutex pool_mutex_;
 
     /// Pool statistics (atomic for lock-free reads)
@@ -276,6 +276,19 @@ private:
 
     /// Track if pool has been initialized
     bool initialized_ = false;
+
+    // ========================================================================
+    // Phase 4a: Lazy Allocation Support
+    // ========================================================================
+
+    /// Maximum number of buffers allowed (capacity ceiling for lazy mode)
+    size_t max_capacity_ = 0;
+
+    /// Number of buffers currently allocated (for lazy mode)
+    std::atomic<uint64_t> allocated_count_{0};
+
+    /// Allocation mode (Prealloc or LazyAllocate)
+    MessagePoolPolicy::AllocationMode allocation_mode_ = MessagePoolPolicy::AllocationMode::Prealloc;
 };
 
 // ============================================================================
@@ -294,31 +307,58 @@ inline void MessageBufferPool<BufferSize, Policy>::Initialize(size_t capacity) {
         throw std::invalid_argument("Pool capacity must be > 0");
     }
 
-    // Pre-allocate all buffers using malloc
-    available_buffers_.reserve(capacity);
-    for (size_t i = 0; i < capacity; ++i) {
-        void* buffer = std::malloc(BufferSize);
-        if (!buffer) {
-            // Free already-allocated buffers on failure
-            for (void* b : available_buffers_) {
-                std::free(b);
+    max_capacity_ = capacity;
+    allocation_mode_ = Policy{}.mode;  // Get allocation mode from policy
+
+    if (allocation_mode_ == MessagePoolPolicy::AllocationMode::Prealloc) {
+        // ====================================================================
+        // Phase 3: Prealloc Mode - allocate all buffers upfront
+        // ====================================================================
+        available_buffers_.reserve(capacity);
+        for (size_t i = 0; i < capacity; ++i) {
+            void* buffer = std::malloc(BufferSize);
+            if (!buffer) {
+                // Free already-allocated buffers on failure
+                for (void* b : available_buffers_) {
+                    std::free(b);
+                }
+                available_buffers_.clear();
+                throw std::bad_alloc();
             }
-            available_buffers_.clear();
-            throw std::bad_alloc();
+            available_buffers_.push_back(buffer);
         }
-        available_buffers_.push_back(buffer);
+
+        allocated_count_.store(capacity, std::memory_order_relaxed);
+        total_capacity_ = capacity;
+
+        // Update statistics
+        {
+            std::lock_guard<std::mutex> stats_lock(stats_mutex_);
+            stats_.total_allocations.store(capacity, std::memory_order_relaxed);
+            stats_.current_available.store(capacity, std::memory_order_relaxed);
+            stats_.peak_capacity.store(capacity, std::memory_order_relaxed);
+        }
+    } else if (allocation_mode_ == MessagePoolPolicy::AllocationMode::LazyAllocate) {
+        // ====================================================================
+        // Phase 4a: Lazy Allocate Mode - allocate on first use
+        // ====================================================================
+        // Reserve space but don't allocate buffers yet
+        available_buffers_.reserve(capacity);
+        allocated_count_.store(0, std::memory_order_relaxed);
+        total_capacity_ = capacity;
+
+        // Statistics start at zero - no allocations yet
+        {
+            std::lock_guard<std::mutex> stats_lock(stats_mutex_);
+            stats_.total_allocations.store(0, std::memory_order_relaxed);
+            stats_.current_available.store(0, std::memory_order_relaxed);
+            stats_.peak_capacity.store(0, std::memory_order_relaxed);
+        }
+    } else {
+        throw std::logic_error("Unsupported allocation mode");
     }
 
-    total_capacity_ = capacity;
     initialized_ = true;
-
-    // Update statistics
-    {
-        std::lock_guard<std::mutex> stats_lock(stats_mutex_);
-        stats_.total_allocations.store(capacity, std::memory_order_relaxed);
-        stats_.current_available.store(capacity, std::memory_order_relaxed);
-        stats_.peak_capacity.store(capacity, std::memory_order_relaxed);
-    }
 }
 
 template <size_t BufferSize, typename Policy>
@@ -345,7 +385,7 @@ inline void* MessageBufferPool<BufferSize, Policy>::AcquireBuffer() {
     // Update request counter
     stats_.total_requests.fetch_add(1, std::memory_order_relaxed);
 
-    // Try to pop from stack
+    // Try to pop from stack (both modes)
     if (!available_buffers_.empty()) {
         void* buffer = available_buffers_.back();
         available_buffers_.pop_back();
@@ -357,16 +397,54 @@ inline void* MessageBufferPool<BufferSize, Policy>::AcquireBuffer() {
         return buffer;
     }
 
-    // Pool empty - allocate new buffer
-    void* buffer = std::malloc(BufferSize);
-    if (!buffer) {
-        throw std::bad_alloc();
+    // Pool empty - allocation behavior depends on mode
+    if (allocation_mode_ == MessagePoolPolicy::AllocationMode::Prealloc) {
+        // ====================================================================
+        // Prealloc Mode: allocate recovery buffer (shouldn't happen if sized correctly)
+        // ====================================================================
+        void* buffer = std::malloc(BufferSize);
+        if (!buffer) {
+            throw std::bad_alloc();
+        }
+        stats_.total_allocations.fetch_add(1, std::memory_order_relaxed);
+        return buffer;
+    } else if (allocation_mode_ == MessagePoolPolicy::AllocationMode::LazyAllocate) {
+        // ====================================================================
+        // Lazy Mode: allocate only if under capacity
+        // ====================================================================
+        uint64_t current_allocated = allocated_count_.load(std::memory_order_relaxed);
+        if (current_allocated >= max_capacity_) {
+            // At capacity - cannot allocate more
+            // Return nullptr to indicate pool exhausted (caller must handle)
+            // Or allocate anyway and track "over-capacity" allocations
+            // For now: allocate but don't count it as part of prealloc
+            void* buffer = std::malloc(BufferSize);
+            if (!buffer) {
+                throw std::bad_alloc();
+            }
+            stats_.total_allocations.fetch_add(1, std::memory_order_relaxed);
+            // Don't increment allocated_count (still at max_capacity)
+            return buffer;
+        } else {
+            // Under capacity - allocate new buffer
+            void* buffer = std::malloc(BufferSize);
+            if (!buffer) {
+                throw std::bad_alloc();
+            }
+            allocated_count_.fetch_add(1, std::memory_order_relaxed);
+            stats_.total_allocations.fetch_add(1, std::memory_order_relaxed);
+
+            // Update peak capacity if needed
+            auto current = allocated_count_.load(std::memory_order_relaxed);
+            auto peak = stats_.peak_capacity.load(std::memory_order_relaxed);
+            if (current > peak) {
+                stats_.peak_capacity.store(current, std::memory_order_relaxed);
+            }
+            return buffer;
+        }
+    } else {
+        throw std::logic_error("Unsupported allocation mode");
     }
-
-    // Update allocation counter
-    stats_.total_allocations.fetch_add(1, std::memory_order_relaxed);
-
-    return buffer;
 }
 
 template <size_t BufferSize, typename Policy>
@@ -383,15 +461,36 @@ inline void MessageBufferPool<BufferSize, Policy>::ReleaseBuffer(void* buffer) n
         return;
     }
 
-    // Return to pool (LIFO stack)
-    available_buffers_.push_back(buffer);
-    stats_.current_available.fetch_add(1, std::memory_order_relaxed);
+    if (allocation_mode_ == MessagePoolPolicy::AllocationMode::Prealloc) {
+        // ====================================================================
+        // Prealloc Mode: always return to pool
+        // ====================================================================
+        available_buffers_.push_back(buffer);
+        stats_.current_available.fetch_add(1, std::memory_order_relaxed);
 
-    // Update peak capacity if needed
-    auto current = available_buffers_.size();
-    auto peak = stats_.peak_capacity.load(std::memory_order_relaxed);
-    if (current > peak) {
-        stats_.peak_capacity.store(current, std::memory_order_relaxed);
+        // Update peak capacity if needed
+        auto current = available_buffers_.size();
+        auto peak = stats_.peak_capacity.load(std::memory_order_relaxed);
+        if (current > peak) {
+            stats_.peak_capacity.store(current, std::memory_order_relaxed);
+        }
+    } else if (allocation_mode_ == MessagePoolPolicy::AllocationMode::LazyAllocate) {
+        // ====================================================================
+        // Lazy Mode: return to pool if under capacity, otherwise free
+        // ====================================================================
+        // Keep buffers up to allocated_count in the pool
+        // Buffers allocated beyond capacity are freed immediately
+        auto current_allocated = allocated_count_.load(std::memory_order_relaxed);
+        auto current_available = available_buffers_.size();
+
+        if (current_available < current_allocated) {
+            // Still building up the pool to match allocated count
+            available_buffers_.push_back(buffer);
+            stats_.current_available.fetch_add(1, std::memory_order_relaxed);
+        } else {
+            // Pool has enough buffers for all allocated - free the extra
+            std::free(buffer);
+        }
     }
 }
 
