@@ -1130,7 +1130,46 @@ bool ValidateSinkOutput(
 
 ---
 
-## Next Steps (Phase 3 Task 4+)
+## Phase 4: Advanced Message Pool Features (PLANNING)
+
+### Overview
+
+Phase 4 extends the production-ready message pool with advanced features for specialized scenarios:
+
+**Phase 4a: Lazy Allocation** (High Priority)
+- Allocate buffers on-demand instead of upfront
+- 50-75% memory savings for memory-constrained systems
+- Trade-off: Higher latency for initial messages
+- Estimated: 1 week
+
+**Phase 4b: Adaptive Capacity** (Medium Priority)
+- Monitor hit rate and adjust pool capacity automatically
+- 20-40% long-term memory reduction for variable workloads
+- Background thread monitors statistics every 5 minutes
+- Estimated: 1 week
+
+**Phase 4c: Per-Thread Pools** (Lower Priority, Conditional)
+- Eliminate contention at extreme concurrency (100+ threads)
+- Only implement if benchmarks show >50ns improvement
+- Estimated: 1 week (if justified)
+
+**Phase 4d: NUMA-Aware Allocation** (Future, Low Priority)
+- Allocate buffers local to NUMA node
+- 10-20% improvement on multi-socket systems
+- Defer to Phase 4+ (edge case)
+
+### Success Criteria
+
+- Each feature independently deployable via feature flags
+- Backward compatible with Phase 3 (default unchanged)
+- 100% test coverage maintained
+- Performance improvements documented
+
+### Planning Document
+
+See `doc/PHASE_4_PLANNING.md` for detailed design, test strategy, and timeline.
+
+
 
 ### Phase 3 Task 4: API Documentation & User Guide ✅ COMPLETE
 
@@ -1293,5 +1332,6 @@ bool ValidateSinkOutput(
 
 **Document Last Updated**: April 24, 2026  
 **Phase 3 Status**: 100% Complete ✅ All Tasks Finished  
-**Overall Project Status**: Core infrastructure 100% tested, documented, production-ready
+**Phase 4 Status**: Planning Complete, Ready to Begin  
+**Overall Project Status**: Core infrastructure 100% tested, documented, production-ready. Phase 4 advanced features planned.
 
