@@ -207,17 +207,22 @@ public:
 
     /**
      * @brief IConfigurable interface: Apply configuration
-     * 
+     *
      * Supported configuration keys:
      * - "enable_statistics": bool (default: true)
      * - "max_captured_frames": size_t (default: 100000, 0 = unlimited)
      * - "statistics_interval_frames": size_t (default: 1000)
-     * 
+     *
      * @param cfg Configuration object (JsonView)
-     * 
+     *
      * @see IConfigurable
      */
     virtual void Configure(const graph::JsonView& cfg) override;
+
+    /**
+     * @brief Provide input port metadata for graph visualization
+     */
+    virtual std::vector<graph::PortMetadata> GetInputPortMetadata() const override;
 
 private:
     /// Internal logger instance

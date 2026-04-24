@@ -244,4 +244,19 @@ void StateVectorCaptureSinkNode::UpdateStatisticsLocked(
     }
 }
 
+// ============================================================================
+// Port Metadata
+// ============================================================================
+
+std::vector<graph::PortMetadata> StateVectorCaptureSinkNode::GetInputPortMetadata() const {
+    std::vector<graph::PortMetadata> metadata;
+    metadata.push_back({
+        0,                              // port_index
+        "StateVector",                  // payload_type
+        "input",                        // direction
+        "Input"                         // port_name
+    });
+    return metadata;
+}
+
 }  // namespace avionics::nodes
