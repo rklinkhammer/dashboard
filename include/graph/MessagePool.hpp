@@ -247,6 +247,34 @@ public:
     }
 
     // ========================================================================
+    // Phase 4b: Adaptive Capacity Support
+    // ========================================================================
+
+    /**
+     * @brief Get current pool capacity
+     * @return Current capacity in number of buffers
+     *
+     * Safe to call from any thread.
+     */
+    [[nodiscard]] size_t GetCurrentCapacity() const noexcept {
+        std::lock_guard<std::mutex> lock(pool_mutex_);
+        return total_capacity_;
+    }
+
+    /**
+     * @brief Adjust pool capacity dynamically
+     * @param new_capacity New capacity in number of buffers
+     *
+     * Adjusts capacity up or down:
+     * - Scale up: Allocates additional buffers
+     * - Scale down: Marks excess buffers for reclamation
+     *
+     * Thread-safe: Can be called while pool is in use.
+     * Non-blocking: Adjustment happens incrementally.
+     */
+    void SetCapacity(size_t new_capacity) noexcept;
+
+    // ========================================================================
     // Non-copyable, movable
     // ========================================================================
 
@@ -491,6 +519,61 @@ inline void MessageBufferPool<BufferSize, Policy>::ReleaseBuffer(void* buffer) n
             // Pool has enough buffers for all allocated - free the extra
             std::free(buffer);
         }
+    }
+}
+
+template <size_t BufferSize, typename Policy>
+inline void MessageBufferPool<BufferSize, Policy>::SetCapacity(size_t new_capacity) noexcept {
+    std::lock_guard<std::mutex> lock(pool_mutex_);
+
+    if (!initialized_) {
+        return;  // Cannot adjust uninitialized pool
+    }
+
+    if (new_capacity == total_capacity_) {
+        return;  // No change needed
+    }
+
+    if (new_capacity > total_capacity_) {
+        // ====================================================================
+        // Scale up: Allocate additional buffers
+        // ====================================================================
+        size_t additional = new_capacity - total_capacity_;
+
+        for (size_t i = 0; i < additional; ++i) {
+            void* buffer = std::malloc(BufferSize);
+            if (!buffer) {
+                // Allocation failed - free what we've added so far
+                break;
+            }
+            available_buffers_.push_back(buffer);
+            stats_.current_available.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        total_capacity_ = new_capacity;
+    } else {
+        // ====================================================================
+        // Scale down: Mark excess buffers for reclamation
+        // ====================================================================
+        size_t excess = total_capacity_ - new_capacity;
+        size_t reclaimed = 0;
+
+        // Free buffers from the stack up to excess amount
+        while (!available_buffers_.empty() && reclaimed < excess) {
+            void* buffer = available_buffers_.back();
+            available_buffers_.pop_back();
+            std::free(buffer);
+            stats_.current_available.fetch_sub(1, std::memory_order_relaxed);
+            reclaimed++;
+        }
+
+        total_capacity_ = new_capacity;
+    }
+
+    // Update peak capacity if new capacity is higher
+    auto peak = stats_.peak_capacity.load(std::memory_order_relaxed);
+    if (total_capacity_ > peak) {
+        stats_.peak_capacity.store(total_capacity_, std::memory_order_relaxed);
     }
 }
 

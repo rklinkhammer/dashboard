@@ -82,6 +82,7 @@ add_executable(test_phase0_integration
     integration/test_csv_pipeline_dual_port_integration.cpp
     integration/test_message_pool_integration.cpp
     integration/test_message_move_semantics.cpp
+    integration/test_adaptive_capacity_integration.cpp
 )
 
 target_include_directories(test_phase0_integration
