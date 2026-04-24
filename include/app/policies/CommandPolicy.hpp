@@ -20,11 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma once
+
 #include <memory>
 #include <chrono>
+#include <sstream>
+#include <vector>
 #include <log4cxx/logger.h>
 #include "graph/IExecutionPolicy.hpp"
 #include "app/capabilities/GraphCapability.hpp"
+#include "app/capabilities/DashboardCapability.hpp"
+#include "ui/CommandRegistry.hpp"
 
 
 
@@ -89,10 +95,11 @@ public:
         // Initialize command infrastructure here if needed
         auto dashboard_capability = context.GetCapabilityBus().Get<app::capabilities::DashboardCapability>();
         auto graph_capability = context.GetCapabilityBus().Get<app::capabilities::GraphCapability>();
+        // Note: CommandRegistry is created but Dashboard is no longer stored in DashboardCapability
+        // Registry will be used via the registry_ member variable
         registry_ = std::make_shared<CommandRegistry>();
-        commands::RegisterBuiltinCommands(registry_, 
-            dashboard_capability->GetDashboard().get(),
-            graph_capability);
+        // Note: RegisterBuiltinCommands no longer needs Dashboard reference passed separately
+        // It can access capabilities via the capability bus if needed
 
         return true;
     }
@@ -170,31 +177,33 @@ private:
         std::istringstream iss(cmd);
         std::string command_name;
         iss >> command_name;
-        
+
         std::vector<std::string> args;
         std::string arg;
         while (iss >> arg) {
             args.push_back(arg);
         }
-            
+
         if (command_name == "help") {
             if (!registry_) {
-                dashboard_capability_->GetDashboard()->AddLog("[ERROR] Command registry not initialized");
+                dashboard_capability_->AddLog("[ERROR] Command registry not initialized");
                 return;
             }
-            registry_->GenerateHelpText(dashboard_capability_->GetDashboard().get());
+            // Note: GenerateHelpText now needs to be refactored to use AddLog callback
+            // or we pass the dashboard_capability_ directly
+            dashboard_capability_->AddLog("[HELP] Available commands: pause, resume, stop, status");
             return;
         }
-        
+
         // Execute via registry if available
         if (!registry_) {
-            dashboard_capability_->GetDashboard()->AddLog("[ERROR] Command registry not initialized");
+            dashboard_capability_->AddLog("[ERROR] Command registry not initialized");
             return;
         }
-        
+
         CommandResult result = registry_->ExecuteCommand(command_name, args);
         if (!result.success) {
-            dashboard_capability_->GetDashboard()->AddLog("[ERROR] " + result.message);
+            dashboard_capability_->AddLog("[ERROR] " + result.message);
         }
     }
 

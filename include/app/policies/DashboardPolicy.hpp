@@ -112,7 +112,6 @@ namespace app::policies
             auto dashboard_capability = std::make_shared<app::capabilities::DashboardCapability>();
             context.GetCapabilityBus().Register<app::capabilities::DashboardCapability>(dashboard_capability);
             dashboard_ = std::make_shared<Dashboard>(graph_capability, metrics_capability, dashboard_capability);
-            dashboard_capability->SetDashboard(dashboard_);
             dashboard_->Initialize();
             // Initialize dashboard here
             return true;
