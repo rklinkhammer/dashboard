@@ -27,6 +27,8 @@
 #include <string>
 #include "graph/NodeFactory.hpp"
 #include "graph/NodeFacade.hpp"
+#include "plugins/PluginRegistry.hpp"
+#include "plugins/PluginLoader.hpp"
 
 namespace graph::test {
 
@@ -85,16 +87,31 @@ public:
      * @endcode
      */
     static std::shared_ptr<graph::NodeFactory> CreateInitializedFactory() {
-        // Create factory without plugin registry for now
-        // Nodes will be discovered through fallback mechanisms
-        auto factory = std::make_shared<graph::NodeFactory>();
+        // Create plugin registry
+        auto registry = std::make_shared<graph::PluginRegistry>();
+
+        // Set up plugin directory and load plugins
+#ifdef GDASHBOARD_PLUGIN_DIR
+        try {
+            graph::PluginLoader loader(GDASHBOARD_PLUGIN_DIR, registry);
+            loader.LoadAllPlugins();
+            GTEST_LOG_(INFO) << "Loaded " << loader.GetLoadedPluginCount() << " plugins from "
+                             << GDASHBOARD_PLUGIN_DIR;
+        } catch (const std::exception& e) {
+            GTEST_LOG_(WARNING) << "Failed to load plugins: " << e.what()
+                                << " (this is expected if plugins haven't been built)";
+        }
+#else
+        GTEST_LOG_(WARNING) << "GDASHBOARD_PLUGIN_DIR not defined at compile time";
+#endif
+
+        // Create and initialize the factory with the populated registry
+        auto factory = std::make_shared<graph::NodeFactory>(registry);
 
         try {
-            // Initialize the unified factory
             factory->Initialize();
         } catch (const std::exception& e) {
-            // Log but continue - initialization may fail if plugin system not configured
-            // This is expected for unit tests
+            GTEST_LOG_(WARNING) << "Factory initialization failed: " << e.what();
         }
 
         return factory;

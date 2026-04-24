@@ -301,7 +301,7 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 1: DataInjectionAccelerometerNode[0] → FlightFSMNode[0]
     EdgeRegistry::Register<DataInjectionAccelerometerNode, 0, FlightFSMNode, 0>(
         "DataInjectionAccelerometerNode", "FlightFSMNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) {
@@ -330,7 +330,7 @@ void GraphBuilder::InitializeEdgeRegistry() {
                 LOG4CXX_ERROR(logger_, "Edge 1: Failed to extract FlightFSMNode from adapter");
                 return false;
             }
-            g.AddEdge<DataInjectionAccelerometerNode, 0, FlightFSMNode, 0>(src, dst);
+            g.AddEdge<DataInjectionAccelerometerNode, 0, FlightFSMNode, 0>(src, dst, buffer_size);
             LOG4CXX_TRACE(logger_, "Edge 1: Successfully created DataInjectionAccelerometerNode[0]→FlightFSMNode[0]");
             return true;
         });
@@ -339,7 +339,7 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 2: DataInjectionGyroscopeNode[0] → FlightFSMNode[1]
     EdgeRegistry::Register<DataInjectionGyroscopeNode, 0, FlightFSMNode, 1>(
         "DataInjectionGyroscopeNode", "FlightFSMNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) {
@@ -356,7 +356,7 @@ void GraphBuilder::InitializeEdgeRegistry() {
                 LOG4CXX_WARN(logger_, "Edge 2: Typed node extraction failed");
                 return false;
             }
-            g.AddEdge<DataInjectionGyroscopeNode, 0, FlightFSMNode, 1>(src, dst);
+            g.AddEdge<DataInjectionGyroscopeNode, 0, FlightFSMNode, 1>(src, dst, buffer_size);
             LOG4CXX_TRACE(logger_, "Edge 2: Created");
             return true;
         });
@@ -365,14 +365,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 3: DataInjectionMagnetometerNode[0] → FlightFSMNode[2]
     EdgeRegistry::Register<DataInjectionMagnetometerNode, 0, FlightFSMNode, 2>(
         "DataInjectionMagnetometerNode", "FlightFSMNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<sensors::DataInjectionMagnetometerNode>();
             auto dst = dst_wrapper->GetNode<avionics::FlightFSMNode>();
             if (!src || !dst) return false;
-            g.AddEdge<DataInjectionMagnetometerNode, 0, FlightFSMNode, 2>(src, dst);
+            g.AddEdge<DataInjectionMagnetometerNode, 0, FlightFSMNode, 2>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: DataInjectionMagnetometerNode[0] → FlightFSMNode[2]");
@@ -380,14 +380,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 4: DataInjectionBarometricNode[0] → FlightFSMNode[3]
     EdgeRegistry::Register<DataInjectionBarometricNode, 0, FlightFSMNode, 3>(
         "DataInjectionBarometricNode", "FlightFSMNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<sensors::DataInjectionBarometricNode>();
             auto dst = dst_wrapper->GetNode<avionics::FlightFSMNode>();
             if (!src || !dst) return false;
-            g.AddEdge<DataInjectionBarometricNode, 0, FlightFSMNode, 3>(src, dst);
+            g.AddEdge<DataInjectionBarometricNode, 0, FlightFSMNode, 3>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: DataInjectionBarometricNode[0] → FlightFSMNode[3]");
@@ -395,14 +395,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 5: DataInjectionGPSPositionNode[0] → FlightFSMNode[4]
     EdgeRegistry::Register<DataInjectionGPSPositionNode, 0, FlightFSMNode, 4>(
         "DataInjectionGPSPositionNode", "FlightFSMNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<sensors::DataInjectionGPSPositionNode>();
             auto dst = dst_wrapper->GetNode<avionics::FlightFSMNode>();
             if (!src || !dst) return false;
-            g.AddEdge<DataInjectionGPSPositionNode, 0, FlightFSMNode, 4>(src, dst);
+            g.AddEdge<DataInjectionGPSPositionNode, 0, FlightFSMNode, 4>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: DataInjectionGPSPositionNode[0] → FlightFSMNode[4]");
@@ -410,14 +410,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 6: FlightFSMNode[0] → AltitudeFusionNode[0]
     EdgeRegistry::Register<avionics::FlightFSMNode, 0, AltitudeFusionNode, 0>(
         "FlightFSMNode", "AltitudeFusionNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<avionics::FlightFSMNode>();
             auto dst = dst_wrapper->GetNode<avionics::AltitudeFusionNode>();
             if (!src || !dst) return false;
-            g.AddEdge<avionics::FlightFSMNode, 0, AltitudeFusionNode, 0>(src, dst);
+            g.AddEdge<avionics::FlightFSMNode, 0, AltitudeFusionNode, 0>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: FlightFSMNode[0] → AltitudeFusionNode[0]");
@@ -425,14 +425,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 7: AltitudeFusionNode[0] → EstimationPipelineNode[0]
     EdgeRegistry::Register<AltitudeFusionNode, 0, EstimationPipelineNode, 0>(
         "AltitudeFusionNode", "EstimationPipelineNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<avionics::AltitudeFusionNode>();
             auto dst = dst_wrapper->GetNode<avionics::estimators::EstimationPipelineNode>();
             if (!src || !dst) return false;
-            g.AddEdge<AltitudeFusionNode, 0, EstimationPipelineNode, 0>(src, dst);
+            g.AddEdge<AltitudeFusionNode, 0, EstimationPipelineNode, 0>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: AltitudeFusionNode[0] → EstimationPipelineNode[0]");
@@ -440,14 +440,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 8: EstimationPipelineNode[0] → FlightMonitorNode[0]
     EdgeRegistry::Register<EstimationPipelineNode, 0, FlightMonitorNode, 0>(
         "EstimationPipelineNode", "FlightMonitorNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<avionics::estimators::EstimationPipelineNode>();
             auto dst = dst_wrapper->GetNode<avionics::FlightMonitorNode>();
             if (!src || !dst) return false;
-            g.AddEdge<EstimationPipelineNode, 0, FlightMonitorNode, 0>(src, dst);
+            g.AddEdge<EstimationPipelineNode, 0, FlightMonitorNode, 0>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: EstimationPipelineNode[0] → FlightMonitorNode[0]");
@@ -455,14 +455,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 9: FlightMonitorNode[0] → FeedbackTestSinkNode[0]
     EdgeRegistry::Register<FlightMonitorNode, 0, FeedbackTestSinkNode, 0>(
         "FlightMonitorNode", "FeedbackTestSinkNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<avionics::FlightMonitorNode>();
             auto dst = dst_wrapper->GetNode<avionics::FeedbackTestSinkNode>();
             if (!src || !dst) return false;
-            g.AddEdge<FlightMonitorNode, 0, FeedbackTestSinkNode, 0>(src, dst);
+            g.AddEdge<FlightMonitorNode, 0, FeedbackTestSinkNode, 0>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: FlightMonitorNode[0] → FeedbackTestSinkNode[0]");
@@ -474,14 +474,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 10: DataInjectionAccelerometerNode[1] → CompletionAggregatorNode[0]
     EdgeRegistry::Register<DataInjectionAccelerometerNode, 1, CompletionAggregatorNode, 0>(
         "DataInjectionAccelerometerNode", "CompletionAggregatorNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<sensors::DataInjectionAccelerometerNode>();
             auto dst = dst_wrapper->GetNode<graph::CompletionAggregatorNode>();
             if (!src || !dst) return false;
-            g.AddEdge<DataInjectionAccelerometerNode, 1, CompletionAggregatorNode, 0>(src, dst);
+            g.AddEdge<DataInjectionAccelerometerNode, 1, CompletionAggregatorNode, 0>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: DataInjectionAccelerometerNode[1] → CompletionAggregatorNode[0]");
@@ -489,14 +489,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 11: DataInjectionGyroscopeNode[1] → CompletionAggregatorNode[1]
     EdgeRegistry::Register<DataInjectionGyroscopeNode, 1, CompletionAggregatorNode, 1>(
         "DataInjectionGyroscopeNode", "CompletionAggregatorNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<sensors::DataInjectionGyroscopeNode>();
             auto dst = dst_wrapper->GetNode<graph::CompletionAggregatorNode>();
             if (!src || !dst) return false;
-            g.AddEdge<DataInjectionGyroscopeNode, 1, CompletionAggregatorNode, 1>(src, dst);
+            g.AddEdge<DataInjectionGyroscopeNode, 1, CompletionAggregatorNode, 1>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: DataInjectionGyroscopeNode[1] → CompletionAggregatorNode[1]");
@@ -504,14 +504,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 12: DataInjectionMagnetometerNode[1] → CompletionAggregatorNode[2]
     EdgeRegistry::Register<DataInjectionMagnetometerNode, 1, CompletionAggregatorNode, 2>(
         "DataInjectionMagnetometerNode", "CompletionAggregatorNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<sensors::DataInjectionMagnetometerNode>();
             auto dst = dst_wrapper->GetNode<graph::CompletionAggregatorNode>();
             if (!src || !dst) return false;
-            g.AddEdge<DataInjectionMagnetometerNode, 1, CompletionAggregatorNode, 2>(src, dst);
+            g.AddEdge<DataInjectionMagnetometerNode, 1, CompletionAggregatorNode, 2>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: DataInjectionMagnetometerNode[1] → CompletionAggregatorNode[2]");
@@ -519,14 +519,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 13: DataInjectionBarometricNode[1] → CompletionAggregatorNode[3]
     EdgeRegistry::Register<DataInjectionBarometricNode, 1, CompletionAggregatorNode, 3>(
         "DataInjectionBarometricNode", "CompletionAggregatorNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<sensors::DataInjectionBarometricNode>();
             auto dst = dst_wrapper->GetNode<graph::CompletionAggregatorNode>();
             if (!src || !dst) return false;
-            g.AddEdge<DataInjectionBarometricNode, 1, CompletionAggregatorNode, 3>(src, dst);
+            g.AddEdge<DataInjectionBarometricNode, 1, CompletionAggregatorNode, 3>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: DataInjectionBarometricNode[1] → CompletionAggregatorNode[3]");
@@ -534,14 +534,14 @@ void GraphBuilder::InitializeEdgeRegistry() {
     // Edge 14: DataInjectionGPSPositionNode[1] → CompletionAggregatorNode[4]
     EdgeRegistry::Register<DataInjectionGPSPositionNode, 1, CompletionAggregatorNode, 4>(
         "DataInjectionGPSPositionNode", "CompletionAggregatorNode",
-        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx) {
+        [](graph::GraphManager& g, size_t src_idx, size_t dst_idx, size_t buffer_size) {
             auto src_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[src_idx]);
             auto dst_wrapper = std::dynamic_pointer_cast<graph::NodeFacadeAdapterWrapper>(g.GetNodes()[dst_idx]);
             if (!src_wrapper || !dst_wrapper) return false;
             auto src = src_wrapper->GetNode<sensors::DataInjectionGPSPositionNode>();
             auto dst = dst_wrapper->GetNode<graph::CompletionAggregatorNode>();
             if (!src || !dst) return false;
-            g.AddEdge<DataInjectionGPSPositionNode, 1, CompletionAggregatorNode, 4>(src, dst);
+            g.AddEdge<DataInjectionGPSPositionNode, 1, CompletionAggregatorNode, 4>(src, dst, buffer_size);
             return true;
         });
     LOG4CXX_TRACE(logger_, "Registered edge: DataInjectionGPSPositionNode[1] → CompletionAggregatorNode[4]");
@@ -617,7 +617,8 @@ void GraphBuilder::WireEdges(
                 dst_type,
                 edge.target_port,
                 src_idx,
-                dst_idx);
+                dst_idx,
+                edge.buffer_size);
             
             if (!created) {
                 throw std::runtime_error(

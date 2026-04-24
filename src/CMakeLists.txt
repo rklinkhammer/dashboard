@@ -20,6 +20,7 @@ set(GDASHBOARD_SOURCES
     graph/SensorClassification.cpp
     graph/StaticNodeAdapter.cpp
     graph/ThreadPool.cpp
+    graph/PooledMessage.cpp
     # ui/Window.cpp
     # ui/MetricsPanel.cpp
     # ui/LoggingWindow.cpp

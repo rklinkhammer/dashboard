@@ -18,6 +18,7 @@ add_executable(test_phase0_unit
     graph/test_node_factory.cpp
     graph/test_edge_registry.cpp
     graph/test_port_types_message_routing.cpp
+    graph/test_message_pool.cpp
     graph/test_graph_manager.cpp
     graph/test_execution_policy_chain.cpp
     graph/test_real_node_integration.cpp
@@ -32,7 +33,13 @@ add_executable(test_phase0_unit
     graph/nodes/test_flight_monitor_node.cpp
     graph/nodes/test_feedback_test_sink_node.cpp
     graph/nodes/test_state_vector_capture_sink_node.cpp
+    graph/nodes/test_data_injection_nodes_dynamic.cpp
+    graph/nodes/test_flight_fsm_node_dynamic.cpp
+    graph/nodes/test_altitude_fusion_node_dynamic.cpp
+    graph/nodes/test_estimation_pipeline_node_dynamic.cpp
+    graph/nodes/test_flight_monitor_node_dynamic.cpp
     graph/nodes/test_feedback_test_sink_node_dynamic.cpp
+    graph/nodes/test_state_vector_capture_sink_node_dynamic.cpp
     core/test_active_queue.cpp
     core/test_thread_pool.cpp
     core/test_type_info.cpp
@@ -42,6 +49,11 @@ target_include_directories(test_phase0_unit
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+target_compile_definitions(test_phase0_unit
+    PRIVATE
+    "GDASHBOARD_PLUGIN_DIR=\"${GDASHBOARD_PLUGIN_DIR}\""
 )
 
 target_link_libraries(test_phase0_unit
@@ -66,6 +78,8 @@ add_test(
 add_executable(test_phase0_integration
     integration/test_phase0_metrics_discovery.cpp
     integration/test_csv_pipeline_dual_port_integration.cpp
+    integration/test_message_pool_integration.cpp
+    integration/test_message_move_semantics.cpp
 )
 
 target_include_directories(test_phase0_integration
@@ -80,6 +94,7 @@ target_link_libraries(test_phase0_integration
     GTest::GTest
     GTest::Main
     nlohmann_json::nlohmann_json
+    log4cxx
 )
 
 add_test(

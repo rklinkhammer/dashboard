@@ -87,15 +87,15 @@ using GraphManager = ::graph::GraphManager;
 class EdgeRegistry {
 public:
     /**
-     * Creator function type: (GraphManager&, src_node_idx, dst_node_idx) -> bool
-     * 
+     * Creator function type: (GraphManager&, src_node_idx, dst_node_idx, buffer_size) -> bool
+     *
      * The creator lambda is responsible for:
      * 1. Getting the nodes by index from GraphManager
      * 2. Casting to the appropriate node types
-     * 3. Calling GraphManager::AddEdge<SrcNode, Port, DstNode, Port>()
+     * 3. Calling GraphManager::AddEdge<SrcNode, Port, DstNode, Port>(src, dst, buffer_size)
      * 4. Returning true if successful
      */
-    using EdgeCreator = std::function<bool(GraphManager&, std::size_t, std::size_t)>;
+    using EdgeCreator = std::function<bool(GraphManager&, std::size_t, std::size_t, std::size_t)>;
     
     /**
      * Register a type-aware edge creator
@@ -155,6 +155,7 @@ public:
      * @param dst_port_idx Destination port index
      * @param src_node_idx Index in graph.GetNodes()
      * @param dst_node_idx Index in graph.GetNodes()
+     * @param buffer_size Queue buffer size for the edge
      * @return true if edge was created successfully, false otherwise
      *
      * @throws std::runtime_error if no creator is registered for this combination
@@ -166,7 +167,8 @@ public:
         const std::string& dst_node_type,
         std::size_t dst_port_idx,
         std::size_t src_node_idx,
-        std::size_t dst_node_idx);
+        std::size_t dst_node_idx,
+        std::size_t buffer_size);
     
     /**
      * Check if an edge creator is registered

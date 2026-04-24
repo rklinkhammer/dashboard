@@ -1039,9 +1039,10 @@ namespace graph
             std::is_base_of_v<IInputCommonFn<DstPortType>, DstNode>,
             "DstNode must inherit from IInputFn or IInputCommonFn for the specified port type");
  
-        Edge(std::shared_ptr<SrcNode> src, std::shared_ptr<DstNode> dst, std::size_t = 8)
+        Edge(std::shared_ptr<SrcNode> src, std::shared_ptr<DstNode> dst, std::size_t buffer_size = 8)
             : src_(std::move(src)),
-              dst_(std::move(dst))
+              dst_(std::move(dst)),
+              buffer_size_(buffer_size)
         {
         }
 
@@ -1227,6 +1228,7 @@ namespace graph
 
         std::shared_ptr<SrcNode> src_;
         std::shared_ptr<DstNode> dst_;
+        std::size_t buffer_size_ = 8;                           ///< Queue buffer size from EdgeConfig
         std::atomic<bool> stop_requested_{false};
         std::thread thread_;
         std::mutex mtx_;

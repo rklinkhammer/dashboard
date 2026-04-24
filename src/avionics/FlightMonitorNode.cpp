@@ -158,4 +158,31 @@ graph::IMetricsCallback* FlightMonitorNode::GetMetricsCallback()
   return metrics_callback_;
 }
 
+// ============================================================================
+// Port Metadata
+// ============================================================================
+
+std::vector<graph::PortMetadata> FlightMonitorNode::GetInputPortMetadata() const {
+    std::vector<graph::PortMetadata> metadata;
+    metadata.push_back({
+        0,                              // port_index
+        "StateVector",                  // payload_type
+        "input",                        // direction
+        "Input"                         // port_name
+    });
+    return metadata;
+}
+
+std::vector<graph::PortMetadata> FlightMonitorNode::GetOutputPortMetadata() const {
+    std::vector<graph::PortMetadata> metadata;
+    metadata.push_back({
+        0,                              // port_index
+        "PhaseAdaptiveFeedbackMsg",     // payload_type
+        "output",                       // direction
+        "Output"                        // port_name
+    });
+    return metadata;
+}
+
+
 }  // namespace avionics

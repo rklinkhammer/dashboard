@@ -76,7 +76,7 @@ TEST_F(EdgeRegistryTest, RegisterEdge_SingleType) {
 
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     EXPECT_EQ(graph::config::EdgeRegistry::GetRegisteredCount(), 1);
@@ -87,17 +87,17 @@ TEST_F(EdgeRegistryTest, RegisterEdge_MultipleTypes) {
     // Verify that registering multiple edge type combinations works
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 1, test_nodes::ProcessorNode, 1>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     graph::config::EdgeRegistry::Register<test_nodes::ProcessorNode, 0, test_nodes::AggregatorNode, 0>(
         "ProcessorNode", "AggregatorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     EXPECT_EQ(graph::config::EdgeRegistry::GetRegisteredCount(), 3);
@@ -110,7 +110,7 @@ TEST_F(EdgeRegistryTest, DuplicateRegistration_Throws) {
     // Verify that registering the same edge type twice throws an error
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     // Attempt to register the same combination again
@@ -118,7 +118,7 @@ TEST_F(EdgeRegistryTest, DuplicateRegistration_Throws) {
     try {
         graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
             "SensorNode", "ProcessorNode",
-            [](graph::config::GraphManager&, std::size_t, std::size_t) { return false; }
+            [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return false; }
         );
     } catch (const std::runtime_error&) {
         threw_error = true;
@@ -134,7 +134,7 @@ TEST_F(EdgeRegistryTest, PortSpecificity_DifferentPorts) {
     // Port 0 should be different from Port 1
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     // Same nodes, different ports - should NOT throw
@@ -142,7 +142,7 @@ TEST_F(EdgeRegistryTest, PortSpecificity_DifferentPorts) {
     try {
         graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 1, test_nodes::ProcessorNode, 1>(
             "SensorNode", "ProcessorNode",
-            [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+            [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
         );
     } catch (const std::runtime_error&) {
         threw_error = true;
@@ -156,7 +156,7 @@ TEST_F(EdgeRegistryTest, TypeNameVariation_DifferentNames) {
     // Verify that different type names are treated as distinct
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNodeV1", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     // Same type objects but different names in registry - should NOT throw
@@ -164,7 +164,7 @@ TEST_F(EdgeRegistryTest, TypeNameVariation_DifferentNames) {
     try {
         graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
             "SensorNodeV2", "ProcessorNode",
-            [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+            [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
         );
     } catch (const std::runtime_error&) {
         threw_error = true;
@@ -193,12 +193,12 @@ TEST_F(EdgeRegistryTest, GetRegisteredTypes_ReturnsAll) {
     // Verify that GetRegistered returns all registered edge combinations
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     graph::config::EdgeRegistry::Register<test_nodes::ProcessorNode, 0, test_nodes::AggregatorNode, 0>(
         "ProcessorNode", "AggregatorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     auto registered = graph::config::EdgeRegistry::GetRegistered();
@@ -228,7 +228,7 @@ TEST_F(EdgeRegistryTest, KeyFormat_MatchesExpected) {
     // Format: "SrcType::SrcPort -> DstType::DstPort"
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 1>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     auto registered = graph::config::EdgeRegistry::GetRegistered();
@@ -251,12 +251,12 @@ TEST_F(EdgeRegistryTest, Clear_RemovesAll) {
     // Verify that Clear removes all registrations
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     graph::config::EdgeRegistry::Register<test_nodes::ProcessorNode, 0, test_nodes::AggregatorNode, 0>(
         "ProcessorNode", "AggregatorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     EXPECT_EQ(graph::config::EdgeRegistry::GetRegisteredCount(), 2);
@@ -272,7 +272,7 @@ TEST_F(EdgeRegistryTest, Clear_AllowsReregistration) {
     // Verify that after Clear(), same types can be registered again
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     EXPECT_EQ(graph::config::EdgeRegistry::GetRegisteredCount(), 1);
@@ -286,7 +286,7 @@ TEST_F(EdgeRegistryTest, Clear_AllowsReregistration) {
     try {
         graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
             "SensorNode", "ProcessorNode",
-            [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+            [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
         );
     } catch (const std::runtime_error&) {
         threw_error = true;
@@ -308,12 +308,12 @@ TEST_F(EdgeRegistryTest, DualPortArchitecture_DataAndSignal) {
     // Register both data port and signal port edges
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 1, test_nodes::ProcessorNode, 1>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     // Both should be registered
@@ -329,7 +329,7 @@ TEST_F(EdgeRegistryTest, HighPortIndices_Supported) {
     // Verify that high port indices are supported (not just 0 and 1)
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 5, test_nodes::ProcessorNode, 10>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     EXPECT_TRUE(graph::config::EdgeRegistry::IsRegistered("SensorNode", 5, "ProcessorNode", 10));
@@ -342,23 +342,23 @@ TEST_F(EdgeRegistryTest, ComplexPipeline_MultiStage) {
 
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     graph::config::EdgeRegistry::Register<test_nodes::ProcessorNode, 0, test_nodes::AggregatorNode, 0>(
         "ProcessorNode", "AggregatorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     // Completion signal ports
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 1, test_nodes::ProcessorNode, 1>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     graph::config::EdgeRegistry::Register<test_nodes::ProcessorNode, 1, test_nodes::AggregatorNode, 1>(
         "ProcessorNode", "AggregatorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     EXPECT_EQ(graph::config::EdgeRegistry::GetRegisteredCount(), 4);
@@ -385,7 +385,7 @@ TEST_F(EdgeRegistryTest, InvalidTypeNames_HandledCorrectly) {
 
     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
         "SensorNode", "ProcessorNode",
-        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
     );
 
     EXPECT_FALSE(graph::config::EdgeRegistry::IsRegistered("", 0, "ProcessorNode", 0));
@@ -414,7 +414,7 @@ TEST_F(EdgeRegistryTest, ThreadSafety_ConcurrentRegistration) {
 
                     graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
                         src_name, dst_name,
-                        [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+                        [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
                     );
 
                     successful_registrations.fetch_add(1);
@@ -454,12 +454,12 @@ TEST_F(EdgeRegistryTest, LargeRegistry_ManyEdgeTypes) {
         if (i % 2 == 0) {
             graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 0, test_nodes::ProcessorNode, 0>(
                 src_name, dst_name,
-                [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+                [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
             );
         } else {
             graph::config::EdgeRegistry::Register<test_nodes::SensorNode, 1, test_nodes::ProcessorNode, 1>(
                 src_name, dst_name,
-                [](graph::config::GraphManager&, std::size_t, std::size_t) { return true; }
+                [](graph::config::GraphManager&, std::size_t, std::size_t, std::size_t) { return true; }
             );
         }
     }

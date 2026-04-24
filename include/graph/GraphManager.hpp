@@ -250,6 +250,7 @@
 #include "core/ReflectionHelper.hpp"
 #include "graph/Nodes.hpp"
 #include "graph/NodeFacadeAdapterWrapper.hpp"
+#include "graph/PooledMessage.hpp"
 #include "ThreadPool.hpp"
 #include "EdgeFacade.hpp"
 
@@ -621,6 +622,13 @@ public:
             LOG4CXX_TRACE(log4cxx::Logger::getLogger("graph.graph"),
                          "GraphManager::Init() - ThreadPool initialized");
         }
+
+        // Initialize message pool registry with common sizes
+        LOG4CXX_TRACE(log4cxx::Logger::getLogger("graph.graph"),
+                     "GraphManager::Init() - initializing message pools");
+        MessagePoolRegistry::GetInstance().InitializeCommonPools(256);
+        LOG4CXX_TRACE(log4cxx::Logger::getLogger("graph.graph"),
+                     "GraphManager::Init() - message pools initialized");
         
         // Initialize nodes first
         LOG4CXX_TRACE(log4cxx::Logger::getLogger("graph.graph"),

@@ -33,8 +33,10 @@
 #include <type_traits>
 #include <atomic>
 #include <new>
+#include <cstdlib>
 #include <string_view>
 #include "core/TypeInfo.hpp"
+#include "PooledMessage.hpp"
 
 namespace graph::message {
 
@@ -273,7 +275,33 @@ public:
             ops_ = &OpsTable<T>::ops;
         } else {
             // Heap path: Allocate on heap for large or non-trivial types
-            heap_ptr_ = new T(value);
+            // First try to allocate from pool if size warrants it
+            if constexpr (sizeof(T) > 32) {  // Only pool larger messages
+                auto* pool = graph::MessagePoolRegistry::GetInstance().GetPoolForSize(sizeof(T));
+                if (pool) {
+                    void* pooled_buffer = pool->AcquireBuffer();
+                    if (pooled_buffer) {
+                        heap_ptr_ = new (pooled_buffer) T(value);
+                        // Mark as pooled by storing special marker
+                        // (in future version, could store pool pointer for proper return)
+                    } else {
+                        // Fallback to direct malloc + placement new if pool fails
+                        void* buffer = std::malloc(sizeof(T));
+                        if (!buffer) throw std::bad_alloc();
+                        heap_ptr_ = new (buffer) T(value);
+                    }
+                } else {
+                    // No pool yet (initialization not complete), use malloc + placement new
+                    void* buffer = std::malloc(sizeof(T));
+                    if (!buffer) throw std::bad_alloc();
+                    heap_ptr_ = new (buffer) T(value);
+                }
+            } else {
+                // Small heap messages use malloc + placement new for consistency
+                void* buffer = std::malloc(sizeof(T));
+                if (!buffer) throw std::bad_alloc();
+                heap_ptr_ = new (buffer) T(value);
+            }
             ops_ = &OpsTable<T>::ops;
             if (!std::is_constant_evaluated()) {
                 s_alloc_count.fetch_add(1, std::memory_order_relaxed);
@@ -297,7 +325,25 @@ private:
     struct OpsTable {
         static constexpr void destroy(MessageStorage& s) noexcept {
             if (s.heap_ptr_) {
-                delete static_cast<T*>(s.heap_ptr_);
+                T* ptr = static_cast<T*>(s.heap_ptr_);
+                ptr->~T();  // Call destructor explicitly
+
+                // Try to return to pool for large types
+                if constexpr (sizeof(T) > 32) {
+                    if (!std::is_constant_evaluated()) {
+                        auto* pool = graph::MessagePoolRegistry::GetInstance().GetPoolForSize(sizeof(T));
+                        if (pool) {
+                            pool->ReleaseBuffer(s.heap_ptr_);
+                            s.heap_ptr_ = nullptr;
+                            s_alloc_count.fetch_sub(1, std::memory_order_relaxed);
+                            s_alloc_bytes.fetch_sub(sizeof(T), std::memory_order_relaxed);
+                            return;
+                        }
+                    }
+                }
+
+                // Fallback: use std::free for all non-pooled allocations (malloc + placement new)
+                std::free(ptr);
                 if (!std::is_constant_evaluated()) {
                     s_alloc_count.fetch_sub(1, std::memory_order_relaxed);
                     s_alloc_bytes.fetch_sub(sizeof(T), std::memory_order_relaxed);
@@ -313,7 +359,26 @@ private:
             dst.active_ = true;
             dst.ops_ = src.ops_;
             if (src.heap_ptr_) {
-                dst.heap_ptr_ = new T(*static_cast<const T*>(src.heap_ptr_));
+                const T* src_ptr = static_cast<const T*>(src.heap_ptr_);
+
+                // Try pooled allocation for large types
+                if constexpr (sizeof(T) > 32) {
+                    if (!std::is_constant_evaluated()) {
+                        auto* pool = graph::MessagePoolRegistry::GetInstance().GetPoolForSize(sizeof(T));
+                        if (pool) {
+                            void* pooled_buffer = pool->AcquireBuffer();
+                            if (pooled_buffer) {
+                                dst.heap_ptr_ = new (pooled_buffer) T(*src_ptr);
+                                s_alloc_count.fetch_add(1, std::memory_order_relaxed);
+                                s_alloc_bytes.fetch_add(sizeof(T), std::memory_order_relaxed);
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                // Fallback to direct allocation
+                dst.heap_ptr_ = new T(*src_ptr);
                 if (!std::is_constant_evaluated()) {
                     s_alloc_count.fetch_add(1, std::memory_order_relaxed);
                     s_alloc_bytes.fetch_add(sizeof(T), std::memory_order_relaxed);

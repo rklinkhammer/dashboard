@@ -82,23 +82,23 @@ public:
         std::string dst_type_name = typeid(DstNode).name();
         
         // Create lambda that captures template specialization
-        auto creator = [](GraphManager& graph, std::size_t src_node_idx, std::size_t dst_node_idx) -> bool {
+        auto creator = [](GraphManager& graph, std::size_t src_node_idx, std::size_t dst_node_idx, std::size_t buffer_size) -> bool {
             try {
                 // Get nodes from graph by index
                 const auto& nodes = graph.GetNodes();
                 if (src_node_idx >= nodes.size() || dst_node_idx >= nodes.size()) {
                     return false;
                 }
-                
+
                 // Call the template method to add the edge
                 auto src_node = std::dynamic_pointer_cast<SrcNode>(nodes[src_node_idx]);
                 auto dst_node = std::dynamic_pointer_cast<DstNode>(nodes[dst_node_idx]);
-                
+
                 if (!src_node || !dst_node) {
                     return false;
                 }
-                
-                graph.AddEdge<SrcNode, SrcPort, DstNode, DstPort>(src_node, dst_node);
+
+                graph.AddEdge<SrcNode, SrcPort, DstNode, DstPort>(src_node, dst_node, buffer_size);
                 return true;
             } catch (const std::exception& e) {
                 // Log error if needed, but don't throw (let caller handle)

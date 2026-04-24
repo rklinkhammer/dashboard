@@ -267,6 +267,20 @@ public:
             
         return schema;
     }
+    
+    // ========================================================================
+    // Port Metadata
+    // ========================================================================
+
+    /**
+     * @brief Provide input port metadata for graph visualization
+     */
+    virtual std::vector<graph::PortMetadata> GetInputPortMetadata() const override;
+
+    /**
+     * @brief Provide output port metadata for graph visualization
+     */
+    virtual std::vector<graph::PortMetadata> GetOutputPortMetadata() const override;
 
 private:
     // ===== Component Members =====

@@ -69,18 +69,19 @@ bool EdgeRegistry::CreateEdge(
     const std::string& dst_node_type,
     std::size_t dst_port_idx,
     std::size_t src_node_idx,
-    std::size_t dst_node_idx) {
-    
+    std::size_t dst_node_idx,
+    std::size_t buffer_size) {
+
     std::lock_guard<std::mutex> lock(EdgeRegistry::mutex_);
-    
+
     std::string key = EdgeRegistry::MakeKey(src_node_type, src_port_idx, dst_node_type, dst_port_idx);
-    
+
     auto it = EdgeRegistry::GetRegistry().find(key);
     if (it == EdgeRegistry::GetRegistry().end()) {
         std::ostringstream oss;
         oss << "No edge creator registered for: " << key
             << " (registered types: ";
-        
+
         bool first = true;
         for (const auto& registered_key : EdgeRegistry::GetRegistry()) {
             if (!first) oss << ", ";
@@ -88,12 +89,12 @@ bool EdgeRegistry::CreateEdge(
             first = false;
         }
         oss << ")";
-        
+
         throw std::runtime_error(oss.str());
     }
-    
-    // Call the registered creator with node indices
-    return it->second(graph, src_node_idx, dst_node_idx);
+
+    // Call the registered creator with node indices and buffer size
+    return it->second(graph, src_node_idx, dst_node_idx, buffer_size);
 }
 
 // Clear all registered edge creators
