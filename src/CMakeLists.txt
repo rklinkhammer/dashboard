@@ -21,6 +21,7 @@ set(GDASHBOARD_SOURCES
     graph/StaticNodeAdapter.cpp
     graph/ThreadPool.cpp
     graph/PooledMessage.cpp
+    graph/AdaptiveCapacityMonitor.cpp
     # ui/Window.cpp
     # ui/MetricsPanel.cpp
     # ui/LoggingWindow.cpp
