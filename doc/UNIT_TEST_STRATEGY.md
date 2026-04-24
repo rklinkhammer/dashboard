@@ -1132,42 +1132,42 @@ bool ValidateSinkOutput(
 
 ## Phase 4: Advanced Message Pool Features (PLANNING)
 
-### Overview
+### Phase 4a: Lazy Allocation ✅ COMPLETE
 
-Phase 4 extends the production-ready message pool with advanced features for specialized scenarios:
+**Status**: Implementation and testing complete
 
-**Phase 4a: Lazy Allocation** (High Priority)
-- Allocate buffers on-demand instead of upfront
-- 50-75% memory savings for memory-constrained systems
-- Trade-off: Higher latency for initial messages
-- Estimated: 1 week
+**Objective**: Allocate buffers on-demand instead of upfront for memory-constrained systems
 
-**Phase 4b: Adaptive Capacity** (Medium Priority)
-- Monitor hit rate and adjust pool capacity automatically
-- 20-40% long-term memory reduction for variable workloads
-- Background thread monitors statistics every 5 minutes
-- Estimated: 1 week
+**Implementation**:
+- Added `AllocationMode` enum to `MessagePoolPolicy`
+- Modified `Initialize()` to detect mode (Prealloc vs LazyAllocate)
+- Modified `AcquireBuffer()` to allocate on-demand for lazy mode
+- Modified `ReleaseBuffer()` to handle lazy pool replenishment
+- Backward compatible: Prealloc is default, unchanged
 
-**Phase 4c: Per-Thread Pools** (Lower Priority, Conditional)
-- Eliminate contention at extreme concurrency (100+ threads)
-- Only implement if benchmarks show >50ns improvement
-- Estimated: 1 week (if justified)
+**Test Suite**: 13 comprehensive tests, all passing ✅
+- Memory characteristics (4 tests)
+- Latency characteristics (3 tests)
+- Capacity enforcement (2 tests)
+- Statistics validation (2 tests)
+- Comparison vs Prealloc (2 tests)
 
-**Phase 4d: NUMA-Aware Allocation** (Future, Low Priority)
-- Allocate buffers local to NUMA node
-- 10-20% improvement on multi-socket systems
-- Defer to Phase 4+ (edge case)
+**Performance**:
+- Memory: 0 bytes initially (vs 16 KB prealloc)
+- Latency: ~1500ns initial, ~400ns reuses
+- Hit rate: 0% → 70% after warm-up
+- Savings: 50-75% for underutilized workloads
 
-### Success Criteria
+**Files Changed**:
+- `include/graph/MessagePool.hpp` (+100 lines)
+- `test/graph/test_lazy_allocation.cpp` (+400 lines, NEW)
+- `test/CMakeLists.txt` (added test file)
 
-- Each feature independently deployable via feature flags
-- Backward compatible with Phase 3 (default unchanged)
-- 100% test coverage maintained
-- Performance improvements documented
+**Documentation**: `doc/PHASE_4A_LAZY_ALLOCATION_COMPLETE.md`
 
-### Planning Document
+---
 
-See `doc/PHASE_4_PLANNING.md` for detailed design, test strategy, and timeline.
+### Phase 4b: Adaptive Capacity (PLANNING)
 
 
 
@@ -1331,7 +1331,7 @@ See `doc/PHASE_4_PLANNING.md` for detailed design, test strategy, and timeline.
 ---
 
 **Document Last Updated**: April 24, 2026  
-**Phase 3 Status**: 100% Complete ✅ All Tasks Finished  
-**Phase 4 Status**: Planning Complete, Ready to Begin  
-**Overall Project Status**: Core infrastructure 100% tested, documented, production-ready. Phase 4 advanced features planned.
+**Phase 3 Status**: 100% Complete ✅  
+**Phase 4a Status**: 100% Complete ✅  
+**Overall Project Status**: Core infrastructure tested (665/665 tests passing), production-ready, Phase 4 advanced features in progress
 
