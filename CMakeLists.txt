@@ -42,12 +42,44 @@ endif()
 find_package(nlohmann_json REQUIRED)
 find_package(FTXUI REQUIRED)
 find_package(GTest)
+find_package(benchmark QUIET)
 find_package(log4cxx REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(Curses REQUIRED)
 
 # Include directories (for all targets)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# ============================================================================
+# Build Options (must come BEFORE subdirectories so flags apply to all targets)
+# ============================================================================
+
+option(ENABLE_VERBOSE_LOGGING "Enable verbose logging output" OFF)
+option(ENABLE_SANITIZERS "Enable address and undefined behavior sanitizers" OFF)
+option(ENABLE_COVERAGE "Enable code coverage instrumentation (gcov/lcov)" OFF)
+option(ENABLE_PROFILING "Enable profiling support (gprof/perf with frame pointers)" OFF)
+
+if(ENABLE_VERBOSE_LOGGING)
+    add_compile_definitions(GDASHBOARD_VERBOSE_LOGGING)
+endif()
+
+if(ENABLE_SANITIZERS)
+    add_compile_options(-fsanitize=address -fsanitize=undefined)
+    add_link_options(-fsanitize=address -fsanitize=undefined)
+endif()
+
+if(ENABLE_COVERAGE)
+    message(STATUS "Code coverage enabled")
+    add_compile_options(--coverage -fprofile-arcs -ftest-coverage)
+    add_link_options(--coverage)
+endif()
+
+if(ENABLE_PROFILING)
+    message(STATUS "Profiling enabled (gprof/perf with frame pointers)")
+    add_compile_options(-g -p -fno-omit-frame-pointer)
+    # Add -fno-inline for better call stack visibility in profiling
+    add_compile_options(-fno-inline)
+endif()
 
 # ============================================================================
 # Testing Setup
@@ -73,6 +105,14 @@ else()
     message(WARNING "Google Test not found. Tests will not be built. Install gtest to enable tests.")
 endif()
 
+# Add benchmarks (optional, if benchmark library is available)
+if(benchmark_FOUND)
+    add_subdirectory(test/benchmark)
+    message(STATUS "Benchmarks: ENABLED (google-benchmark found)")
+else()
+    message(STATUS "Benchmarks: DISABLED (install google-benchmark to enable)")
+endif()
+
 # ============================================================================
 # Build Information
 # ============================================================================
@@ -95,17 +135,15 @@ endif()
 include(${CMAKE_SOURCE_DIR}/cmake/Doxygen.cmake)
 
 # ============================================================================
-# Build Options
+# Code Coverage (gcov/lcov)
 # ============================================================================
 
-option(ENABLE_VERBOSE_LOGGING "Enable verbose logging output" OFF)
-option(ENABLE_SANITIZERS "Enable address and undefined behavior sanitizers" OFF)
+include(${CMAKE_SOURCE_DIR}/cmake/Coverage.cmake)
 
-if(ENABLE_VERBOSE_LOGGING)
-    add_compile_definitions(GDASHBOARD_VERBOSE_LOGGING)
-endif()
+# ============================================================================
+# Plugin Configuration
+# ============================================================================
 
-if(ENABLE_SANITIZERS)
-    add_compile_options(-fsanitize=address -fsanitize=undefined)
-    add_link_options(-fsanitize=address -fsanitize=undefined)
-endif()
+# Define the plugin directory where .so files will be located
+set(GDASHBOARD_PLUGIN_DIR "${CMAKE_BINARY_DIR}/plugins" CACHE PATH "Directory containing plugin .so files")
+message(STATUS "Plugin directory: ${GDASHBOARD_PLUGIN_DIR}")
